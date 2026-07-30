@@ -16,4 +16,5 @@ alwaysApply: false
 - Query via `python3 scripts/query_expectations.py` — do not invent expectations
 - Canvas structure: `agents/canvas-course-updater.md` / `python3 scripts/canvas_*.py`
 - Read `courses/MCF3M/AGENTS.md` for course agent notes
-- Rebuild posture: current Canvas + Notebook module/lesson trees are a **baseline archive**, not permanent IA — remove/add/merge deliberately; preserve `.imscc` and `live-lessons/archives/`
+- **Target IA:** `courses/MCF3M/course-plan.md` (M0 intro + M1–5 themed modules @ 3 weeks each + culminating/buffer) — legacy Canvas/Notebook trees are baseline archive only
+- Rebuild posture: remove/add/merge toward `course-plan.md`; preserve `.imscc` and `live-lessons/archives/`

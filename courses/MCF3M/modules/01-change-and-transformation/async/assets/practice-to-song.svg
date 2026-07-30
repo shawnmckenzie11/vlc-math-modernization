@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" role="img" aria-label="Practice to how a song feels">
+  <rect width="80" height="80" rx="8" fill="#eef5f9"/>
+  <path d="M30 52V26l24-6v26" fill="none" stroke="#0374b5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="26" cy="54" r="7" fill="#2d3b45"/>
+  <circle cx="50" cy="48" r="7" fill="#2d3b45"/>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="400" viewBox="0 0 960 400" role="img" aria-labelledby="title desc">
+  <title id="title">Quadratic equations, 3 ways</title>
+  <desc id="desc">A chef presents the same dish three ways, labeled Standard, Factored, and Vertex  like three algebraic forms of one quadratic.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7f1e8"/>
+      <stop offset="100%" stop-color="#e8f0ea"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="400" fill="url(#bg)"/>
+  <!-- counter -->
+  <rect x="40" y="290" width="880" height="70" rx="8" fill="#5c4033"/>
+  <rect x="40" y="290" width="880" height="18" fill="#7a5644"/>
+
+  <!-- chef -->
+  <g transform="translate(80,70)">
+    <ellipse cx="70" cy="200" rx="48" ry="14" fill="#000" opacity="0.08"/>
+    <circle cx="70" cy="78" r="36" fill="#f0c7a8"/>
+    <path d="M40 55c8-28 52-28 60 0" fill="#f7f7f5"/>
+    <rect x="48" y="42" width="44" height="14" rx="4" fill="#f7f7f5"/>
+    <circle cx="58" cy="76" r="3.5" fill="#2d3b45"/>
+    <circle cx="82" cy="76" r="3.5" fill="#2d3b45"/>
+    <path d="M60 92c6 6 14 6 20 0" fill="none" stroke="#c47a5a" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M42 112h56l8 90H34z" fill="#f7f7f5"/>
+    <path d="M55 112v90M85 112v90" fill="none" stroke="#d9d4cc" stroke-width="2"/>
+    <rect x="62" y="150" width="16" height="28" rx="3" fill="#2f6f5e"/>
+    <!-- arms gesturing to plates -->
+    <path d="M42 130c-28 18-36 40-38 62" fill="none" stroke="#f0c7a8" stroke-width="12" stroke-linecap="round"/>
+    <path d="M98 130c40 10 70 18 110 22" fill="none" stroke="#f0c7a8" stroke-width="12" stroke-linecap="round"/>
+  </g>
+
+  <!-- plate 1: Standard -->
+  <g transform="translate(280,150)">
+    <ellipse cx="90" cy="120" rx="88" ry="28" fill="#000" opacity="0.08"/>
+    <ellipse cx="90" cy="110" rx="86" ry="26" fill="#ece7df"/>
+    <ellipse cx="90" cy="106" rx="70" ry="18" fill="#faf8f4"/>
+    <ellipse cx="90" cy="100" rx="28" ry="16" fill="#c45c3e"/>
+    <ellipse cx="90" cy="96" rx="18" ry="8" fill="#e07a55"/>
+    <rect x="30" y="8" width="120" height="36" rx="6" fill="#2d3b45"/>
+    <text x="90" y="32" text-anchor="middle" font-family="Lato,Helvetica,Arial,sans-serif" font-size="18" font-weight="700" fill="#f7f7f5">Standard</text>
+  </g>
+
+  <!-- plate 2: Factored -->
+  <g transform="translate(500,150)">
+    <ellipse cx="90" cy="120" rx="88" ry="28" fill="#000" opacity="0.08"/>
+    <ellipse cx="90" cy="110" rx="86" ry="26" fill="#ece7df"/>
+    <ellipse cx="90" cy="106" rx="70" ry="18" fill="#faf8f4"/>
+    <ellipse cx="78" cy="100" rx="22" ry="14" fill="#c45c3e"/>
+    <ellipse cx="104" cy="98" rx="20" ry="12" fill="#2f6f5e"/>
+    <circle cx="90" cy="92" r="6" fill="#e8c547"/>
+    <rect x="30" y="8" width="120" height="36" rx="6" fill="#2d3b45"/>
+    <text x="90" y="32" text-anchor="middle" font-family="Lato,Helvetica,Arial,sans-serif" font-size="18" font-weight="700" fill="#f7f7f5">Factored</text>
+  </g>
+
+  <!-- plate 3: Vertex -->
+  <g transform="translate(720,150)">
+    <ellipse cx="90" cy="120" rx="88" ry="28" fill="#000" opacity="0.08"/>
+    <ellipse cx="90" cy="110" rx="86" ry="26" fill="#ece7df"/>
+    <ellipse cx="90" cy="106" rx="70" ry="18" fill="#faf8f4"/>
+    <path d="M58 108c16-36 48-36 64 0" fill="none" stroke="#c45c3e" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="90" cy="78" r="8" fill="#e8c547"/>
+    <rect x="30" y="8" width="120" height="36" rx="6" fill="#2d3b45"/>
+    <text x="90" y="32" text-anchor="middle" font-family="Lato,Helvetica,Arial,sans-serif" font-size="18" font-weight="700" fill="#f7f7f5">Vertex</text>
+  </g>
+
+  <text x="480" y="48" text-anchor="middle" font-family="Lato,Helvetica,Arial,sans-serif" font-size="28" font-weight="700" fill="#2d3b45">Same dish · 3 ways</text>
+  <text x="480" y="78" text-anchor="middle" font-family="Lato,Helvetica,Arial,sans-serif" font-size="16" fill="#5a6a74">One quadratic curve · three algebraic forms</text>
+</svg>

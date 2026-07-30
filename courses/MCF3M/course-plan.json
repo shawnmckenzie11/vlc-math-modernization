@@ -1,0 +1,88 @@
+{
+  "course": "MCF3M",
+  "semester": "2026-2027 S1",
+  "status": "target_ia",
+  "as_of": "2026-07-30",
+  "pacing": {
+    "module_0_weeks": 1,
+    "content_modules_weeks_each": 3,
+    "content_module_count": 5,
+    "culminating_review_weeks": 1,
+    "buffer_weeks": 1,
+    "notes": "Fits ~18 blocks into 19 instructional weeks (Sep 8 2026 – Jan 25 2027). Jan 25 is a single extra day before exams."
+  },
+  "modules": [
+    {
+      "id": 0,
+      "title": "Intro / housekeeping",
+      "weeks": 1,
+      "focus": "Course routines, online norms, tools, Honorlock, learning skills",
+      "legacy_sources": ["Canvas Module 0", "live-lessons Learning Skills / course intro"]
+    },
+    {
+      "id": 1,
+      "title": "Change & Transformation",
+      "weeks": 3,
+      "focus": "Quadratic content (strand A), themed around change and transformation",
+      "legacy_sources": ["Canvas/Notebook modules 1-4"],
+      "action": "merge"
+    },
+    {
+      "id": 2,
+      "title": "Trigonometry",
+      "weeks": 3,
+      "focus": "Trigonometry (strand C entry)",
+      "legacy_sources": ["Canvas/Notebook module 5"],
+      "action": "remap"
+    },
+    {
+      "id": 3,
+      "title": "Waves",
+      "weeks": 3,
+      "focus": "Periodic / sinusoidal functions (strand C)",
+      "legacy_sources": ["Canvas/Notebook module 6"],
+      "action": "remap"
+    },
+    {
+      "id": 4,
+      "title": "Explosions",
+      "weeks": 3,
+      "focus": "Exponential functions (strand B)",
+      "legacy_sources": ["Canvas/Notebook module 7"],
+      "action": "remap"
+    },
+    {
+      "id": 5,
+      "title": "Finance",
+      "weeks": 3,
+      "focus": "Financial applications of exponentials (strand B)",
+      "legacy_sources": ["Canvas/Notebook module 8"],
+      "action": "remap"
+    }
+  ],
+  "closing_blocks": [
+    {"id": "culminating_review", "title": "Culminating / review", "weeks": 1},
+    {"id": "buffer", "title": "Buffer", "weeks": 1}
+  ],
+  "provisional_calendar": [
+    {"week": 1, "start": "2026-09-08", "end": "2026-09-11", "block": "M0"},
+    {"week": 2, "start": "2026-09-14", "end": "2026-09-18", "block": "M1"},
+    {"week": 3, "start": "2026-09-21", "end": "2026-09-25", "block": "M1"},
+    {"week": 4, "start": "2026-09-28", "end": "2026-10-02", "block": "M1"},
+    {"week": 5, "start": "2026-10-05", "end": "2026-10-09", "block": "M2"},
+    {"week": 6, "start": "2026-10-13", "end": "2026-10-16", "block": "M2", "notes": "Thanksgiving Oct 12"},
+    {"week": 7, "start": "2026-10-19", "end": "2026-10-23", "block": "M2"},
+    {"week": 8, "start": "2026-10-26", "end": "2026-10-30", "block": "M3"},
+    {"week": 9, "start": "2026-11-02", "end": "2026-11-06", "block": "M3"},
+    {"week": 10, "start": "2026-11-09", "end": "2026-11-13", "block": "M3"},
+    {"week": 11, "start": "2026-11-16", "end": "2026-11-19", "block": "M4", "notes": "PD Nov 20"},
+    {"week": 12, "start": "2026-11-23", "end": "2026-11-27", "block": "M4"},
+    {"week": 13, "start": "2026-11-30", "end": "2026-12-04", "block": "M4"},
+    {"week": 14, "start": "2026-12-07", "end": "2026-12-11", "block": "M5"},
+    {"week": 15, "start": "2026-12-14", "end": "2026-12-18", "block": "M5"},
+    {"week": 16, "start": "2027-01-04", "end": "2027-01-08", "block": "M5", "notes": "Post winter break"},
+    {"week": 17, "start": "2027-01-11", "end": "2027-01-15", "block": "culminating_review"},
+    {"week": 18, "start": "2027-01-18", "end": "2027-01-22", "block": "buffer"},
+    {"week": 19, "start": "2027-01-25", "end": "2027-01-25", "block": "flex_pre_exam"}
+  ]
+}

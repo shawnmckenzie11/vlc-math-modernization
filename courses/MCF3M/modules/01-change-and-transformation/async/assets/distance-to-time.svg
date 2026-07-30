@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" role="img" aria-label="Distance to time">
+  <rect width="80" height="80" rx="8" fill="#eef5f9"/>
+  <path d="M16 52c8-18 16-26 24-26s16 8 24 26" fill="none" stroke="#0374b5" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="22" cy="48" r="4" fill="#2d3b45"/>
+  <circle cx="58" cy="48" r="4" fill="#2d3b45"/>
+  <path d="M34 28h12M40 22v12" stroke="#0374b5" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

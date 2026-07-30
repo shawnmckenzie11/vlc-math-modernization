@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCF3M Module 1 — Change &amp; Transformation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Module sections">
+    <a href="#s1_relations">Relationships we can trust</a>
+<a href="#s2_constant_change">When change itself changes</a>
+<a href="#s3_life_bridge">Seeing curved change in real life</a>
+<a href="#s4_three_forms">Quadratic Equations, 3 Ways</a>
+<a href="#s5_convert_forms">Algebra of Converting Quadratic Forms</a>
+<a href="#s6_transformations">Stretch, flip, shift</a>
+<a href="questions.html">Question bank</a>
+  </nav>
+  <div class="page-shell">
+  <main class="wrap">
+    <header class="hero">
+      <p class="eyebrow">MCF3M · Module 1</p>
+      <h1>Change &amp; Transformation</h1>
+      <p class="lede">
+        Life is full of change — sometimes steady, sometimes speeding up, slowing down, or
+        flipping direction. This module builds the math that helps you describe those patterns
+        clearly, so you can make better sense of the stories unfolding around you.
+      </p>
+    </header>
+    <section class="section" id="s1_relations">
+  <header class="section-head">
+    <h2>Relationships we can trust</h2>
+  </header>
+  <div class="block prose intro"><p>Every day you use relationships without calling them that:</p>
+<ul class="intro-life-examples">
+<li><img src="assets/hours-to-pay.svg" alt="" width="40" height="40" /><span>hours worked → pay</span></li>
+<li><img src="assets/practice-to-song.svg" alt="" width="40" height="40" /><span>practice time → how a song feels</span></li>
+<li><img src="assets/distance-to-time.svg" alt="" width="40" height="40" /><span>distance → time</span></li>
+</ul>
+<p>In math we <strong>represent</strong> relationships so we can talk about them clearly — with a table, a graph, a mapping, or an equation. The point isn’t decoration. It’s understanding life a little more precisely.</p>
+<p>Some relationships are messy (one input, many possible outputs). The ones you can rely on — each allowed input has one clear output — are especially useful. Later we’ll give those a special name.</p></div>
+  <div class="block hook">
+    <h3>Try this</h3>
+    <div class="prose"><p>Think of something that changed for you this week. What was the input? What was the output? If two people used your description, would they get the same output for the same input?</p></div>
+  </div>
+  <div class="block explore-block explore-block-tabs" data-explore-tabs><h3>Explore · Reliable relationships (one output each)</h3><p class="explore-tabs-hint">Same idea — pick a modality:</p><div class="explore-tablist" role="tablist"><button type="button" class="explore-tab" role="tab" id="explore-tabs-s1_relations-0-btn-0" aria-controls="explore-tabs-s1_relations-0-panel-0" aria-selected="true" data-tab-panel="explore-tabs-s1_relations-0-panel-0"><span class="explore-tab-kind">KHAN</span><span class="explore-tab-title">What is a function?</span></button><button type="button" class="explore-tab" role="tab" id="explore-tabs-s1_relations-0-btn-1" aria-controls="explore-tabs-s1_relations-0-panel-1" aria-selected="false" data-tab-panel="explore-tabs-s1_relations-0-panel-1"><span class="explore-tab-kind">Video</span><span class="explore-tab-title">Steve Sweeney — Relations &amp; Functions</span></button></div><div class="explore-tab-panel" role="tabpanel" id="explore-tabs-s1_relations-0-panel-0" aria-labelledby="explore-tabs-s1_relations-0-btn-0"><div class="resource resource-card resource-card-compact resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:functions/x2f8bb11595b61c86:evaluating-functions/v/what-is-a-function" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div><div class="explore-tab-panel hidden" role="tabpanel" id="explore-tabs-s1_relations-0-panel-1" aria-labelledby="explore-tabs-s1_relations-0-btn-1"><div class="resource resource-card resource-card-compact">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=RYHpL3c2tCw" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/RYHpL3c2tCw" title="Steve Sweeney — Relations &amp; Functions" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div></div>
+<div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S1-E01" data-expectations="A2.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S1-E01</span><span class="item-label">Example · conceptual</span></div>
+  <h4>One input, several outputs</h4>
+  <div class="stem"><p>A mapping sends each student ID to the seats that student uses in a day. One student sits in three different rooms. Is this a <em>reliable</em> relationship for predicting “the” seat from an ID? Why?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>No. One ID leads to three seats. If you want a prediction you can trust, each allowed input needs one clear output.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+<article class="q-card example" id="M1-S1-E02" data-expectations="A2.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S1-E02</span><span class="item-label">Example · process</span></div>
+  <h4>Checking a graph carefully</h4>
+  <div class="stem"><p>A graph passes through both \((2,1)\) and \((2,4)\). Imagine a vertical line at \(x=2\). What does that tell you about trusting this graph as “one output per input”?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p><strong>Step 1:</strong> Draw (or imagine) the line \(x=2\).<br><strong>Step 2:</strong> It hits the graph twice.<br><strong>Step 3:</strong> So input 2 has two outputs — not a one-output-per-input relationship.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+</div>
+<div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>Which description is reliable?</summary>
+<article class="q-card formative" id="M1-S1-F01" data-expectations="A2.1"
+  data-formative
+  data-feedback-correct="Exactly one output per input is what makes a relationship reliable for prediction."
+  data-feedback-incorrect="Look for exactly one output for each input. Repeated \(x\) with different \(y\) breaks that.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S1-F01</span><span class="item-label">Check your understanding</span></div>
+  <h4>Which description is reliable?</h4>
+  <div class="stem"><p>Which of these is built so each input has exactly one output?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>A table where one \(x\) appears twice with two different \(y\) values</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>A mapping where every input has exactly one arrow out</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>Any curve drawn on a grid</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>A list of pairs with the same first number repeating freely</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+</details>
+</div>
+<div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Representing relationships <span class="practice-count">(3)</span></summary>
+<article class="q-card practice" id="M1-S1-P01" data-expectations="A2.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S1-P01</span><span class="item-label">Practice</span></div>
+  <h4>Write it as an equation</h4>
+  <div class="stem"><p>Write “output is 3 more than twice the input” as an equation using \(x\) and \(y\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(y=2x+3\). Each \(x\) gives one \(y\), so this is the reliable kind of relationship.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+<article class="q-card practice" id="M1-S1-P02" data-expectations="A2.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S1-P02</span><span class="item-label">Practice</span></div>
+  <h4>Naming the useful ones</h4>
+  <div class="stem"><p>Mathematicians call a reliable relationship (exactly one output per allowed input) a <strong>function</strong>. In your own words, why is that name useful for understanding life — not just for a test?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Sample: When a relationship is a function, you can trust a prediction: same input → same output. That makes models of pay, height, scores, or schedules usable.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+<article class="q-card practice" id="M1-S1-P03" data-expectations="A2.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S1-P03</span><span class="item-label">Practice</span></div>
+  <h4>Inputs that make sense</h4>
+  <div class="stem"><p>For \(y=2x+3\) with no story attached, which values of \(x\) are allowed? Which values of \(y\) can appear?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Any real \(x\) works. Any real \(y\) can appear (it’s a non-horizontal line). In a real story, you’d restrict further — hours can’t be negative, for example.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.3" title="A2.3 — explain the meanings of the terms domain and range, through investigatio…"><span class="exp-codes" aria-label="Curriculum expectations">A2.3</span></aside>
+</article>
+</details>
+</div>
+</section>
+<section class="section" id="s2_constant_change">
+  <header class="section-head">
+    <h2>When change itself changes</h2>
+  </header>
+  <div class="block prose intro"><p>Some change is steady: the same bump every equal step. That’s <em>constant change</em> — what you’ve seen in straight-line relationships.</p>
+<p>Other change speeds up or slows down. The simplest pattern like that in this course is a curve that bends like a parabola. You’ll spot it in tables by looking at <strong>first differences</strong> (and when those aren’t constant, <strong>second differences</strong>).</p>
+<p>We’ll also talk carefully about which inputs make sense and which outputs show up — in context and on a graph.</p></div>
+  <div class="block hook">
+    <h3>Explore</h3>
+    <div class="prose"><p>Sketch two mini-stories: (1) something grows by the same amount each day; (2) the daily growth itself keeps getting larger. Which table would look “even”? Which would look like it’s accelerating?</p></div>
+  </div>
+  <div class="block explore-block"><h3>Explore · Steady change (linear)</h3><div class="resource resource-card">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=C7QgiGwy8vI" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/C7QgiGwy8vI" title="Steve Sweeney — Linear Relations review" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div>
+<div class="block explore-block"><h3>Explore · A bending graph</h3><div class="resource resource-card resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations/x2f8bb11595b61c86:intro-parabolas/e/interpret-quadratic-graph" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div>
+<div class="block explore-block"><h3>Explore · Quadratic graphs up close</h3><div class="resource resource-card">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=p99nn0xZc7Y" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/p99nn0xZc7Y" title="Steve Sweeney — Properties &amp; Graphs of Quadratic Relations" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div>
+<div class="block explore-block"><h3>Explore · Try it in Desmos</h3><div class="resource resource-card resource-card-desmos">
+<p class="resource-chrome">Desmos · Desmos graphing calculator · <a href="https://www.desmos.com/calculator" target="_blank" rel="noopener">Open resource</a></p>
+<p class="desmos-activity-ask">Build a table for a linear rule and for y=x^2. Compare first differences (and second differences on the curve).</p>
+<details class="desmos-howto"><summary>How to use this calculator</summary><div class="desmos-steps" aria-label="Desmos calculator steps"><ol class="desmos-steps-list"><li>Click the empty expression line on the left (line 1). Type <code>y=3x+1</code> and press Enter. A straight line should appear on the graph.</li><li>Click the <strong>+</strong> button at the top of the expression list, then choose <strong>Table</strong>.</li><li>In the table’s first column, enter <code>0</code>, <code>1</code>, <code>2</code>, <code>3</code> for <em>x</em>. In the second-column header, type <code>y_1</code> (so the table pulls values from your equation). Watch the <em>y</em> values fill in.</li><li>On paper (or in a note), subtract consecutive <em>y</em> values: how much does <em>y</em> change from one row to the next? Those are <strong>first differences</strong>. Are they the same each time?</li><li>Clear or delete the first equation (click the expression, then the × / delete). Type <code>y=x^2</code> instead. Rebuild or refresh the table the same way (<code>0</code>–<code>4</code> for <em>x</em>, column header <code>y_1</code>).</li><li>Compute first differences again. Then compute <em>second</em> differences (how the first differences themselves change). What stays steady this time?</li><li>If the graph view gets zoomed weirdly, click the home / reset-zoom icon (house) in the graph toolbar. To start completely fresh, reload the page or delete every expression and begin again.</li></ol></div></details>
+<div class="embed-frame embed-tall"><iframe src="https://www.desmos.com/calculator" title="Desmos graphing calculator" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div>
+<div class="block explore-block"><h3>Explore · Inputs and outputs</h3><div class="resource resource-card">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=lZd3feH1WTI" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/lZd3feH1WTI" title="Steve Sweeney — Domain &amp; Range" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div>
+<div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S2-E01" data-expectations="A2.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-E01</span><span class="item-label">Example · process</span></div>
+  <h4>First differences on a straight pattern</h4>
+  <div class="stem"><p>Look at this table for \(y=3x+1\). The last column shows how \(y\) changes from one row to the next (first differences).</p><div class="diff-table-wrap"><table class="diff-table"><thead><tr><th>x</th><th>y</th><th>1st difference</th></tr></thead><tbody><tr><td>0</td><td>1</td><td>+3</td></tr><tr><td>1</td><td>4</td><td>+3</td></tr><tr><td>2</td><td>7</td><td>+3</td></tr><tr><td>3</td><td>10</td><td>—</td></tr></tbody></table></div><p>What do you notice about the first differences? What kind of change is that?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>The table is:</p><div class="diff-table-wrap"><table class="diff-table"><thead><tr><th>x</th><th>y</th><th>1st difference</th></tr></thead><tbody><tr><td>0</td><td>1</td><td>+3</td></tr><tr><td>1</td><td>4</td><td>+3</td></tr><tr><td>2</td><td>7</td><td>+3</td></tr><tr><td>3</td><td>10</td><td>—</td></tr></tbody></table></div><p>First differences are all \(+3\). Equal steps in \(x\) give equal steps in \(y\) — constant change (linear).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+<article class="q-card example" id="M1-S2-E02" data-expectations="A2.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-E02</span><span class="item-label">Example · process</span></div>
+  <h4>When first differences aren’t constant</h4>
+  <div class="stem"><p>Here is \(y=x^2\). Read across the first- and second-difference columns.</p><div class="diff-table-wrap"><table class="diff-table"><thead><tr><th>x</th><th>y</th><th>1st difference</th><th>2nd difference</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>+1</td><td>—</td></tr><tr><td>1</td><td>1</td><td>+3</td><td>+2</td></tr><tr><td>2</td><td>4</td><td>+5</td><td>+2</td></tr><tr><td>3</td><td>9</td><td>+7</td><td>+2</td></tr><tr><td>4</td><td>16</td><td>—</td><td>—</td></tr></tbody></table></div><p>What stays constant? What does that suggest?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><div class="diff-table-wrap"><table class="diff-table"><thead><tr><th>x</th><th>y</th><th>1st difference</th><th>2nd difference</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>+1</td><td>—</td></tr><tr><td>1</td><td>1</td><td>+3</td><td>+2</td></tr><tr><td>2</td><td>4</td><td>+5</td><td>+2</td></tr><tr><td>3</td><td>9</td><td>+7</td><td>+2</td></tr><tr><td>4</td><td>16</td><td>—</td><td>—</td></tr></tbody></table></div><p>First differences change (\(+1,+3,+5,+7\)). Second differences are constantly \(+2\). That steady second difference is the table signature of a simple quadratic (parabola-like) pattern.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+<article class="q-card example" id="M1-S2-E03" data-expectations="A2.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-E03</span><span class="item-label">Example · conceptual</span></div>
+  <h4>Same story, three representations</h4>
+  <div class="stem"><p>A phone plan costs \$20 plus \$5 per GB. Describe it in words, start a table, and write an equation. Where is the constant rate?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Words: \$20 base, then \$5 for each GB. Table: \((0,20),(1,25),(2,30),\ldots\). Equation: \(C=5g+20\). The constant rate is \$5 per GB.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.2" title="A2.2 — substitute into and evaluate linear and quadratic functions represented …"><span class="exp-codes" aria-label="Curriculum expectations">A2.2</span></aside>
+</article>
+<article class="q-card example" id="M1-S2-E04" data-expectations="A1.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-E04</span><span class="item-label">Example · application</span></div>
+  <h4>Language for speeding-up change</h4>
+  <div class="stem"><p>A coach says, “We improved a little each week, then the improvements themselves got bigger.” Is that constant change? What would you expect in a table?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Not constant — the weekly improvement is changing. First differences would not stay the same; they would grow.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.1" title="A1.1 — pose problems involving quadratic relations arising from real-world appl…"><span class="exp-codes" aria-label="Curriculum expectations">A1.1</span></aside>
+</article>
+</div>
+<div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>Read the first differences</summary>
+<article class="q-card formative" id="M1-S2-F01" data-expectations="A2.1"
+  data-formative
+  data-feedback-correct="Constant first differences mean steady, constant change — a linear pattern."
+  data-feedback-incorrect="Constant first differences point to a linear relationship.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-F01</span><span class="item-label">Check your understanding</span></div>
+  <h4>Read the first differences</h4>
+  <div class="stem"><p>A table has first differences \(+4,+4,+4,+4\). Which pattern fits best?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>Quadratic (bending)</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>Linear (steady change)</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>Exponential growth</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>No pattern</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>Which column is the input?</summary>
+<article class="q-card formative" id="M1-S2-F02" data-expectations="A2.3"
+  data-formative
+  data-feedback-correct="Time is the input you choose; height is the output you read."
+  data-feedback-incorrect="Ask: which quantity do we feed in? For a flight story, that’s usually time.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-F02</span><span class="item-label">Check your understanding</span></div>
+  <h4>Which column is the input?</h4>
+  <div class="stem"><p>In a table of \((t,h)\) for the height of a ball, which variable is the natural input?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>Height \(h\)</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>Time \(t\)</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>Either, interchangeably</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>The first differences</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.3" title="A2.3 — explain the meanings of the terms domain and range, through investigatio…"><span class="exp-codes" aria-label="Curriculum expectations">A2.3</span></aside>
+</article>
+</details>
+</div>
+<div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>First &amp; second differences <span class="practice-count">(2)</span></summary>
+<article class="q-card practice" id="M1-S2-P01" data-expectations="A2.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-P01</span><span class="item-label">Practice</span></div>
+  <h4>Build the difference column</h4>
+  <div class="stem"><p>Here are \(y\)-values at equal \(x\)-steps: 5, 8, 11, 14. Complete a difference table and name the type of change.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>One filled table:</p><div class="diff-table-wrap"><table class="diff-table"><thead><tr><th>x</th><th>y</th><th>1st difference</th></tr></thead><tbody><tr><td>0</td><td>5</td><td>+3</td></tr><tr><td>1</td><td>8</td><td>+3</td></tr><tr><td>2</td><td>11</td><td>+3</td></tr><tr><td>3</td><td>14</td><td>—</td></tr></tbody></table></div><p>First differences are all \(+3\) → constant change / linear.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+<article class="q-card practice" id="M1-S2-P02" data-expectations="A2.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-P02</span><span class="item-label">Practice</span></div>
+  <h4>Spot the quadratic signature</h4>
+  <div class="stem"><p>Values of \(y\): 2, 3, 6, 11, 18 (equal steps in \(x\)). Show first and second differences and conclude.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><div class="diff-table-wrap"><table class="diff-table"><thead><tr><th>x</th><th>y</th><th>1st difference</th><th>2nd difference</th></tr></thead><tbody><tr><td>0</td><td>2</td><td>+1</td><td>—</td></tr><tr><td>1</td><td>3</td><td>+3</td><td>+2</td></tr><tr><td>2</td><td>6</td><td>+5</td><td>+2</td></tr><tr><td>3</td><td>11</td><td>+7</td><td>+2</td></tr><tr><td>4</td><td>18</td><td>—</td><td>—</td></tr></tbody></table></div><p>Second differences are constantly \(+2\) → quadratic-style pattern.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.1" title="A2.1 — explain the meaning of the term function, and distinguish a function fro…"><span class="exp-codes" aria-label="Curriculum expectations">A2.1</span></aside>
+</article>
+</details>
+<details class="practice-accordion"><summary>Inputs, outputs, and stories <span class="practice-count">(2)</span></summary>
+<article class="q-card practice" id="M1-S2-P03" data-expectations="A2.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-P03</span><span class="item-label">Practice</span></div>
+  <h4>Inputs and outputs on a parabola sketch</h4>
+  <div class="stem"><p>A curve opens upward with its lowest point at \((1,-4)\) and no extra story. Which inputs are allowed? Which outputs appear?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Any real input \(x\). Outputs satisfy \(y\ge -4\) (nothing below the low point).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.3" title="A2.3 — explain the meanings of the terms domain and range, through investigatio…"><span class="exp-codes" aria-label="Curriculum expectations">A2.3</span></aside>
+</article>
+<article class="q-card practice" id="M1-S2-P04" data-expectations="A2.4">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-P04</span><span class="item-label">Practice</span></div>
+  <h4>When a story restricts inputs</h4>
+  <div class="stem"><p>Height \(h=-5t^2+20t\) (metres) for a ball, with \(t\ge 0\) until landing. Why isn’t “any real \(t\)” a good input set for the story?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Negative time isn’t part of the flight story, and after landing the model may stop. Restrict \(t\) to the flight interval.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.4" title="A2.4 — explain any restrictions on the domain and the range of a quadratic func…"><span class="exp-codes" aria-label="Curriculum expectations">A2.4</span></aside>
+</article>
+</details>
+<details class="practice-accordion"><summary>Describing change <span class="practice-count">(2)</span></summary>
+<article class="q-card practice" id="M1-S2-P05" data-expectations="A2.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-P05</span><span class="item-label">Practice</span></div>
+  <h4>Equation from words</h4>
+  <div class="stem"><p>Translate: “output is the square of the input, then minus 3” into an equation with \(x\) and \(y\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(y=x^2-3\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.2" title="A2.2 — substitute into and evaluate linear and quadratic functions represented …"><span class="exp-codes" aria-label="Curriculum expectations">A2.2</span></aside>
+</article>
+<article class="q-card practice" id="M1-S2-P06" data-expectations="A1.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S2-P06</span><span class="item-label">Practice</span></div>
+  <h4>Two sentences about rate</h4>
+  <div class="stem"><p>In one sentence each, contrast “constant rate” vs “the rate itself is changing” for a practice-improvement story.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Constant rate: same gain each week. Changing rate: weekly gains grow or shrink — the speed of change is changing.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.1" title="A1.1 — pose problems involving quadratic relations arising from real-world appl…"><span class="exp-codes" aria-label="Curriculum expectations">A1.1</span></aside>
+</article>
+</details>
+</div>
+</section>
+<section class="section" id="s3_life_bridge">
+  <header class="section-head">
+    <h2>Seeing curved change in real life</h2>
+  </header>
+  <div class="block prose intro"><p>Before we pile on formal labels, practice <em>seeing</em> non-constant change in life: area growing with a side length, a ball’s height over time, practice that accelerates, a situation that speeds up then slows.</p>
+<p>You’ll also meet a clean shorthand for “plug this input into the relationship” — once the idea of a reliable relationship is already clear. That shorthand is <strong>function notation</strong>.</p>
+<p>Suppose \(f\) is the rule “double the input, then add 1.” We write \(f(x)=2x+1\). Important: \(f(x)\) does <em>not</em> mean “\(f\) times \(x\).” It means “the output of rule \(f\) when the input is \(x\).”</p>
+<p>To evaluate, replace every \(x\) with the number you care about:</p>
+<ul>
+<li>\(f(3)=2(3)+1=7\)</li>
+<li>\(f(0)=1\)</li>
+<li>\(f(-2)=-3\)</li>
+</ul>
+<p>Same idea with a life label: \(H(t)\) for height at time \(t\). Then \(H(2)=7\) means “when the input is 2, the height is 7” — just “plug 2 into the height rule.” The Explore and example below give you more practice plugging values in.</p></div>
+  <div class="block hook">
+    <h3>Think it through</h3>
+    <div class="prose"><p>Pick something from your life (sport, music, gaming, a habit, a friendship, a job). Where did the speed of change stay steady? Where did that speed itself change? Describe each in plain language first — two short sentences are enough. You can attach the math words later once the idea is clear.</p></div>
+  </div>
+  <div class="block explore-block"><h3>Explore · A shorthand for “plug this in”</h3><div class="resource resource-card">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=OqnsGJCCQUk" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/OqnsGJCCQUk" title="Steve Sweeney — Intro to Functions &amp; Function Notation" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div>
+<div class="block explore-block"><h3>Explore · Inputs that make sense</h3><div class="resource resource-card resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:functions/x2f8bb11595b61c86:introduction-to-the-domain-and-range-of-a-function/v/domain-of-a-function-intro" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div>
+<div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S3-E04" data-expectations="A2.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-E04</span><span class="item-label">Example · conceptual</span></div>
+  <h4>Function notation: plugging in</h4>
+  <div class="stem"><p>Using \(f(x)=2x+1\), replace each \(x\) with the input you care about:</p>
+<ul>
+<li>\(f(3)=2(3)+1=6+1=7\)</li>
+<li>\(f(0)=2(0)+1=1\)</li>
+<li>\(f(-2)=2(-2)+1=-4+1=-3\)</li>
+</ul>
+<p>Let \(H(t)\) be height in metres after \(t\) seconds. In your own words, what does \(H(2)=7\) say?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>When time is 2 seconds, height is 7 metres. The input sits in the parentheses; the output is on the other side of the equals sign.</p>
+<p>Check: \(f(3)=7\), \(f(0)=1\), \(f(-2)=-3\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.2" title="A2.2 — substitute into and evaluate linear and quadratic functions represented …"><span class="exp-codes" aria-label="Curriculum expectations">A2.2</span></aside>
+</article>
+<article class="q-card example" id="M1-S3-E01" data-expectations="A1.2,A3.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-E01</span><span class="item-label">Example · application</span></div>
+  <h4>Area grows with a square</h4>
+  <div class="stem"><p>A square garden has side \(x\) metres. A 1 m border surrounds it. Why is the outer area a curved (quadratic) pattern in \(x\)?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Outer side is \(x+2\), area \((x+2)^2=x^2+4x+4\). The \(x^2\) term means area doesn’t grow at a constant rate as \(x\) grows.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.2,A3.3" title="A1.2 — represent situations (e.g., the area of a picture frame of variable widt… · A3.3 — solve problems arising from real-world applications, given the algebraic…"><span class="exp-codes" aria-label="Curriculum expectations">A1.2 · A3.3</span></aside>
+</article>
+<article class="q-card example" id="M1-S3-E02" data-expectations="A3.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-E02</span><span class="item-label">Example · process</span></div>
+  <h4>A ball rises, then falls</h4>
+  <div class="stem"><p>A ball’s height rises then falls. In everyday words, what “turned”? Connect to rate of change without needing formal peak vocabulary yet.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Upward change slowed to a stop, then reversed downward — the rate of change of height changed sign. That’s the turning moment in the story.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A3.3" title="A3.3 — solve problems arising from real-world applications, given the algebraic…"><span class="exp-codes" aria-label="Curriculum expectations">A3.3</span></aside>
+</article>
+<article class="q-card example" id="M1-S3-E03" data-expectations="A1.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-E03</span><span class="item-label">Example · application</span></div>
+  <h4>Practice minutes that accelerate</h4>
+  <div class="stem"><p>Week 1: 20 minutes. Each week you add more minutes than the week before (not a fixed +5). Why might a straight-line model fail?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>A straight line assumes a constant weekly increase. If the increase itself grows, first differences aren’t constant — a curved model may fit better.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.1" title="A1.1 — pose problems involving quadratic relations arising from real-world appl…"><span class="exp-codes" aria-label="Curriculum expectations">A1.1</span></aside>
+</article>
+</div>
+<div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>Which story leans quadratic?</summary>
+<article class="q-card formative" id="M1-S3-F01" data-expectations="A1.1,A1.2"
+  data-formative
+  data-feedback-correct="Area scales with side squared — a classic curved pattern."
+  data-feedback-incorrect="Look for something that depends on a length squared, or a rate that itself changes smoothly.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-F01</span><span class="item-label">Check your understanding</span></div>
+  <h4>Which story leans quadratic?</h4>
+  <div class="stem"><p>Which scenario best suggests curved / quadratic change?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>Saving \$10 every week with no change in habit</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>A square patio’s area as side length increases</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>A bus that always travels 60 km/h</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>Counting down one day at a time to an exam</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A1.1,A1.2" title="A1.1 — pose problems involving quadratic relations arising from real-world appl… · A1.2 — represent situations (e.g., the area of a picture frame of variable widt…"><span class="exp-codes" aria-label="Curriculum expectations">A1.1 · A1.2</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>Model + reasoning</summary>
+<article class="q-card formative" id="M1-S3-F02" data-expectations="A1.1"
+  data-formative
+  data-feedback-correct="A clear model plus reasoning is how math earns its place in a life story."
+  data-feedback-incorrect="Don’t leave a claim floating — show a representation and explain the fit.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-F02</span><span class="item-label">Check your understanding</span></div>
+  <h4>Model + reasoning</h4>
+  <div class="stem"><p>If you claim “we improved about 2 points per week,” what should travel with that claim?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>Only the sentence — no representation needed</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>A model (graph, table, equation, or sketch) plus a few sentences of why it fits</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>A full before/after transformation write-up every time</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>The quadratic formula</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A1.1" title="A1.1 — pose problems involving quadratic relations arising from real-world appl…"><span class="exp-codes" aria-label="Curriculum expectations">A1.1</span></aside>
+</article>
+</details>
+</div>
+<div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Life stories of curved change <span class="practice-count">(3)</span></summary>
+<article class="q-card practice" id="M1-S3-P01" data-expectations="A1.1,A3.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-P01</span><span class="item-label">Practice</span></div>
+  <h4>Your hobby as a table</h4>
+  <div class="stem"><p>Invent five rows for a hobby metric over time. Say whether first differences look constant, and why.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Sample steady: 20,25,30,35,40 → differences +5. Sample accelerating: 20,22,26,32,40 → differences 2,4,6,8.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.1,A3.1" title="A1.1 — pose problems involving quadratic relations arising from real-world appl… · A3.1 — collect data that can be modelled as a quadratic function, through inves…"><span class="exp-codes" aria-label="Curriculum expectations">A1.1 · A3.1</span></aside>
+</article>
+<article class="q-card practice" id="M1-S3-P02" data-expectations="A3.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-P02</span><span class="item-label">Practice</span></div>
+  <h4>Rise and fall in plain words</h4>
+  <div class="stem"><p>Describe a thrown ball’s path using only everyday words for rise/fall.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>It climbs while moving forward, peaks, then falls — the upward change slows and reverses.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A3.3" title="A3.3 — solve problems arising from real-world applications, given the algebraic…"><span class="exp-codes" aria-label="Curriculum expectations">A3.3</span></aside>
+</article>
+<article class="q-card practice" id="M1-S3-P03" data-expectations="A1.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-P03</span><span class="item-label">Practice</span></div>
+  <h4>Picture-frame area setup</h4>
+  <div class="stem"><p>A photo is \(x\times x\) with a 2 cm mat border all around. Write an expression for total area including the mat.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Outer side \(x+4\), area \((x+4)^2\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.2" title="A1.2 — represent situations (e.g., the area of a picture frame of variable widt…"><span class="exp-codes" aria-label="Curriculum expectations">A1.2</span></aside>
+</article>
+</details>
+<details class="practice-accordion"><summary>Notation and domain <span class="practice-count">(2)</span></summary>
+<article class="q-card practice" id="M1-S3-P04" data-expectations="A2.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-P04</span><span class="item-label">Practice</span></div>
+  <h4>Read and evaluate function notation</h4>
+  <div class="stem"><p>Let \(f(x)=x^2-4x\).</p>
+<ol>
+<li>Compute \(f(0)\), \(f(2)\), and \(f(5)\).</li>
+<li>If \(f(x)\) were “height of a toy rocket (metres) after \(x\) seconds,” interpret \(f(5)\) in one ordinary sentence.</li>
+</ol></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(f(0)=0-0=0\); \(f(2)=4-8=-4\); \(f(5)=25-20=5\).</p>
+<p>After 5 seconds, the rocket’s height is 5 metres.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.2" title="A2.2 — substitute into and evaluate linear and quadratic functions represented …"><span class="exp-codes" aria-label="Curriculum expectations">A2.2</span></aside>
+</article>
+<article class="q-card practice" id="M1-S3-P05" data-expectations="A2.4">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-P05</span><span class="item-label">Practice</span></div>
+  <h4>Domain in a game</h4>
+  <div class="stem"><p>Points scored vs minutes played in a game — what input restriction is natural?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Minutes from 0 to the length of the game; negative time or “after the buzzer” usually doesn’t count.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.4" title="A2.4 — explain any restrictions on the domain and the range of a quadratic func…"><span class="exp-codes" aria-label="Curriculum expectations">A2.4</span></aside>
+</article>
+</details>
+<details class="practice-accordion"><summary>Story seed <span class="practice-count">(1)</span></summary>
+<article class="q-card practice" id="M1-S3-P06" data-expectations="A1.1">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S3-P06</span><span class="item-label">Practice</span></div>
+  <h4>Story seed</h4>
+  <div class="stem"><p>Write three sentences of a personal change story that has a clear “the rate itself changed” moment (no equations required).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Example: “My ranking climbed quickly, stalled after an injury, then climbed again differently.” The stall is where the rate changed.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.1" title="A1.1 — pose problems involving quadratic relations arising from real-world appl…"><span class="exp-codes" aria-label="Curriculum expectations">A1.1</span></aside>
+</article>
+</details>
+</div>
+</section>
+<section class="section" id="s4_three_forms">
+  <header class="section-head">
+    <h2>Quadratic Equations, 3 Ways</h2>
+  </header>
+  <div class="block prose intro"><figure class="learning-figure"><img src="assets/quadratic-equations-3-ways.svg" alt="A chef presents the same dish three ways, labeled Standard, Factored, and Vertex" width="960" height="400" loading="lazy" /><figcaption>Same curve, three quadratic forms — like one dish, three ways.</figcaption></figure>
+<p>A quadratic relationship is the same curve no matter how you write the equation. What changes is which features sit in plain sight. We call these writings the three <strong>quadratic forms</strong>:</p>
+<ul>
+<li><strong>Standard form</strong> \(y=ax^2+bx+c\) — the constant term \(c\) is the \(y\)-intercept (the output when \(x=0\)).</li>
+<li><strong>Factored form</strong> \(y=a(x-r)(x-s)\) — the values \(r\) and \(s\) are the <strong>zeros</strong> (also called the \(x\)-intercepts), where the graph crosses the \(x\)-axis.</li>
+<li><strong>Vertex form</strong> \(y=a(x-h)^2+k\) — the point \((h,k)\) is the <strong>vertex</strong> (the peak or low point of the parabola).</li>
+</ul>
+<p>First you will learn to <em>recognize</em> each form from how the equation is written. Then you will practice reading the features each form makes easy — including which inputs and outputs make sense when a story restricts them.</p></div>
+  <div class="block hook">
+    <h3>Try this</h3>
+    <div class="prose"><p>Look at \(y=2(x-3)^2+5\), \(y=(x+1)(x-4)\), and \(y=x^2-6x+8\). Before you expand or graph anything: which is vertex form? which is factored? which is standard? Write the three labels, then check yourself in the examples below.</p></div>
+  </div>
+  <section class="subsection" id="s4_recognize"><h3>Recognizing the three forms</h3><div class="block prose subsection-intro"><p>Before you dig into features, practice a quieter skill: <strong>name the form from the equation’s shape</strong>.</p>
+<p>Look for the pattern:</p>
+<ul>
+<li>Powers written out as \(ax^2+bx+c\) → <strong>standard form</strong></li>
+<li>A product of linear factors \(a(x-r)(x-s)\) → <strong>factored form</strong></li>
+<li>A squared binomial plus a constant \(a(x-h)^2+k\) → <strong>vertex form</strong></li>
+</ul>
+<p>Same parabola underneath — different algebraic packaging. Naming the form tells you which features you can read immediately.</p></div><div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S4-E04" data-expectations="A2.10">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-E04</span><span class="item-label">Example · conceptual</span></div>
+  <h4>Name each form</h4>
+  <div class="stem"><p>From how each equation is written — without expanding or graphing — name the <strong>quadratic form</strong> of each:</p><ol><li>\(y=2x^2-5x+3\)</li><li>\(y=-2(x-1)(x+5)\)</li><li>\(y=3(x+2)^2-7\)</li></ol></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>(1) Standard form \(ax^2+bx+c\). (2) Factored form \(a(x-r)(x-s)\). (3) Vertex form \(a(x-h)^2+k\). Same kind of curve; three algebraic forms.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10</span></aside>
+</article>
+</div><div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>Which equation is vertex form?</summary>
+<article class="q-card formative" id="M1-S4-F01" data-expectations="A2.10"
+  data-formative
+  data-feedback-correct="Vertex form looks like \(a(x-h)^2+k\)."
+  data-feedback-incorrect="Look for a squared binomial plus a constant: \(a(x-h)^2+k\).">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-F01</span><span class="item-label">Check your understanding</span></div>
+  <h4>Which equation is vertex form?</h4>
+  <div class="stem"><p>Which equation is written in <strong>vertex form</strong>?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>\(y=x^2-6x+8\)</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>\(y=2(x-3)^2+5\)</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>\(y=(x+1)(x-4)\)</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>\(y=3x^2+x\)</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.10" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10</span></aside>
+</article>
+</details>
+</div><div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Recognizing forms <span class="practice-count">(2)</span></summary>
+<article class="q-card practice" id="M1-S4-P01" data-expectations="A2.10">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P01</span><span class="item-label">Practice</span></div>
+  <h4>Name the form</h4>
+  <div class="stem"><p>Name the quadratic form: \(y=-3(x+1)(x-4)\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Factored form.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10</span></aside>
+</article>
+<article class="q-card practice" id="M1-S4-P12" data-expectations="A2.10,A2.7">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P12</span><span class="item-label">Practice</span></div>
+  <h4>Same curve?</h4>
+  <div class="stem"><p>Why might \(y=x^2-4x-5\) and \(y=(x-5)(x+1)\) describe the same curve? How could you check?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>They can be two quadratic forms of the same relationship. Expand the factored form (or compare zeros/graphs) to verify.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.7" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.7 — express the equation of a quadratic function in the standard form f(x) =…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.7</span></aside>
+</article>
+</details>
+</div></section>
+<section class="subsection" id="s4_vertex"><h3>Vertex form</h3><div class="block prose subsection-intro"><p>In vertex form \(y=a(x-h)^2+k\), the turning point of the parabola — its peak or low point — is written into the equation as the <strong>vertex</strong> \((h,k)\).</p>
+<p>The sign of \(a\) tells you whether that vertex is a maximum (opens down) or a minimum (opens up). Watch the Explore resources, then read vertices, ranges, and max/min values from equations written this way.</p></div><div class="block explore-block"><h3>Explore · Vertex form</h3><div class="resource resource-card resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations/x2f8bb11595b61c86:vertex-form/v/vertex-form-intro" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div>
+<div class="block explore-block"><h3>Explore · Best values (max/min)</h3><div class="resource resource-card">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=U9J1RaeUze0" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/U9J1RaeUze0" title="Steve Sweeney — Optimal Values" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div><div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S4-E03" data-expectations="A2.10,A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-E03</span><span class="item-label">Example · process</span></div>
+  <h4>Read a vertex</h4>
+  <div class="stem"><p>For \(y=3(x+2)^2-7\), state the <strong>vertex</strong> (the peak or low point) and say whether the vertex is a maximum or a minimum.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Rewrite the squared piece as \((x-(-2))^2\), so the vertex is \((-2,-7)\). Since \(a=3&gt;0\), the parabola opens upward and \(-7\) is a minimum value.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.5" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.5</span></aside>
+</article>
+<article class="q-card example" id="M1-S4-E05" data-expectations="A2.10,A2.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-E05</span><span class="item-label">Example · process</span></div>
+  <h4>Domain and range from vertex form</h4>
+  <div class="stem"><p>For \(y=-(x-4)^2+10\), state the domain and range. Use the vertex to decide the range.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Domain: all real \(x\). The vertex is \((4,10)\) and \(a&lt;0\), so the graph opens down and has a maximum of \(10\). Range: \(y\le 10\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.3" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.3 — explain the meanings of the terms domain and range, through investigatio…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.3</span></aside>
+</article>
+<article class="q-card example" id="M1-S4-E08" data-expectations="A2.10,A3.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-E08</span><span class="item-label">Example · application</span></div>
+  <h4>Which form for a peak</h4>
+  <div class="stem"><p>You need the peak height of a throw — the highest point on the path. Which quadratic form makes that <strong>vertex</strong> most direct to read, and why?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Vertex form \(y=a(x-h)^2+k\): the value \(k\) is the maximum (or minimum) height at the vertex.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A3.3" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A3.3 — solve problems arising from real-world applications, given the algebraic…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A3.3</span></aside>
+</article>
+</div><div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>Vertex coordinates</summary>
+<article class="q-card formative" id="M1-S4-F02" data-expectations="A2.10,A2.5"
+  data-formative
+  data-feedback-correct="In \(a(x-h)^2+k\), the vertex is \((h,k)=(5,9)\)."
+  data-feedback-incorrect="Match \(h\) and \(k\) carefully — watch the sign inside the squared binomial.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-F02</span><span class="item-label">Check your understanding</span></div>
+  <h4>Vertex coordinates</h4>
+  <div class="stem"><p>For \(y=2(x-5)^2+9\), the vertex is…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="true"><span>\((5,9)\)</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="false"><span>\((-5,9)\)</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>\((5,-9)\)</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>\((2,9)\)</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.5" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.5</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>Range upward</summary>
+<article class="q-card formative" id="M1-S4-F03" data-expectations="A2.3"
+  data-formative
+  data-feedback-correct="The minimum value is the vertex’s \(y\)-coordinate, \(-2\), so outputs satisfy \(y\ge -2\)."
+  data-feedback-incorrect="Opens upward ⇒ minimum at the vertex’s \(y\)-coordinate.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-F03</span><span class="item-label">Check your understanding</span></div>
+  <h4>Range upward</h4>
+  <div class="stem"><p>A parabola opens upward with vertex \((3,-2)\). What is the range?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>\(y\le -2\)</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>\(y\ge -2\)</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>all real \(y\)</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>\(x\ge 3\)</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.3" title="A2.3 — explain the meanings of the terms domain and range, through investigatio…"><span class="exp-codes" aria-label="Curriculum expectations">A2.3</span></aside>
+</article>
+</details>
+</div><div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Vertex form practice <span class="practice-count">(5)</span></summary>
+<article class="q-card practice" id="M1-S4-P02" data-expectations="A2.10">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P02</span><span class="item-label">Practice</span></div>
+  <h4>Vertex</h4>
+  <div class="stem"><p>State the vertex of \(y=\frac{1}{2}(x-6)^2+1\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((6,1)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10</span></aside>
+</article>
+<article class="q-card practice" id="M1-S4-P05" data-expectations="A2.10">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P05</span><span class="item-label">Practice</span></div>
+  <h4>Open direction</h4>
+  <div class="stem"><p>Does \(y=-0.2(x-3)^2+8\) open up or down? Is the vertex a maximum or a minimum?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Opens down (\(a&lt;0\)); the vertex is a maximum of \(8\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10</span></aside>
+</article>
+<article class="q-card practice" id="M1-S4-P08" data-expectations="A2.10,A3.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P08</span><span class="item-label">Practice</span></div>
+  <h4>Max revenue form</h4>
+  <div class="stem"><p>Which quadratic form makes maximum revenue easiest to read from the equation?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Vertex form — the \(k\) value is the max/min at the vertex.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A3.3" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A3.3 — solve problems arising from real-world applications, given the algebraic…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A3.3</span></aside>
+</article>
+<article class="q-card practice" id="M1-S4-P10" data-expectations="A2.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P10</span><span class="item-label">Practice</span></div>
+  <h4>Range down</h4>
+  <div class="stem"><p>Vertex \((2,9)\), opens down. What is the range?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(y\le 9\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.3" title="A2.3 — explain the meanings of the terms domain and range, through investigatio…"><span class="exp-codes" aria-label="Curriculum expectations">A2.3</span></aside>
+</article>
+<article class="q-card practice" id="M1-S4-P11" data-expectations="A2.10,A2.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P11</span><span class="item-label">Practice</span></div>
+  <h4>Evaluate at vertex</h4>
+  <div class="stem"><p>Given \(f(x)=(x-3)^2+2\), find \(f(3)\) and interpret the result using the vertex.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(f(3)=2\) — the minimum value at the vertex \((3,2)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.2" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.2 — substitute into and evaluate linear and quadratic functions represented …"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.2</span></aside>
+</article>
+</details>
+</div></section>
+<section class="subsection" id="s4_factored"><h3>Factored form &amp; zeros</h3><div class="block prose subsection-intro"><p>In factored form \(y=a(x-r)(x-s)\), the numbers \(r\) and \(s\) are the <strong>zeros</strong> (the \(x\)-intercepts): inputs where the output is zero.</p>
+<p>The axis of symmetry sits halfway between those zeros. Use the Explore below to connect roots and sketching, then practise reading zeros and the axis from factored equations.</p></div><div class="block explore-block"><h3>Explore · Factored form &amp; zeros</h3><div class="resource resource-card resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations/x2f8bb11595b61c86:standard-form-quadratic/v/graphing-a-parabola-using-roots-and-vertex" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div><div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S4-E02" data-expectations="A2.10,A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-E02</span><span class="item-label">Example · process</span></div>
+  <h4>Zeros from factored form</h4>
+  <div class="stem"><p>For \(y=-2(x-1)(x+5)\), find the <strong>zeros</strong> (the \(x\)-intercepts) and explain what the sign of \(a\) tells you about the graph.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Zeros at \(x=1\) and \(x=-5\) (set each factor equal to zero). \(a=-2&lt;0\), so the parabola opens downward.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.9" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.9</span></aside>
+</article>
+<article class="q-card example" id="M1-S4-E06" data-expectations="A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-E06</span><span class="item-label">Example · process</span></div>
+  <h4>Axis from zeros</h4>
+  <div class="stem"><p>A quadratic has zeros at \(x=2\) and \(x=8\). Find the axis of symmetry without expanding to standard form.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>The axis is the midpoint of the zeros: \(x=(2+8)/2=5\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.9" title="A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.9</span></aside>
+</article>
+</div><div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Factored form practice <span class="practice-count">(3)</span></summary>
+<article class="q-card practice" id="M1-S4-P03" data-expectations="A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P03</span><span class="item-label">Practice</span></div>
+  <h4>Double zero</h4>
+  <div class="stem"><p>Find the zeros of \(y=5(x+2)(x+2)\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>A double zero at \(x=-2\) (the graph touches the \(x\)-axis once).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.9" title="A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.9</span></aside>
+</article>
+<article class="q-card practice" id="M1-S4-P06" data-expectations="A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P06</span><span class="item-label">Practice</span></div>
+  <h4>Axis</h4>
+  <div class="stem"><p>Zeros at \(-3\) and \(5\). What is the axis of symmetry?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(x=1\) (midpoint of the zeros).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.9" title="A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.9</span></aside>
+</article>
+<article class="q-card practice" id="M1-S4-P09" data-expectations="A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P09</span><span class="item-label">Practice</span></div>
+  <h4>Sketch cues</h4>
+  <div class="stem"><p>State the zeros and the opening direction for \(y=(x-1)(x-5)\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Zeros at \(1\) and \(5\); opens upward (\(a=1&gt;0\)).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.9" title="A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.9</span></aside>
+</article>
+</details>
+</div></section>
+<section class="subsection" id="s4_standard"><h3>Standard form</h3><div class="block prose subsection-intro"><p>Standard form \(y=ax^2+bx+c\) is the expanded polynomial look. The constant \(c\) is immediate: it is the <strong>\(y\)-intercept</strong> — the output when \(x=0\).</p>
+<p>The leading coefficient \(a\) still tells opening direction and steepness, but the vertex and zeros usually take more work from this writing alone. That is why you keep the other forms nearby.</p></div><div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S4-E01" data-expectations="A2.10">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-E01</span><span class="item-label">Example · conceptual</span></div>
+  <h4>What standard form shows</h4>
+  <div class="stem"><p>Look at \(y=2x^2-5x+3\) written in <strong>standard form</strong>. Which features can you name from this writing alone — without rewriting or graphing? Which features would still take more work?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(a=2\) (opens upward; relatively steep), \(c=3\) (the \(y\)-intercept). The vertex and the zeros need more work from standard form alone.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10</span></aside>
+</article>
+<article class="q-card example" id="M1-S4-E07" data-expectations="A2.10,A2.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-E07</span><span class="item-label">Example · conceptual</span></div>
+  <h4>Meaning of c</h4>
+  <div class="stem"><p>In a revenue model written in standard form, \(R(x)=ax^2+bx+c\), what does \(c\) mean when \(x\) is the number of items sold?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(R(0)=c\) — revenue when zero items are sold (the \(y\)-intercept of the model).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.2" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.2 — substitute into and evaluate linear and quadratic functions represented …"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.2</span></aside>
+</article>
+</div><div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>What is c?</summary>
+<article class="q-card formative" id="M1-S4-F04" data-expectations="A2.10"
+  data-formative
+  data-feedback-correct="When \(x=0\), \(y=c\) — that is the \(y\)-intercept."
+  data-feedback-incorrect="Evaluate the equation at \(x=0\).">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-F04</span><span class="item-label">Check your understanding</span></div>
+  <h4>What is c?</h4>
+  <div class="stem"><p>In standard form \(y=ax^2+bx+c\), the constant \(c\) is…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>the axis of symmetry</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>the \(y\)-intercept</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>always the vertex</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>the larger zero</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.10" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10</span></aside>
+</article>
+</details>
+</div><div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Standard form practice <span class="practice-count">(2)</span></summary>
+<article class="q-card practice" id="M1-S4-P07" data-expectations="A2.10">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P07</span><span class="item-label">Practice</span></div>
+  <h4>Y-intercept</h4>
+  <div class="stem"><p>What is the \(y\)-intercept of \(y=4x^2-x+7\)?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(7\) (the constant term in standard form).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10</span></aside>
+</article>
+<article class="q-card practice" id="M1-S4-P04" data-expectations="A1.2,A2.4">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S4-P04</span><span class="item-label">Practice</span></div>
+  <h4>Restricted domain</h4>
+  <div class="stem"><p>\(A(x)=x(20-x)\) models area for width \(x\) with perimeter 40. Restrict the domain so the story makes sense.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Need \(0&lt;x&lt;20\) (positive widths that fit the perimeter).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.2,A2.4" title="A1.2 — represent situations (e.g., the area of a picture frame of variable widt… · A2.4 — explain any restrictions on the domain and the range of a quadratic func…"><span class="exp-codes" aria-label="Curriculum expectations">A1.2 · A2.4</span></aside>
+</article>
+</details>
+</div></section>
+</section>
+<section class="section" id="s5_convert_forms">
+  <header class="section-head">
+    <h2>Algebra of Converting Quadratic Forms</h2>
+  </header>
+  <div class="block prose intro"><p>The same curved relationship can answer different questions from life: when does something hit zero? where is the peak? what happens at the start? Each algebraic writing makes a different part of that story easy to see. Moving between forms is how you match the model to the question you are actually asking.</p>
+</div>
+  <div class="block hook">
+    <h3>Try this</h3>
+    <div class="prose"><p>You’re given \(y=x^2-6x+5\) and you want the vertex. Will you complete the square, or factor and use the midpoint of the zeros? Why?</p></div>
+  </div>
+  <section class="subsection" id="s5_expanding"><h3>Expanding</h3><div class="block prose subsection-intro"><p>You’ve been expanding for a while now — multiplying binomials, clearing brackets, writing products as ordinary polynomials. We’re staying with it here on purpose: expanding is a key useful skill, and it’s the natural starting point for everything that follows. Factoring is expanding in reverse, and later rewrites (toward vertex form) lean on being comfortable moving between a product and \(ax^2+bx+c\).</p>
+<p>Expanding is the “multiply it out” move. When a curved relationship is written as a product — factored form, or a squared piece in vertex form — expanding unpacks it into the familiar \(y=ax^2+bx+c\) look.</p>
+<p>That’s useful when you want the starting height (the \(y\)-intercept) or when a tool expects the ordinary polynomial shape. Expanding doesn’t change the story; it just shows a different page of the same book.</p></div><div class="block explore-block"><h3>Explore · Expanding</h3><div class="resource resource-card resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratics-multiplying-factoring/x2f8bb11595b61c86:multiply-binomial/v/multiplying-binomials" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div><div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S5-E01" data-expectations="A1.2,A2.7">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E01</span><span class="item-label">Example · process</span></div>
+  <h4>Expanding: Expand a product</h4>
+  <div class="stem"><p>Expand \((x+3)(x+5)\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(x^2+5x+3x+15=x^2+8x+15\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.2,A2.7" title="A1.2 — represent situations (e.g., the area of a picture frame of variable widt… · A2.7 — express the equation of a quadratic function in the standard form f(x) =…"><span class="exp-codes" aria-label="Curriculum expectations">A1.2 · A2.7</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E02" data-expectations="A2.7">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E02</span><span class="item-label">Example · process</span></div>
+  <h4>Expanding: Expand vertex to standard</h4>
+  <div class="stem"><p>Expand \(y=2(x-3)^2+1\) to standard form.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(2(x^2-6x+9)+1=2x^2-12x+19\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.7" title="A2.7 — express the equation of a quadratic function in the standard form f(x) =…"><span class="exp-codes" aria-label="Curriculum expectations">A2.7</span></aside>
+</article>
+</div><div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>Expand check</summary>
+<article class="q-card formative" id="M1-S5-F01" data-expectations="A1.2,A2.7"
+  data-formative
+  data-feedback-correct="Distribute carefully."
+  data-feedback-incorrect="Watch the middle terms.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-F01</span><span class="item-label">Check your understanding</span></div>
+  <h4>Expand check</h4>
+  <div class="stem"><p>\((x-4)(x+2)\) expands to…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="true"><span>\(x^2-2x-8\)</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="false"><span>\(x^2+2x-8\)</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>\(x^2-6x-8\)</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>\(x^2-8\)</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A1.2,A2.7" title="A1.2 — represent situations (e.g., the area of a picture frame of variable widt… · A2.7 — express the equation of a quadratic function in the standard form f(x) =…"><span class="exp-codes" aria-label="Curriculum expectations">A1.2 · A2.7</span></aside>
+</article>
+</details>
+</div><div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Expanding <span class="practice-count">(3)</span></summary>
+<article class="q-card practice" id="M1-S5-P01" data-expectations="A1.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P01</span><span class="item-label">Practice</span></div>
+  <h4>FOIL</h4>
+  <div class="stem"><p>Expand \((2x-1)(x+4)\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(2x^2+7x-4\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.2" title="A1.2 — represent situations (e.g., the area of a picture frame of variable widt…"><span class="exp-codes" aria-label="Curriculum expectations">A1.2</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P02" data-expectations="A1.2">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P02</span><span class="item-label">Practice</span></div>
+  <h4>Square binomial</h4>
+  <div class="stem"><p>Expand \((x-5)^2\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(x^2-10x+25\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.2" title="A1.2 — represent situations (e.g., the area of a picture frame of variable widt…"><span class="exp-codes" aria-label="Curriculum expectations">A1.2</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P03" data-expectations="A2.7">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P03</span><span class="item-label">Practice</span></div>
+  <h4>Vertex→standard</h4>
+  <div class="stem"><p>Expand \(y=-(x+1)^2+3\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(-x^2-2x+2\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.7" title="A2.7 — express the equation of a quadratic function in the standard form f(x) =…"><span class="exp-codes" aria-label="Curriculum expectations">A2.7</span></aside>
+</article>
+</details>
+</div></section>
+<section class="subsection" id="s5_factoring"><h3>Factoring</h3><div class="block prose subsection-intro"><p>Factoring is expanding’s reverse: you start from a polynomial and rebuild it as a product. Why care? Factored form makes the zeros obvious — the inputs where the output hits zero. In life stories, those zeros are often the moments something lands, empties, or breaks even.</p>
+<p>Most factoring mistakes aren’t “bad algebra” so much as skipping a decision. Use the flowchart below as a deliberate checklist, not a magic spell:</p>
+<figure class="learning-figure"><img src="assets/factoring-flowchart.png" alt="Factoring: Putting it all Together — decision flowchart for GCF, difference of squares, trinomials, and grouping" width="960" height="786" loading="lazy" /><figcaption>Factoring flowchart — start at the top and follow the yes/no questions until you land on a method (or STOP).</figcaption></figure>
+<p>Always ask first: is there a common factor? Pulling a GCF out front makes everything else smaller and cleaner — like simplifying a recipe before you cook.</p>
+<p>Then count the terms. Two terms often means difference of squares: \(a^2-b^2=(a-b)(a+b)\). Three terms? Check for a perfect-square trinomial, then a simple \(x^2+bx+c\) pair search (numbers that multiply to \(c\) and add to \(b\)), then harder cases with decomposition/grouping when the leading coefficient isn’t 1. Four terms often point to grouping.</p>
+<p>Not every expression factors nicely over the integers you know — and that’s okay. The flowchart’s job is to help you try the right tool before you assume you’re stuck. Watch the Explore resources, then work the examples with the chart open beside you.</p></div><div class="block explore-block explore-block-tabs" data-explore-tabs><h3>Explore · Factoring</h3><p class="explore-tabs-hint">Same idea — pick a modality:</p><div class="explore-tablist" role="tablist"><button type="button" class="explore-tab" role="tab" id="explore-tabs-s5_factoring-0-btn-0" aria-controls="explore-tabs-s5_factoring-0-panel-0" aria-selected="true" data-tab-panel="explore-tabs-s5_factoring-0-panel-0"><span class="explore-tab-kind">KHAN</span><span class="explore-tab-title">Factoring quadratic expressions</span></button><button type="button" class="explore-tab" role="tab" id="explore-tabs-s5_factoring-0-btn-1" aria-controls="explore-tabs-s5_factoring-0-panel-1" aria-selected="false" data-tab-panel="explore-tabs-s5_factoring-0-panel-1"><span class="explore-tab-kind">Video</span><span class="explore-tab-title">Steve Sweeney — Factoring review</span></button></div><div class="explore-tab-panel" role="tabpanel" id="explore-tabs-s5_factoring-0-panel-0" aria-labelledby="explore-tabs-s5_factoring-0-btn-0"><div class="resource resource-card resource-card-compact resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratics-multiplying-factoring/x2f8bb11595b61c86:factor-quadratics-intro/v/factoring-quadratic-expressions" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div><div class="explore-tab-panel hidden" role="tabpanel" id="explore-tabs-s5_factoring-0-panel-1" aria-labelledby="explore-tabs-s5_factoring-0-btn-1"><div class="resource resource-card resource-card-compact">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=fJu8nQZlhHQ" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/fJu8nQZlhHQ" title="Steve Sweeney — Factoring review" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div></div><div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S5-E03" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E03</span><span class="item-label">Example · process</span></div>
+  <h4>Factoring: Common factor</h4>
+  <div class="stem"><p>Factor \(6x^2+9x\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(3x(2x+3)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E04" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E04</span><span class="item-label">Example · process</span></div>
+  <h4>Factoring: Simple trinomial</h4>
+  <div class="stem"><p>Factor \(x^2+5x+6\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x+2)(x+3)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E05" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E05</span><span class="item-label">Example · process</span></div>
+  <h4>Factoring: Mixed signs</h4>
+  <div class="stem"><p>Factor \(x^2-x-20\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x-5)(x+4)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E06" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E06</span><span class="item-label">Example · process</span></div>
+  <h4>Factoring: Difference of squares</h4>
+  <div class="stem"><p>Factor \(9x^2-25\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((3x-5)(3x+5)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+</div><div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>Factor pair</summary>
+<article class="q-card formative" id="M1-S5-F02" data-expectations="A1.3"
+  data-formative
+  data-feedback-correct="Product \(c\), sum \(b\)."
+  data-feedback-incorrect="For monic trinomials: factors of \(c\) summing to \(b\).">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-F02</span><span class="item-label">Check your understanding</span></div>
+  <h4>Factor pair</h4>
+  <div class="stem"><p>To factor \(x^2+7x+12\), find integers that…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>multiply to 7 and add to 12</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>multiply to 12 and add to 7</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>multiply to 12 and subtract to 7</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>multiply to 19</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>GCF first</summary>
+<article class="q-card formative" id="M1-S5-F03" data-expectations="A1.3"
+  data-formative
+  data-feedback-correct="Pull a common factor when you can."
+  data-feedback-incorrect="GCF first keeps the rest cleaner.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-F03</span><span class="item-label">Check your understanding</span></div>
+  <h4>GCF first</h4>
+  <div class="stem"><p>First step for \(2x^2+10x+12\)?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>Quadratic formula immediately</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>Factor out the common factor 2</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>Complete the square first</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>Assume it doesn’t factor</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+</details>
+</div><div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Factoring <span class="practice-count">(5)</span></summary>
+<article class="q-card practice" id="M1-S5-P04" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P04</span><span class="item-label">Practice</span></div>
+  <h4>GCF</h4>
+  <div class="stem"><p>Factor \(4x^2-12x\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(4x(x-3)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P05" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P05</span><span class="item-label">Practice</span></div>
+  <h4>Simple</h4>
+  <div class="stem"><p>Factor \(x^2+9x+18\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x+3)(x+6)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P06" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P06</span><span class="item-label">Practice</span></div>
+  <h4>Mixed</h4>
+  <div class="stem"><p>Factor \(x^2+2x-15\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x+5)(x-3)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P07" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P07</span><span class="item-label">Practice</span></div>
+  <h4>a≠1</h4>
+  <div class="stem"><p>Factor \(2x^2+5x+2\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((2x+1)(x+2)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P08" data-expectations="A1.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P08</span><span class="item-label">Practice</span></div>
+  <h4>DOS</h4>
+  <div class="stem"><p>Factor \(x^2-16\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x-4)(x+4)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3" title="A1.3 — factor quadratic expressions in one variable, including those for which …"><span class="exp-codes" aria-label="Curriculum expectations">A1.3</span></aside>
+</article>
+</details>
+</div></section>
+<section class="subsection" id="s5_convert_cts"><h3>Converting between forms · Completing the square</h3><div class="block prose subsection-intro"><p>Sometimes the question you care about isn’t “when does this hit zero?” — it’s “where’s the peak or low point?” Vertex form \(y=a(x-h)^2+k\) answers that immediately: the vertex is \((h,k)\). Completing the square is the purposeful rewrite that gets you there from standard form.</p>
+<p>Here’s the core idea, patiently: you rearrange \(x^2+bx\) by adding and subtracting \((b/2)^2\) so a perfect square appears. That isn’t a trick for its own sake — you’re building the squared chunk that sits at the heart of vertex form. When \(a\neq 1\), factor \(a\) out of the \(x\) terms first, complete the square inside, then distribute carefully.</p>
+<p>There’s a second conversion path that lives next to completing the square: symmetry. If you already know two zeros, the axis of symmetry is halfway between them, and that axis is the vertex’s \(x\)-coordinate. Factor → midpoint of zeros → evaluate for the \(y\)-coordinate. Same destination as completing the square, different road.</p>
+<p>Choose on purpose. Need zeros? Factor. Need the turning point and you don’t have clean zeros? Complete the square. Have zeros already? Symmetry may be faster. Either way, you’re not collecting techniques for a test checklist — you’re choosing the writing that makes the life question (peak, landing, start) easier to see.</p>
+<p>The Explore below walks completing the square; the examples practice both routes so you can match the method to the question you’re actually asking.</p></div><div class="block explore-block explore-block-tabs" data-explore-tabs><h3>Explore · Completing the square</h3><p class="explore-tabs-hint">Same idea — pick a modality:</p><div class="explore-tablist" role="tablist"><button type="button" class="explore-tab" role="tab" id="explore-tabs-s5_convert_cts-0-btn-0" aria-controls="explore-tabs-s5_convert_cts-0-panel-0" aria-selected="true" data-tab-panel="explore-tabs-s5_convert_cts-0-panel-0"><span class="explore-tab-kind">KHAN</span><span class="explore-tab-title">Completing the square (example 1)</span></button><button type="button" class="explore-tab" role="tab" id="explore-tabs-s5_convert_cts-0-btn-1" aria-controls="explore-tabs-s5_convert_cts-0-panel-1" aria-selected="false" data-tab-panel="explore-tabs-s5_convert_cts-0-panel-1"><span class="explore-tab-kind">Video</span><span class="explore-tab-title">Steve Sweeney — Completing the Square &amp; Tr…</span></button></div><div class="explore-tab-panel" role="tabpanel" id="explore-tabs-s5_convert_cts-0-panel-0" aria-labelledby="explore-tabs-s5_convert_cts-0-btn-0"><div class="resource resource-card resource-card-compact resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations/x2f8bb11595b61c86:completing-square-quadratics/v/ex1-completing-the-square" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div><div class="explore-tab-panel hidden" role="tabpanel" id="explore-tabs-s5_convert_cts-0-panel-1" aria-labelledby="explore-tabs-s5_convert_cts-0-btn-1"><div class="resource resource-card resource-card-compact">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=7T-YTGFb-uQ" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/7T-YTGFb-uQ" title="Steve Sweeney — Completing the Square &amp; Transformations" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div></div><div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S5-E07" data-expectations="A1.5,A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E07</span><span class="item-label">Example · process</span></div>
+  <h4>Symmetry: Vertex from zeros</h4>
+  <div class="stem"><p>\(y=(x+1)(x-7)\). Find the vertex.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(x=(-1+7)/2=3\). \(y=(4)(-4)=-16\). Vertex \((3,-16)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.5,A2.9" title="A1.5 — determine, through investigation, and describe the connection between th… · A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A1.5 · A2.9</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E08" data-expectations="A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E08</span><span class="item-label">Example · conceptual</span></div>
+  <h4>Symmetry: Mirror zero</h4>
+  <div class="stem"><p>Vertex at \(x=2\), one zero at \(x=-1\). Other zero?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Distance 3, so other zero at \(2+3=5\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.9" title="A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.9</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E09" data-expectations="A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E09</span><span class="item-label">Example · process</span></div>
+  <h4>Completing the Square: CTS a=1</h4>
+  <div class="stem"><p>Rewrite \(x^2+6x+5\) in vertex form.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x+3)^2-4\). Vertex \((-3,-4)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.8" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E10" data-expectations="A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E10</span><span class="item-label">Example · process</span></div>
+  <h4>Completing the Square: CTS again</h4>
+  <div class="stem"><p>Complete the square: \(x^2-10x+22\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x-5)^2-3\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.8" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E11" data-expectations="A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E11</span><span class="item-label">Example · process</span></div>
+  <h4>Completing the Square: CTS a≠1</h4>
+  <div class="stem"><p>Convert \(3x^2-12x+17\) to vertex form.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(3(x-2)^2+5\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.8" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8</span></aside>
+</article>
+<article class="q-card example" id="M1-S5-E12" data-expectations="A2.10,A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-E12</span><span class="item-label">Example · conceptual</span></div>
+  <h4>Completing the Square: Why CTS</h4>
+  <div class="stem"><p>Why complete the square when you already have standard form?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>To reveal the vertex / max-min cleanly — useful for turning points in a story.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.8" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.8</span></aside>
+</article>
+</div><div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>Midpoint</summary>
+<article class="q-card formative" id="M1-S5-F04" data-expectations="A2.9"
+  data-formative
+  data-feedback-correct="Average the zeros."
+  data-feedback-incorrect="Midpoint of the zeros.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-F04</span><span class="item-label">Check your understanding</span></div>
+  <h4>Midpoint</h4>
+  <div class="stem"><p>Zeros at 0 and 6. Axis?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>\(x=6\)</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>\(x=3\)</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>\(x=0\)</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>\(x=-3\)</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.9" title="A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.9</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>Half square</summary>
+<article class="q-card formative" id="M1-S5-F05" data-expectations="A2.8"
+  data-formative
+  data-feedback-correct="Half of 8 is 4; \(4^2=16\)."
+  data-feedback-incorrect="\((b/2)^2\).">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-F05</span><span class="item-label">Check your understanding</span></div>
+  <h4>Half square</h4>
+  <div class="stem"><p>For \(x^2+8x\), what constant completes the square?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>4</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="false"><span>8</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="true"><span>16</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>64</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.8" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>CTS destination</summary>
+<article class="q-card formative" id="M1-S5-F06" data-expectations="A2.8"
+  data-formative
+  data-feedback-correct="CTS lands in vertex form."
+  data-feedback-incorrect="Remember the destination.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-F06</span><span class="item-label">Check your understanding</span></div>
+  <h4>CTS destination</h4>
+  <div class="stem"><p>Completing the square primarily converts…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>factored → standard only</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>standard → vertex</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>vertex → factored only</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>any form → exponential</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.8" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8</span></aside>
+</article>
+</details>
+</div><div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Zeros ↔ vertex <span class="practice-count">(4)</span></summary>
+<article class="q-card practice" id="M1-S5-P09" data-expectations="A1.4,A1.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P09</span><span class="item-label">Practice</span></div>
+  <h4>Zeros by factoring</h4>
+  <div class="stem"><p>Solve \(x^2-5x+6=0\) by factoring.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x-2)(x-3)=0\) ⇒ \(x=2,3\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.4,A1.5" title="A1.4 — solve quadratic equations by selecting and applying a factoring strategy · A1.5 — determine, through investigation, and describe the connection between th…"><span class="exp-codes" aria-label="Curriculum expectations">A1.4 · A1.5</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P10" data-expectations="A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P10</span><span class="item-label">Practice</span></div>
+  <h4>Vertex via zeros</h4>
+  <div class="stem"><p>\(y=(x-2)(x-10)\). Find vertex.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((6,-16)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.9" title="A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.9</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P11" data-expectations="A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P11</span><span class="item-label">Practice</span></div>
+  <h4>Missing zero</h4>
+  <div class="stem"><p>Axis \(x=1\), zero at \(x=4\). Other zero?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(x=-2\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.9" title="A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.9</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P12" data-expectations="A1.5,A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P12</span><span class="item-label">Practice</span></div>
+  <h4>Why halfway</h4>
+  <div class="stem"><p>Why is the vertex halfway between distinct zeros?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Parabolas are symmetric about the axis; zeros are mirrors.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.5,A2.9" title="A1.5 — determine, through investigation, and describe the connection between th… · A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A1.5 · A2.9</span></aside>
+</article>
+</details>
+<details class="practice-accordion"><summary>Completing the square <span class="practice-count">(4)</span></summary>
+<article class="q-card practice" id="M1-S5-P13" data-expectations="A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P13</span><span class="item-label">Practice</span></div>
+  <h4>Fill blank</h4>
+  <div class="stem"><p>\(x^2+12x+\_\_=(x+6)^2\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>36.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.8" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P14" data-expectations="A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P14</span><span class="item-label">Practice</span></div>
+  <h4>CTS convert</h4>
+  <div class="stem"><p>Write \(x^2+4x-1\) in vertex form.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x+2)^2-5\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.8" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P15" data-expectations="A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P15</span><span class="item-label">Practice</span></div>
+  <h4>CTS a≠1</h4>
+  <div class="stem"><p>Begin CTS on \(2x^2+8x+3\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(2(x+2)^2-5\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.8" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P16" data-expectations="A2.10,A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P16</span><span class="item-label">Practice</span></div>
+  <h4>Read vertex</h4>
+  <div class="stem"><p>After CTS: \(y=(x-3)^2+7\). Vertex? Max or min?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((3,7)\), minimum.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.8" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.8</span></aside>
+</article>
+</details>
+<details class="practice-accordion"><summary>Choosing a form <span class="practice-count">(2)</span></summary>
+<article class="q-card practice" id="M1-S5-P17" data-expectations="A1.3,A1.4">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P17</span><span class="item-label">Practice</span></div>
+  <h4>Need zeros</h4>
+  <div class="stem"><p>Need zeros from \(x^2-9x+18\). Best first move?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Factor: \((x-3)(x-6)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A1.3,A1.4" title="A1.3 — factor quadratic expressions in one variable, including those for which … · A1.4 — solve quadratic equations by selecting and applying a factoring strategy"><span class="exp-codes" aria-label="Curriculum expectations">A1.3 · A1.4</span></aside>
+</article>
+<article class="q-card practice" id="M1-S5-P18" data-expectations="A2.8,A2.9">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S5-P18</span><span class="item-label">Practice</span></div>
+  <h4>Need vertex</h4>
+  <div class="stem"><p>Need vertex from \(x^2-6x+5\). Name two valid methods.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>CTS; or factor then midpoint of zeros.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.8,A2.9" title="A2.8 — express the equation of a quadratic function in the vertex form f(x) = a… · A2.9 — sketch graphs of quadratic functions in the factored form f(x) = a(x − r…"><span class="exp-codes" aria-label="Curriculum expectations">A2.8 · A2.9</span></aside>
+</article>
+</details>
+</div></section>
+</section>
+<section class="section" id="s6_transformations">
+  <header class="section-head">
+    <h2>Stretch, flip, shift</h2>
+  </header>
+  <div class="block prose intro"><p>Sometimes a story doesn’t invent a brand-new pattern — it takes a familiar curve and stretches it, flips it, or slides it.</p>
+<p>In vertex form \(y=a(x-h)^2+k\), the numbers \(a\), \(h\), and \(k\) describe those moves relative to \(y=x^2\). That’s useful in math class and in telling a before/after story from life.</p></div>
+  <div class="block hook">
+    <h3>Explore</h3>
+    <div class="prose"><p>Open the Desmos exploration below. Change one thing at a time until you can feel stretch, flip, and shift. Then name one real-life “before → after” that feels like more than a simple slide.</p></div>
+  </div>
+  <div class="block explore-block"><h3>Explore · Play with a, h, and k</h3><div class="resource resource-card resource-card-desmos">
+<p class="resource-chrome">Desmos · Desmos transformations exploration · <a href="https://www.desmos.com/calculator/uqf1zk8gyy" target="_blank" rel="noopener">Open resource</a></p>
+<p class="desmos-activity-ask">Change one parameter at a time until you can feel stretch, flip, and shift. Then say what each of a, h, and k does to the graph.</p>
+<details class="desmos-howto"><summary>How to use this calculator</summary><div class="desmos-steps" aria-label="Desmos calculator steps"><ol class="desmos-steps-list"><li>This graph is already set up as \(y=a(x-h)^2+k\) with sliders. Look at the left panel: you should see the equation \(y=a(x-h)^2+k\) and sliders starting near <code>a=1</code>, <code>h=0</code>, <code>k=0</code> — the same shape as \(y=x^2\).</li><li>Drag <strong>only the <em>k</em> slider</strong> slowly. Watch the whole parabola slide up or down. Leave <em>a</em> and <em>h</em> alone. Then drag <em>k</em> back to <code>0</code>.</li><li>Drag <strong>only <em>h</em></strong>. Notice the sideways move. (Positive <em>h</em> in \((x-h)\) shifts the curve to the <em>right</em>.) Return <em>h</em> to <code>0</code>.</li><li>Drag <strong>only <em>a</em></strong>: try values bigger than 1, then between 0 and 1, then a negative value. Watch for stretch/compress and a flip when <em>a</em> goes negative.</li><li>Say out loud what each parameter did. When you want the parent curve again, set <code>a=1</code>, <code>h=0</code>, <code>k=0</code> (or reload the page).</li></ol></div></details>
+<div class="embed-frame embed-tall"><iframe src="https://www.desmos.com/calculator/uqf1zk8gyy" title="Desmos transformations exploration" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div>
+<div class="block explore-block explore-block-tabs" data-explore-tabs><h3>Explore · Describing the moves</h3><p class="explore-tabs-hint">Same idea — pick a modality:</p><div class="explore-tablist" role="tablist"><button type="button" class="explore-tab" role="tab" id="explore-tabs-s6_transformations-1-btn-0" aria-controls="explore-tabs-s6_transformations-1-panel-0" aria-selected="true" data-tab-panel="explore-tabs-s6_transformations-1-panel-0"><span class="explore-tab-kind">KHAN</span><span class="explore-tab-title">Example: translating a parabola</span></button><button type="button" class="explore-tab" role="tab" id="explore-tabs-s6_transformations-1-btn-1" aria-controls="explore-tabs-s6_transformations-1-panel-1" aria-selected="false" data-tab-panel="explore-tabs-s6_transformations-1-panel-1"><span class="explore-tab-kind">Video</span><span class="explore-tab-title">Steve Sweeney — Transformation Summary &amp; M…</span></button></div><div class="explore-tab-panel" role="tabpanel" id="explore-tabs-s6_transformations-1-panel-0" aria-labelledby="explore-tabs-s6_transformations-1-btn-0"><div class="resource resource-card resource-card-compact resource-card-linkout">
+<p class="resource-instruction">Watch and complete activities here</p>
+<p class="resource-cta"><a class="resource-cta-btn" href="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations/x2f8bb11595b61c86:transform-quadratic-functions/v/example-translating-parabola" target="_blank" rel="noopener">Open on Khan Academy</a></p>
+</div></div><div class="explore-tab-panel hidden" role="tabpanel" id="explore-tabs-s6_transformations-1-panel-1" aria-labelledby="explore-tabs-s6_transformations-1-btn-1"><div class="resource resource-card resource-card-compact">
+<p class="resource-instruction">Watch the following video · <a href="https://www.youtube.com/watch?v=Ly5dhRy943U" target="_blank" rel="noopener">Open resource</a></p>
+<div class="embed-frame"><iframe src="https://www.youtube.com/embed/Ly5dhRy943U" title="Steve Sweeney — Transformation Summary &amp; Mapping Rule" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>
+</div></div></div>
+<div class="block"><h3>Examples</h3>
+<article class="q-card example" id="M1-S6-E01" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E01</span><span class="item-label">Example · process</span></div>
+  <h4>Role of k</h4>
+  <div class="stem"><p>Compare \(y=x^2\) and \(y=x^2+4\). What did \(+4\) do?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Vertical shift up 4; vertex moves to \((0,4)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E02" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E02</span><span class="item-label">Example · process</span></div>
+  <h4>Role of h</h4>
+  <div class="stem"><p>Compare \(y=x^2\) and \(y=(x-3)^2\). Which way did it move?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Right 3 (horizontal shift).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E03" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E03</span><span class="item-label">Example · process</span></div>
+  <h4>Stretch</h4>
+  <div class="stem"><p>How does \(y=3x^2\) differ from \(y=x^2\)?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Vertical stretch by 3 (narrower); vertex still at the origin.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E04" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E04</span><span class="item-label">Example · process</span></div>
+  <h4>Reflection</h4>
+  <div class="stem"><p>What does the negative in \(y=-x^2\) do?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Reflects in the \(x\)-axis (opens down).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E05" data-expectations="A2.5,A2.6">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E05</span><span class="item-label">Example · process</span></div>
+  <h4>Several moves</h4>
+  <div class="stem"><p>Describe moves from \(y=x^2\) to \(y=-2(x+1)^2+5\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Left 1; stretch by 2; reflect; up 5.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5,A2.6" title="A2.5 — determine, through investigation using technology, the roles of a, h, an… · A2.6 — sketch graphs of g(x) = a(x − h)^2 + k by applying one or more transform…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5 · A2.6</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E06" data-expectations="A2.6">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E06</span><span class="item-label">Example · process</span></div>
+  <h4>Point mapping</h4>
+  <div class="stem"><p>Under \(y=(x-2)^2+3\), where does the parent vertex \((0,0)\) go?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Right 2, up 3 → \((2,3)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.6" title="A2.6 — sketch graphs of g(x) = a(x − h)^2 + k by applying one or more transform…"><span class="exp-codes" aria-label="Curriculum expectations">A2.6</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E07" data-expectations="A2.5,A3.3">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E07</span><span class="item-label">Example · application</span></div>
+  <h4>Update a launch</h4>
+  <div class="stem"><p>\(h(t)=-5t^2+10\) should launch 1 second later. How might the equation change?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Replace \(t\) with \(t-1\): \(h(t)=-5(t-1)^2+10\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5,A3.3" title="A2.5 — determine, through investigation using technology, the roles of a, h, an… · A3.3 — solve problems arising from real-world applications, given the algebraic…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5 · A3.3</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E08" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E08</span><span class="item-label">Example · application</span></div>
+  <h4>Life stretch</h4>
+  <div class="stem"><p>A student’s improvement curve feels “the same shape but more extreme.” Which parameter is the first suspect?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(|a|\) — vertical stretch/compression.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E09" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E09</span><span class="item-label">Example · application</span></div>
+  <h4>Life flip</h4>
+  <div class="stem"><p>A relationship that was improving starts worsening in a mirrored way. Which move fits?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Reflection (sign of \(a\)).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card example" id="M1-S6-E10" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-E10</span><span class="item-label">Example · conceptual</span></div>
+  <h4>Before/after vs a single rate</h4>
+  <div class="stem"><p>How is a before/after stretch-or-flip story different from claiming a single steady rate?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>A steady rate is a local slope claim. A before/after move updates the whole pattern — stretch, flip, or shift after something turned.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+</div>
+<div class="block formative-block"><h3>Formative checks</h3>
+<details class="formative-accordion"><summary>k effect</summary>
+<article class="q-card formative" id="M1-S6-F01" data-expectations="A2.5"
+  data-formative
+  data-feedback-correct="Outside the square shifts vertically."
+  data-feedback-incorrect="\(k\) moves up/down.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-F01</span><span class="item-label">Check your understanding</span></div>
+  <h4>k effect</h4>
+  <div class="stem"><p>\(y=x^2-3\) compared to \(y=x^2\) is…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>left 3</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>down 3</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>right 3</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>reflect</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>h sign</summary>
+<article class="q-card formative" id="M1-S6-F02" data-expectations="A2.5"
+  data-formative
+  data-feedback-correct="\(x+4=x-(-4)\) ⇒ left 4."
+  data-feedback-incorrect="Horizontal shifts oppose the sign you see.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-F02</span><span class="item-label">Check your understanding</span></div>
+  <h4>h sign</h4>
+  <div class="stem"><p>\(y=(x+4)^2\) shifts the parent…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>right 4</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>left 4</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>up 4</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>down 4</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>compression</summary>
+<article class="q-card formative" id="M1-S6-F03" data-expectations="A2.5"
+  data-formative
+  data-feedback-correct="\(0&amp;lt;|a|&amp;lt;1\) compresses vertically."
+  data-feedback-incorrect="Think wider / closer to the \(x\)-axis.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-F03</span><span class="item-label">Check your understanding</span></div>
+  <h4>compression</h4>
+  <div class="stem"><p>\(y=\frac{1}{2}x^2\) is…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>vertical stretch</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>vertical compression</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>horizontal shift</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>reflection only</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>read equation</summary>
+<article class="q-card formative" id="M1-S6-F04" data-expectations="A2.10,A2.5"
+  data-formative
+  data-feedback-correct="\(h=2\), \(k=1\), \(a&amp;lt;0\)."
+  data-feedback-incorrect="Read \(a\), then \((h,k)\).">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-F04</span><span class="item-label">Check your understanding</span></div>
+  <h4>read equation</h4>
+  <div class="stem"><p>True about \(y=-(x-2)^2+1\)?</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>Vertex at \((-2,1)\)</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>Vertex at \((2,1)\), opens down</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>Opens up at \((2,1)\)</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>Vertex at \((2,-1)\)</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.5" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.5</span></aside>
+</article>
+</details>
+<details class="formative-accordion"><summary>before/after</summary>
+<article class="q-card formative" id="M1-S6-F05" data-expectations="A2.5"
+  data-formative
+  data-feedback-correct="You’re describing a move of the pattern."
+  data-feedback-incorrect="Think stretch/flip/shift of the model.">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-F05</span><span class="item-label">Check your understanding</span></div>
+  <h4>before/after</h4>
+  <div class="stem"><p>A before/after stretch of a curve in a life story is primarily about…</p></div>
+  <form>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="choice" value="a" data-correct="false"><span>only a single local rate claim</span></label><label class="choice"><input type="radio" name="choice" value="b" data-correct="true"><span>updating the whole pattern (a transformation)</span></label><label class="choice"><input type="radio" name="choice" value="c" data-correct="false"><span>neither math nor story</span></label><label class="choice"><input type="radio" name="choice" value="d" data-correct="false"><span>the quadratic formula alone</span></label>
+    </div>
+    <div class="formative-actions">
+      <button type="submit" data-action="submit">Submit</button>
+      <button type="button" class="secondary" data-action="reset">Try again</button>
+    </div>
+  </form>
+  <div class="feedback" aria-live="polite"></div>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+</details>
+</div>
+<div class="block practice-block"><h3>Practice</h3>
+<details class="practice-accordion"><summary>Reading a, h, k <span class="practice-count">(6)</span></summary>
+<article class="q-card practice" id="M1-S6-P01" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P01</span><span class="item-label">Practice</span></div>
+  <h4>Identify a,h,k</h4>
+  <div class="stem"><p>For \(y=5(x+7)^2-2\), state \(a,h,k\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(a=5\), \(h=-7\), \(k=-2\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P02" data-expectations="A2.5,A2.6">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P02</span><span class="item-label">Practice</span></div>
+  <h4>Describe</h4>
+  <div class="stem"><p>Describe moves for \(y=\frac{1}{3}(x-1)^2\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Right 1; vertical compression by \(1/3\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5,A2.6" title="A2.5 — determine, through investigation using technology, the roles of a, h, an… · A2.6 — sketch graphs of g(x) = a(x − h)^2 + k by applying one or more transform…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5 · A2.6</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P03" data-expectations="A2.6">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P03</span><span class="item-label">Practice</span></div>
+  <h4>Write equation</h4>
+  <div class="stem"><p>From \(y=x^2\): left 2, up 6, reflect. Equation?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\(y=-(x+2)^2+6\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.6" title="A2.6 — sketch graphs of g(x) = a(x − h)^2 + k by applying one or more transform…"><span class="exp-codes" aria-label="Curriculum expectations">A2.6</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P04" data-expectations="A2.6">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P04</span><span class="item-label">Practice</span></div>
+  <h4>Map a point</h4>
+  <div class="stem"><p>Parent point \((1,1)\) under \(y=2(x-3)^2\) goes where?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>When \(x-3=1\), \(x=4\); output \(2\). Point \((4,2)\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.6" title="A2.6 — sketch graphs of g(x) = a(x − h)^2 + k by applying one or more transform…"><span class="exp-codes" aria-label="Curriculum expectations">A2.6</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P05" data-expectations="A2.5,A2.6">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P05</span><span class="item-label">Practice</span></div>
+  <h4>Possible equation</h4>
+  <div class="stem"><p>Vertex \((-4,5)\), opens down stretched. Give a possible equation.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>e.g. \(y=-2(x+4)^2+5\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5,A2.6" title="A2.5 — determine, through investigation using technology, the roles of a, h, an… · A2.6 — sketch graphs of g(x) = a(x − h)^2 + k by applying one or more transform…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5 · A2.6</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P06" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P06</span><span class="item-label">Practice</span></div>
+  <h4>Compare</h4>
+  <div class="stem"><p>\(y=(x-1)^2\) vs \(y=(x-1)^2+8\). What stayed the same?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Shape and horizontal position; second is shifted up 8.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+</details>
+<details class="practice-accordion"><summary>Life before/after <span class="practice-count">(3)</span></summary>
+<article class="q-card practice" id="M1-S6-P07" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P07</span><span class="item-label">Practice</span></div>
+  <h4>Life compression</h4>
+  <div class="stem"><p>One-sentence life metaphor for vertical compression.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Example: “Same timeline, but the highs and lows felt less extreme.”</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P08" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P08</span><span class="item-label">Practice</span></div>
+  <h4>Life shift</h4>
+  <div class="stem"><p>How could a horizontal shift appear in a schedule story?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Same pattern, everything happens later or earlier.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P13" data-expectations="A2.5,A2.6">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P13</span><span class="item-label">Practice</span></div>
+  <h4>Mini before/after</h4>
+  <div class="stem"><p>Outline a before equation, after equation, and one reasoning sentence from life.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Example before \(y=x^2\); after \(y=-0.5(x-2)^2+3\); “After the setback my progress flipped and flattened, peaking later.”</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5,A2.6" title="A2.5 — determine, through investigation using technology, the roles of a, h, an… · A2.6 — sketch graphs of g(x) = a(x − h)^2 + k by applying one or more transform…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5 · A2.6</span></aside>
+</article>
+</details>
+<details class="practice-accordion"><summary>Features, checks, and domain <span class="practice-count">(6)</span></summary>
+<article class="q-card practice" id="M1-S6-P09" data-expectations="A2.10,A2.6">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P09</span><span class="item-label">Practice</span></div>
+  <h4>Features</h4>
+  <div class="stem"><p>For \(y=-(x-2)^2+9\): vertex, max/min, axis.</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((2,9)\); max 9; axis \(x=2\).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.10,A2.6" title="A2.10 — describe the information (e.g., maximum, intercepts) that can be obtaine… · A2.6 — sketch graphs of g(x) = a(x − h)^2 + k by applying one or more transform…"><span class="exp-codes" aria-label="Curriculum expectations">A2.10 · A2.6</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P10" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P10</span><span class="item-label">Practice</span></div>
+  <h4>Changing k</h4>
+  <div class="stem"><p>If only \(k\) increases, what can happen to zeros?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Graph slides up; zeros may move or disappear.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P11" data-expectations="A2.5,A2.8">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P11</span><span class="item-label">Practice</span></div>
+  <h4>CTS then describe</h4>
+  <div class="stem"><p>\(y=x^2+2x+2\) → vertex form, then name moves from \(y=x^2\).</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>\((x+1)^2+1\): left 1, up 1.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5,A2.8" title="A2.5 — determine, through investigation using technology, the roles of a, h, an… · A2.8 — express the equation of a quadratic function in the vertex form f(x) = a…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5 · A2.8</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P12" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P12</span><span class="item-label">Practice</span></div>
+  <h4>Desmos check</h4>
+  <div class="stem"><p>Use the Desmos exploration above (Play with <em>a</em>, <em>h</em>, and <em>k</em>).</p><ol><li>Reset so <code>a=1</code>, <code>h=0</code>, <code>k=0</code> (parent curve).</li><li>Leave <em>h</em> and <em>k</em> alone. Drag the <strong><em>a</em></strong> slider from positive values into a <strong>negative</strong> value.</li><li>Watch the graph: which way does the parabola open now?</li></ol><p>In one sentence: what happens when \(a\) becomes negative?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>The parabola flips to open downward (reflection in the <em>x</em>-axis / vertical flip).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P14" data-expectations="A2.3,A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P14</span><span class="item-label">Practice</span></div>
+  <h4>Domain/range after moves</h4>
+  <div class="stem"><p>Does shifting \(y=x^2\) change its domain? Its range?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Domain stays all reals. Range shifts with \(k\) (and flips bounds if reflected).</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.3,A2.5" title="A2.3 — explain the meanings of the terms domain and range, through investigatio… · A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.3 · A2.5</span></aside>
+</article>
+<article class="q-card practice" id="M1-S6-P15" data-expectations="A2.5">
+  <div class="card-meta"><span class="smart-id" title="Question ID">M1-S6-P15</span><span class="item-label">Practice</span></div>
+  <h4>Why a turn first</h4>
+  <div class="stem"><p>Why does a before/after transformation story often need a turning moment underneath?</p></div>
+  <details>
+    <summary>Show solution</summary>
+    <div class="solution-body solution"><p>Something changed about the rate — then the whole pattern stretched, flipped, or shifted.</p></div>
+  </details>
+  <aside class="expectation-footnote" data-expectations="A2.5" title="A2.5 — determine, through investigation using technology, the roles of a, h, an…"><span class="exp-codes" aria-label="Curriculum expectations">A2.5</span></aside>
+</article>
+</details>
+</div>
+</section>
+    <p class="footer-note">
+      Regenerated from <code>questions/m1_questions.sqlite</code> via
+      <code>python3 scripts/m1_build_async.py</code>. Do not hand-edit this HTML as source of truth.
+    </p>
+  </main>
+  </div>
+  <script src="module.js"></script>
+</body>
+</html>

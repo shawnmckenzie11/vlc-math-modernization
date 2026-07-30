@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" role="img" aria-label="Hours to pay">
+  <rect width="80" height="80" rx="8" fill="#eef5f9"/>
+  <circle cx="28" cy="40" r="16" fill="none" stroke="#0374b5" stroke-width="3"/>
+  <path d="M28 28v12l8 5" fill="none" stroke="#0374b5" stroke-width="3" stroke-linecap="round"/>
+  <rect x="48" y="28" width="20" height="24" rx="3" fill="#2d3b45"/>
+  <text x="58" y="45" text-anchor="middle" font-family="Lato, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#fff">$</text>
+</svg>

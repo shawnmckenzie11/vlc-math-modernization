@@ -1,0 +1,101 @@
+---
+description: Async module lesson authoring (student pages, Q DB, Explore UX)
+globs: courses/*/modules/**
+alwaysApply: false
+---
+
+# Async module lessons
+
+Use when drafting or regenerating **Canvas async module pages** under `courses/*/modules/`.
+
+## Student-facing voice
+
+- Student-facing only: no teacher construction meta, no “why we built it this way,” no scaffolding-of-the-course voice.
+- Do **not** show section weightings (e.g. `~20% of module`) on the student HTML.
+- Core motivation: **math can be valuable for understanding life**.
+- Write like Sal Khan: thorough but concise; patient and clear; explain *why*; one idea at a time; concrete then generalize. Avoid dense textbook speak and fluff.
+- Online ELC: the async page must **stand alone** if a live class is missed.
+- Align to the course syllabus story/artifact ethos and that course’s `course-plan.md` target IA.
+
+## Instructional sequencing
+
+- No ahead-of-schedule vocabulary or notation.
+- Example: do not use function notation \(f(x)\) (or lean on “function” as assumed knowledge) before the sequence introduces the idea, then the notation.
+- Audit stems, solutions, intros, hooks, and Explore notes for premature terms (vertex form, zeros jargon, etc.) relative to where the student is in the module.
+
+## Delivery shape
+
+- One **Canvas-like** single HTML preview page per module for testing (readable content width; not an app shell).
+- Prefer local `python3 -m http.server` for preview so embeds work (`file://` often blocks iframes).
+- HTML is **regenerated from a sqlite question DB** via a build script. Do not treat generated HTML as source of truth.
+
+## In-repo media assets (AU)
+
+- Save module images (thumbnails, diagrams, Explore stills you create) **in the repo** beside the async HTML, e.g. `courses/<CODE>/modules/<module>/async/assets/` (or `media/`).
+- Reference them with **relative paths** (`assets/foo.svg`) so Canvas porting can ship files with the page — do **not** rely only on remote URLs for assets you own.
+- Prefer SVG/PNG committed under that folder; keep filenames stable.
+
+## Question bank
+
+- Store all examples / formatives / practice in sqlite (seed → DB → render).
+- Render each item as a **question card** with curriculum expectation footnotes (codes + short titles from the course curriculum DB).
+- Every item has a stable **smart ID** seeded explicitly (e.g. `M1-S2-E01` = Module · Section · E/F/P · number). IDs must survive regenerations.
+- Also generate a front-facing **question bank browse page** (search/filter by ID, section, type, expectation) with links/anchors back to cards on the lesson page.
+
+## Practice accordion
+
+- Bundle **similar-topic practice** cards in collapsed `<details class="practice-accordion">` groups (seed `cluster_title`; summary like `Factoring (5)`).
+- Keeps the page compact while preserving natural progression when the student opens each accordion.
+- Examples stay expanded (not accordioned) so the core teach path stays visible.
+
+## Solution toggles (AU)
+
+- On example and practice solution `<details>` toggles, use the label **“Show solution”** (not “Show worked solution,” “Reveal full solution,” or similar).
+
+## Formative accordion (AU)
+
+- Bundle formative checks in collapsed `<details class="formative-accordion">` groups — **all groups start collapsed, including the first**.
+- Do **not** set `open` on the first formative group. Summary should name the check (title + count when clustered).
+
+## Explore media
+
+- Prefer **Khan Academy** embeds when they match the subtopic; verify URLs exist.
+- Fallback: **Steve Sweeney** YouTube (`@stevesweeney70`) — verify video IDs; do not invent.
+- **Desmos** for transformations-style exploration (and table/graph check work).
+- Multiple media: use **tabs only when they cover the same content** (same idea, alternate modality). If media are different ideas or sequential beats, render **separate sequential Explore blocks** — never tab unrelated resources together.
+- Store same-content clustering in the DB (e.g. `content_group` + `block_title`).
+
+## Learning-modality instructions (AU — Khan / Sweeney)
+
+- Resource cards use a **one-line standard instruction**, not verbose chrome that restates title + long notes.
+- **Khan Academy:** instruction line like “Watch and complete activities here” + keep **Open on Khan Academy** (or equivalent open-resource CTA).
+- **Steve Sweeney / YouTube:** instruction line like “Watch the following video” + keep **Open resource** link.
+- Embed iframe (when present) follows below. Author `notes` in the DB may stay for seed context; do not dump them into the student chrome line.
+
+## Desmos activity ask + how-to (AU — all modules)
+
+- Never drop a bare Desmos iframe/link.
+- Show an **overall activity instruction** up front (what to do / what to notice — from seed `notes` or dedicated activity-ask field).
+- Put calculator **how-to / interaction steps** in an expandable `<details>` (patient click/drag/type/slider/watch/reset steps). Seed `interaction_steps_html` on each `kind=desmos` resource; renderer must require steps and place them inside that expandable — not as a always-open wall of text.
+- Tailor steps to that specific activity (blank calculator vs saved graph with sliders, table work vs transformations, etc.).
+- Question cards that ask students to use Desmos (examples/practice) should also spell out interaction steps in the stem, not only “open Desmos.”
+
+## Title / type hierarchy (AU)
+
+- Use a clear typographic scale in module CSS — not flat same-size headers:
+  - **Page title** (`h1` / hero): largest
+  - **Section** (`h2`): next
+  - **Explore / block** (`h3`): clearly smaller than section
+  - **Card titles** (`h4` / accordion summaries): smaller still, purposeful weight
+- Prefer the established type scale in `async/styles.css`; do not invent one-off sizes per section.
+
+## Expectation footnotes
+
+- Keep footnotes **quiet**: small muted codes (hover/`title` may carry the full statement).
+- Stay **Canvas-portable**: put codes on `data-expectations` (on the card and/or footnote) plus a subtle visible fallback so import does not drop the data.
+- Do **not** use loud “Curriculum expectations” list blocks on student cards.
+
+## Difference tables
+
+- Whenever first differences (and second differences, if shown) are computed or displayed, use a proper HTML `<table>` with clear headers (e.g. \(x\), \(y\), 1st diff, 2nd diff). Never ASCII/monospace “tables.”
+- Style tables for Canvas-like readability in the module CSS.
