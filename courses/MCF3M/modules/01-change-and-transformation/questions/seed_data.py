@@ -13,7 +13,7 @@ TARGET_COUNTS = {
     "s2_constant_change": {"example": 4, "formative": 2, "practice": 6},
     "s3_life_bridge": {"example": 4, "formative": 2, "practice": 6},
     "s4_three_forms": {"example": 8, "formative": 4, "practice": 12},
-    "s5_convert_forms": {"example": 12, "formative": 6, "practice": 18},
+    "s5_convert_forms": {"example": 16, "formative": 6, "practice": 22},
     "s6_transformations": {"example": 10, "formative": 5, "practice": 15},
 }
 
@@ -77,7 +77,7 @@ def _item(
     }
 
 
-SECTIONS: list[dict[str, Any]] = [{'section_key': 's1_relations', 'title': 'Relations & representing them', 'student_title': 'Relationships we can trust', 'weight_percent': 5, 'sort_order': 1, 'intro_html': '<p>Every day you use relationships without calling them that:</p>\n<ul class="intro-life-examples">\n<li><img src="assets/hours-to-pay.svg" alt="" width="40" height="40" /><span>hours worked → pay</span></li>\n<li><img src="assets/practice-to-song.svg" alt="" width="40" height="40" /><span>practice time → how a song feels</span></li>\n<li><img src="assets/distance-to-time.svg" alt="" width="40" height="40" /><span>distance → time</span></li>\n</ul>\n<p>In math we <strong>represent</strong> relationships so we can talk about them clearly — with a table, a graph, a mapping, or an equation. The point isn’t decoration. It’s understanding life a little more precisely.</p>\n<p>Some relationships are messy (one input, many possible outputs). The ones you can rely on — each allowed input has one clear output — are especially useful. Later we’ll give those a special name.</p>', 'hook_html': '<p>Think of something that changed for you this week. What was the input? What was the output? If two people used your description, would they get the same output for the same input?</p>', 'hook_kind': 'reflection'}, {'section_key': 's2_constant_change', 'title': 'Constant → non-constant change', 'student_title': 'When change itself changes', 'weight_percent': 10, 'sort_order': 2, 'intro_html': '<p>Some change is steady: the same bump every equal step. That’s <em>constant change</em> — what you’ve seen in straight-line relationships.</p>\n<p>Other change speeds up or slows down. The simplest pattern like that in this course is a curve that bends like a parabola. You’ll spot it in tables by looking at <strong>first differences</strong> (and when those aren’t constant, <strong>second differences</strong>).</p>\n<p>We’ll also talk carefully about which inputs make sense and which outputs show up — in context and on a graph.</p>', 'hook_html': '<p>Sketch two mini-stories: (1) something grows by the same amount each day; (2) the daily growth itself keeps getting larger. Which table would look “even”? Which would look like it’s accelerating?</p>', 'hook_kind': 'exploration'}, {'section_key': 's3_life_bridge', 'title': 'Bridge linear → quadratic (life contexts)', 'student_title': 'Seeing curved change in real life', 'weight_percent': 10, 'sort_order': 3, 'intro_html': '<p>Before we pile on formal labels, practice <em>seeing</em> non-constant change in life: area growing with a side length, a ball’s height over time, practice that accelerates, a situation that speeds up then slows.</p>\n<p>You’ll also meet a clean shorthand for “plug this input into the relationship” — once the idea of a reliable relationship is already clear. That shorthand is <strong>function notation</strong>.</p>\n<p>Suppose \\(f\\) is the rule “double the input, then add 1.” We write \\(f(x)=2x+1\\). Important: \\(f(x)\\) does <em>not</em> mean “\\(f\\) times \\(x\\).” It means “the output of rule \\(f\\) when the input is \\(x\\).”</p>\n<p>To evaluate, replace every \\(x\\) with the number you care about:</p>\n<ul>\n<li>\\(f(3)=2(3)+1=7\\)</li>\n<li>\\(f(0)=1\\)</li>\n<li>\\(f(-2)=-3\\)</li>\n</ul>\n<p>Same idea with a life label: \\(H(t)\\) for height at time \\(t\\). Then \\(H(2)=7\\) means “when the input is 2, the height is 7” — just “plug 2 into the height rule.” The Explore and example below give you more practice plugging values in.</p>', 'hook_html': '<p>Pick something from your life (sport, music, gaming, a habit, a friendship, a job). Where did the speed of change stay steady? Where did that speed itself change? Describe each in plain language first — two short sentences are enough. You can attach the math words later once the idea is clear.</p>', 'hook_kind': 'discussion'}, {'section_key': 's4_three_forms', 'title': 'Three forms of quadratics', 'student_title': 'Quadratic Equations, 3 Ways', 'weight_percent': 20, 'sort_order': 4, 'intro_html': '<figure class="learning-figure"><img src="assets/quadratic-equations-3-ways.svg" alt="A chef presents the same dish three ways, labeled Standard, Factored, and Vertex" width="960" height="400" loading="lazy" /><figcaption>Same curve, three quadratic forms — like one dish, three ways.</figcaption></figure>\n<p>A quadratic relationship is the same curve no matter how you write the equation. What changes is which features sit in plain sight. We call these writings the three <strong>quadratic forms</strong>:</p>\n<ul>\n<li><strong>Standard form</strong> \\(y=ax^2+bx+c\\) — the constant term \\(c\\) is the \\(y\\)-intercept (the output when \\(x=0\\)).</li>\n<li><strong>Factored form</strong> \\(y=a(x-r)(x-s)\\) — the values \\(r\\) and \\(s\\) are the <strong>zeros</strong> (also called the \\(x\\)-intercepts), where the graph crosses the \\(x\\)-axis.</li>\n<li><strong>Vertex form</strong> \\(y=a(x-h)^2+k\\) — the point \\((h,k)\\) is the <strong>vertex</strong> (the peak or low point of the parabola).</li>\n</ul>\n<p>First you will learn to <em>recognize</em> each form from how the equation is written. Then you will practice reading the features each form makes easy — including which inputs and outputs make sense when a story restricts them.</p>', 'hook_html': '<p>Look at \\(y=2(x-3)^2+5\\), \\(y=(x+1)(x-4)\\), and \\(y=x^2-6x+8\\). Before you expand or graph anything: which is vertex form? which is factored? which is standard? Write the three labels, then check yourself in the examples below.</p>', 'hook_kind': 'activity'}, {'section_key': 's5_convert_forms', 'title': 'Convert between forms', 'student_title': 'Algebra of Converting Quadratic Forms', 'weight_percent': 30, 'sort_order': 5, 'intro_html': '<p>The same curved relationship can answer different questions from life: when does something hit zero? where is the peak? what happens at the start? Each algebraic writing makes a different part of that story easy to see. Moving between forms is how you match the model to the question you are actually asking.</p>\n', 'hook_html': '<p>You’re given \\(y=x^2-6x+5\\) and you want the vertex. Will you complete the square, or factor and use the midpoint of the zeros? Why?</p>', 'hook_kind': 'reflection'}, {'section_key': 's6_transformations', 'title': 'Transformations', 'student_title': 'Stretch, flip, shift', 'weight_percent': 25, 'sort_order': 6, 'intro_html': '<p>Sometimes a story doesn’t invent a brand-new pattern — it takes a familiar curve and stretches it, flips it, or slides it.</p>\n<p>In vertex form \\(y=a(x-h)^2+k\\), the numbers \\(a\\), \\(h\\), and \\(k\\) describe those moves relative to \\(y=x^2\\). That’s useful in math class and in telling a before/after story from life.</p>', 'hook_html': '<p>Open the Desmos exploration below. Change one thing at a time until you can feel stretch, flip, and shift. Then name one real-life “before → after” that feels like more than a simple slide.</p>', 'hook_kind': 'exploration'}]
+SECTIONS: list[dict[str, Any]] = [{'section_key': 's1_relations', 'title': 'Relations & representing them', 'student_title': 'Relationships we can trust', 'weight_percent': 5, 'sort_order': 1, 'intro_html': '<p>Every day you use relationships without calling them that:</p>\n<ul class="intro-life-examples">\n<li><img src="assets/hours-to-pay.svg" alt="" width="40" height="40" /><span>hours worked → pay</span></li>\n<li><img src="assets/practice-to-song.svg" alt="" width="40" height="40" /><span>practice time → how a song feels</span></li>\n<li><img src="assets/distance-to-time.svg" alt="" width="40" height="40" /><span>distance → time</span></li>\n</ul>\n<p>In math we <strong>represent</strong> relationships so we can talk about them clearly — with a table, a graph, a mapping, or an equation. The point isn’t decoration. It’s understanding life a little more precisely.</p>\n<p>Some relationships are messy (one input, many possible outputs). The ones you can rely on — each allowed input has one clear output — are especially useful. Later we’ll give those a special name.</p>', 'hook_html': '<p>Think of something that changed for you this week. What was the input? What was the output? If two people used your description, would they get the same output for the same input?</p>', 'hook_kind': 'reflection'}, {'section_key': 's2_constant_change', 'title': 'Constant → non-constant change', 'student_title': 'When change itself changes', 'weight_percent': 10, 'sort_order': 2, 'intro_html': '<p>Some change is steady: the same bump every equal step. That’s <em>constant change</em> — what you’ve seen in straight-line relationships.</p>\n<p>Other change speeds up or slows down. The simplest pattern like that in this course is a curve that bends like a parabola. You’ll spot it in tables by looking at <strong>first differences</strong> (and when those aren’t constant, <strong>second differences</strong>).</p>\n<p>We’ll also talk carefully about which inputs make sense and which outputs show up — in context and on a graph.</p>', 'hook_html': '<p>Sketch two mini-stories: (1) something grows by the same amount each day; (2) the daily growth itself keeps getting larger. Which table would look “even”? Which would look like it’s accelerating?</p>', 'hook_kind': 'exploration'}, {'section_key': 's3_life_bridge', 'title': 'Bridge linear → quadratic (life contexts)', 'student_title': 'Seeing curved change in real life', 'weight_percent': 10, 'sort_order': 3, 'intro_html': '<p>Before we pile on formal labels, practice <em>seeing</em> non-constant change in life: area growing with a side length, a ball’s height over time, practice that accelerates, a situation that speeds up then slows.</p>\n<p>You’ll also meet a clean shorthand for “plug this input into the relationship” — once the idea of a reliable relationship is already clear. That shorthand is <strong>function notation</strong>.</p>\n<p>Suppose \\(f\\) is the rule “double the input, then add 1.” We write \\(f(x)=2x+1\\). Important: \\(f(x)\\) does <em>not</em> mean “\\(f\\) times \\(x\\).” It means “the output of rule \\(f\\) when the input is \\(x\\).”</p>\n<p>To evaluate, replace every \\(x\\) with the number you care about:</p>\n<ul>\n<li>\\(f(3)=2(3)+1=7\\)</li>\n<li>\\(f(0)=1\\)</li>\n<li>\\(f(-2)=-3\\)</li>\n</ul>\n<p>Same idea with a life label: \\(H(t)\\) for height at time \\(t\\). Then \\(H(2)=7\\) means “when the input is 2, the height is 7” — just “plug 2 into the height rule.” The Explore and example below give you more practice plugging values in.</p>', 'hook_html': '<p>Pick something from your life (sport, music, gaming, a habit, a friendship, a job). Where did the speed of change stay steady? Where did that speed itself change? Describe each in plain language first — two short sentences are enough. You can attach the math words later once the idea is clear.</p>', 'hook_kind': 'discussion'}, {'section_key': 's4_three_forms', 'title': 'Three forms of quadratics', 'student_title': 'Quadratic Equations, 3 Ways', 'weight_percent': 20, 'sort_order': 4, 'intro_html': '<figure class="learning-figure"><img src="assets/quadratic-equations-3-ways.png" alt="A chef presents the same dish three ways, labeled Standard, Factored, and Vertex" width="960" height="540" loading="lazy" /><figcaption>Same curve, three quadratic forms — like one dish, three ways.</figcaption></figure>\n<p>A quadratic relationship is the same curve no matter how you write the equation. What changes is which features sit in plain sight. We call these writings the three <strong>quadratic forms</strong>:</p>\n<ul>\n<li><strong>Standard form</strong> \\(y=ax^2+bx+c\\) — the constant term \\(c\\) is the \\(y\\)-intercept (the output when \\(x=0\\)).</li>\n<li><strong>Factored form</strong> \\(y=a(x-r)(x-s)\\) — the values \\(r\\) and \\(s\\) are the <strong>zeros</strong> (also called the \\(x\\)-intercepts), where the graph crosses the \\(x\\)-axis.</li>\n<li><strong>Vertex form</strong> \\(y=a(x-h)^2+k\\) — the point \\((h,k)\\) is the <strong>vertex</strong> (the peak or low point of the parabola).</li>\n</ul>\n<p>First you will learn to <em>recognize</em> each form from how the equation is written. Then you will practice reading the features each form makes easy — including which inputs and outputs make sense when a story restricts them.</p>', 'hook_html': '<p>Look at \\(y=2(x-3)^2+5\\), \\(y=(x+1)(x-4)\\), and \\(y=x^2-6x+8\\). Before you expand or graph anything: which is vertex form? which is factored? which is standard? Write the three labels, then check yourself in the examples below.</p>', 'hook_kind': 'activity'}, {'section_key': 's5_convert_forms', 'title': 'Convert between forms', 'student_title': 'Algebra of Converting Quadratic Forms', 'weight_percent': 30, 'sort_order': 5, 'intro_html': '<p>The same curved relationship can answer different questions from life: when does something hit zero? where is the peak? what happens at the start? Each algebraic writing makes a different part of that story easy to see. Moving between forms is how you match the model to the question you are actually asking.</p>\n', 'hook_html': '<p>You’re given \\(y=x^2-6x+5\\) and you want the vertex. Will you complete the square, or factor and use the midpoint of the zeros? Why?</p>', 'hook_kind': 'reflection'}, {'section_key': 's6_transformations', 'title': 'Transformations', 'student_title': 'Stretch, flip, shift', 'weight_percent': 25, 'sort_order': 6, 'intro_html': '<p>Sometimes a story doesn’t invent a brand-new pattern — it takes a familiar curve and stretches it, flips it, or slides it.</p>\n<p>In vertex form \\(y=a(x-h)^2+k\\), the numbers \\(a\\), \\(h\\), and \\(k\\) describe those moves relative to \\(y=x^2\\). That’s useful in math class and in telling a before/after story from life.</p>', 'hook_html': '<p>Open the Desmos exploration below. Change one thing at a time until you can feel stretch, flip, and shift. Then name one real-life “before → after” that feels like more than a simple slide.</p>', 'hook_kind': 'exploration'}]
 
 # Within-section beats (learning + examples + formatives interleaved).
 SUBSECTIONS: list[dict[str, Any]] = [
@@ -1072,12 +1072,12 @@ ITEMS.extend([
     subsection_key='s5_expanding',
   ),
   _item(
-    'M1-S5-E03', 's5_convert_forms', 'example', 'Factoring: Common factor',
+    'M1-S5-E03', 's5_convert_forms', 'example', 'Factoring (warm-up): Common factor',
     '<p>Factor \\(6x^2+9x\\).</p>',
     subtype='process',
-    solution_html='<p>\\(3x(2x+3)\\).</p>',
+    solution_html='<p>Pull out the greatest common factor: \\(3x(2x+3)\\).</p>',
     formative_json=None,
-    difficulty=2,
+    difficulty=1,
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=[],
     expectations=['A1.3'],
@@ -1085,12 +1085,12 @@ ITEMS.extend([
     subsection_key='s5_factoring',
   ),
   _item(
-    'M1-S5-E04', 's5_convert_forms', 'example', 'Factoring: Simple trinomial',
+    'M1-S5-E04', 's5_convert_forms', 'example', 'Factoring (warm-up): Simple trinomial',
     '<p>Factor \\(x^2+5x+6\\).</p>',
     subtype='process',
-    solution_html='<p>\\((x+2)(x+3)\\).</p>',
+    solution_html='<p>Find two numbers that multiply to 6 and add to 5: \\(2\\) and \\(3\\). So \\((x+2)(x+3)\\).</p>',
     formative_json=None,
-    difficulty=2,
+    difficulty=1,
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=[],
     expectations=['A1.3'],
@@ -1098,12 +1098,12 @@ ITEMS.extend([
     subsection_key='s5_factoring',
   ),
   _item(
-    'M1-S5-E05', 's5_convert_forms', 'example', 'Factoring: Mixed signs',
+    'M1-S5-E05', 's5_convert_forms', 'example', 'Factoring (warm-up): Mixed signs',
     '<p>Factor \\(x^2-x-20\\).</p>',
     subtype='process',
-    solution_html='<p>\\((x-5)(x+4)\\).</p>',
+    solution_html='<p>Numbers that multiply to \\(-20\\) and add to \\(-1\\): \\(-5\\) and \\(4\\). So \\((x-5)(x+4)\\).</p>',
     formative_json=None,
-    difficulty=2,
+    difficulty=1,
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=[],
     expectations=['A1.3'],
@@ -1111,16 +1111,87 @@ ITEMS.extend([
     subsection_key='s5_factoring',
   ),
   _item(
-    'M1-S5-E06', 's5_convert_forms', 'example', 'Factoring: Difference of squares',
+    'M1-S5-E06', 's5_convert_forms', 'example', 'Factoring (warm-up): Difference of squares',
     '<p>Factor \\(9x^2-25\\).</p>',
     subtype='process',
-    solution_html='<p>\\((3x-5)(3x+5)\\).</p>',
+    solution_html='<p>Both terms are perfect squares: \\((3x)^2-5^2=(3x-5)(3x+5)\\).</p>',
     formative_json=None,
-    difficulty=2,
+    difficulty=1,
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=[],
     expectations=['A1.3'],
     sort_order=6,
+    subsection_key='s5_factoring',
+  ),
+  _item(
+    'M1-S5-E13', 's5_convert_forms', 'example', 'Factoring: GCF and simple trinomial',
+    '<p>Factor completely: \\(2x^2+10x+12\\).</p>',
+    subtype='process',
+    solution_html=(
+      '<p>First pull the common factor: \\(2(x^2+5x+6)\\).</p>'
+      '<p>Then factor the trinomial: numbers that multiply to 6 and add to 5 are '
+      '\\(2\\) and \\(3\\).</p>'
+      '<p>So \\(2(x+2)(x+3)\\).</p>'
+    ),
+    formative_json=None,
+    difficulty=3,
+    source='original:m1-rebuild',
+    artifact_tags=[],
+    expectations=['A1.3'],
+    sort_order=7,
+    subsection_key='s5_factoring',
+  ),
+  _item(
+    'M1-S5-E14', 's5_convert_forms', 'example', 'Factoring: GCF and difference of squares',
+    '<p>Factor completely: \\(3x^2-48\\).</p>',
+    subtype='process',
+    solution_html=(
+      '<p>Common factor first: \\(3(x^2-16)\\).</p>'
+      '<p>Difference of squares: \\(x^2-16=(x-4)(x+4)\\).</p>'
+      '<p>So \\(3(x-4)(x+4)\\).</p>'
+    ),
+    formative_json=None,
+    difficulty=3,
+    source='original:m1-rebuild',
+    artifact_tags=[],
+    expectations=['A1.3'],
+    sort_order=8,
+    subsection_key='s5_factoring',
+  ),
+  _item(
+    'M1-S5-E15', 's5_convert_forms', 'example', 'Factoring: Decomposition',
+    '<p>Factor by decomposition: \\(6x^2+11x+3\\).</p>',
+    subtype='process',
+    solution_html=(
+      '<p>We need two numbers that multiply to \\(6\\cdot 3=18\\) and add to \\(11\\): '
+      '\\(9\\) and \\(2\\).</p>'
+      '<p>Rewrite the middle term: \\(6x^2+9x+2x+3\\).</p>'
+      '<p>Group: \\(3x(2x+3)+1(2x+3)=(3x+1)(2x+3)\\).</p>'
+    ),
+    formative_json=None,
+    difficulty=4,
+    source='original:m1-rebuild',
+    artifact_tags=[],
+    expectations=['A1.3'],
+    sort_order=9,
+    subsection_key='s5_factoring',
+  ),
+  _item(
+    'M1-S5-E16', 's5_convert_forms', 'example', 'Factoring: GCF and decomposition',
+    '<p>Factor completely: \\(4x^2+14x+6\\).</p>',
+    subtype='process',
+    solution_html=(
+      '<p>Common factor first: \\(2(2x^2+7x+3)\\).</p>'
+      '<p>Inside, multiply \\(2\\cdot 3=6\\); numbers that multiply to 6 and add to 7 are '
+      '\\(6\\) and \\(1\\).</p>'
+      '<p>Rewrite: \\(2(2x^2+6x+x+3)=2\\bigl(2x(x+3)+1(x+3)\\bigr)=2(2x+1)(x+3)\\).</p>'
+    ),
+    formative_json=None,
+    difficulty=4,
+    source='original:m1-rebuild',
+    artifact_tags=[],
+    expectations=['A1.3'],
+    sort_order=10,
     subsection_key='s5_factoring',
   ),
   _item(
@@ -1133,7 +1204,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.9', 'A1.5'],
-    sort_order=7,
+    sort_order=11,
     subsection_key='s5_convert_cts',
   ),
   _item(
@@ -1146,7 +1217,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.9'],
-    sort_order=8,
+    sort_order=12,
     subsection_key='s5_convert_cts',
   ),
   _item(
@@ -1159,7 +1230,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.8'],
-    sort_order=9,
+    sort_order=13,
     subsection_key='s5_convert_cts',
   ),
   _item(
@@ -1172,7 +1243,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.8'],
-    sort_order=10,
+    sort_order=14,
     subsection_key='s5_convert_cts',
   ),
   _item(
@@ -1185,7 +1256,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.8'],
-    sort_order=11,
+    sort_order=15,
     subsection_key='s5_convert_cts',
   ),
   _item(
@@ -1198,7 +1269,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.8', 'A2.10'],
-    sort_order=12,
+    sort_order=16,
     subsection_key='s5_convert_cts',
   ),
   _item(
@@ -1392,6 +1463,69 @@ ITEMS.extend([
     subsection_key='s5_factoring',
   ),
   _item(
+    'M1-S5-P19', 's5_convert_forms', 'practice', 'GCF + trinomial',
+    '<p>Factor completely: \\(3x^2+15x+18\\).</p>',
+    subtype='process',
+    solution_html='<p>\\(3(x^2+5x+6)=3(x+2)(x+3)\\).</p>',
+    formative_json=None,
+    difficulty=3,
+    source='original:m1-rebuild',
+    artifact_tags=[],
+    expectations=['A1.3'],
+    sort_order=9,
+    cluster_title='Factoring',
+    subsection_key='s5_factoring',
+  ),
+  _item(
+    'M1-S5-P20', 's5_convert_forms', 'practice', 'GCF + DOS',
+    '<p>Factor completely: \\(5x^2-45\\).</p>',
+    subtype='process',
+    solution_html='<p>\\(5(x^2-9)=5(x-3)(x+3)\\).</p>',
+    formative_json=None,
+    difficulty=3,
+    source='original:m1-rebuild',
+    artifact_tags=[],
+    expectations=['A1.3'],
+    sort_order=10,
+    cluster_title='Factoring',
+    subsection_key='s5_factoring',
+  ),
+  _item(
+    'M1-S5-P21', 's5_convert_forms', 'practice', 'Decomposition',
+    '<p>Factor by decomposition: \\(8x^2+10x+3\\).</p>',
+    subtype='process',
+    solution_html=(
+      '<p>Need numbers that multiply to \\(24\\) and add to \\(10\\): \\(6\\) and \\(4\\).</p>'
+      '<p>\\(8x^2+6x+4x+3=2x(4x+3)+1(4x+3)=(2x+1)(4x+3)\\).</p>'
+    ),
+    formative_json=None,
+    difficulty=4,
+    source='original:m1-rebuild',
+    artifact_tags=[],
+    expectations=['A1.3'],
+    sort_order=11,
+    cluster_title='Factoring',
+    subsection_key='s5_factoring',
+  ),
+  _item(
+    'M1-S5-P22', 's5_convert_forms', 'practice', 'GCF + decomposition',
+    '<p>Factor completely: \\(6x^2+15x+6\\).</p>',
+    subtype='process',
+    solution_html=(
+      '<p>\\(3(2x^2+5x+2)\\). Inside: numbers multiplying to 4 and adding to 5 are '
+      '\\(4\\) and \\(1\\).</p>'
+      '<p>\\(3(2x^2+4x+x+2)=3\\bigl(2x(x+2)+1(x+2)\\bigr)=3(2x+1)(x+2)\\).</p>'
+    ),
+    formative_json=None,
+    difficulty=4,
+    source='original:m1-rebuild',
+    artifact_tags=[],
+    expectations=['A1.3'],
+    sort_order=12,
+    cluster_title='Factoring',
+    subsection_key='s5_factoring',
+  ),
+  _item(
     'M1-S5-P09', 's5_convert_forms', 'practice', 'Zeros by factoring',
     '<p>Solve \\(x^2-5x+6=0\\) by factoring.</p>',
     subtype='process',
@@ -1401,7 +1535,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=[],
     expectations=['A1.4', 'A1.5'],
-    sort_order=9,
+    sort_order=13,
     cluster_title='Zeros ↔ vertex',
     subsection_key='s5_convert_cts',
   ),
@@ -1415,7 +1549,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.9'],
-    sort_order=10,
+    sort_order=14,
     cluster_title='Zeros ↔ vertex',
     subsection_key='s5_convert_cts',
   ),
@@ -1429,7 +1563,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.9'],
-    sort_order=11,
+    sort_order=15,
     cluster_title='Zeros ↔ vertex',
     subsection_key='s5_convert_cts',
   ),
@@ -1443,7 +1577,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.9', 'A1.5'],
-    sort_order=12,
+    sort_order=16,
     cluster_title='Zeros ↔ vertex',
     subsection_key='s5_convert_cts',
   ),
@@ -1457,7 +1591,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=[],
     expectations=['A2.8'],
-    sort_order=13,
+    sort_order=17,
     cluster_title='Completing the square',
     subsection_key='s5_convert_cts',
   ),
@@ -1471,7 +1605,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.8'],
-    sort_order=14,
+    sort_order=18,
     cluster_title='Completing the square',
     subsection_key='s5_convert_cts',
   ),
@@ -1485,7 +1619,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.8'],
-    sort_order=15,
+    sort_order=19,
     cluster_title='Completing the square',
     subsection_key='s5_convert_cts',
   ),
@@ -1499,7 +1633,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.8', 'A2.10'],
-    sort_order=16,
+    sort_order=20,
     cluster_title='Completing the square',
     subsection_key='s5_convert_cts',
   ),
@@ -1513,7 +1647,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=[],
     expectations=['A1.3', 'A1.4'],
-    sort_order=17,
+    sort_order=21,
     cluster_title='Choosing a form',
     subsection_key='s5_convert_cts',
   ),
@@ -1527,7 +1661,7 @@ ITEMS.extend([
     source='adapted:legacy-canvas-m2-m4',
     artifact_tags=['Turning Point'],
     expectations=['A2.8', 'A2.9'],
-    sort_order=18,
+    sort_order=22,
     cluster_title='Choosing a form',
     subsection_key='s5_convert_cts',
   ),

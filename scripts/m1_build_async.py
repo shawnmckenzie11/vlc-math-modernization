@@ -38,7 +38,7 @@ TARGET_COUNTS = {
     "s2_constant_change": {"example": 4, "formative": 2, "practice": 6},
     "s3_life_bridge": {"example": 4, "formative": 2, "practice": 6},
     "s4_three_forms": {"example": 8, "formative": 4, "practice": 12},
-    "s5_convert_forms": {"example": 12, "formative": 6, "practice": 18},
+    "s5_convert_forms": {"example": 16, "formative": 6, "practice": 22},
     "s6_transformations": {"example": 10, "formative": 5, "practice": 15},
 }
 

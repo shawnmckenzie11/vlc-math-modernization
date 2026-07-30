@@ -20,11 +20,15 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Extracted IMSCC unpack (large); keep the .imscc archive under sources/
+# Extracted IMSCC unpack (large); keep the .imscc archive locally under sources/
 # Committed inventory lives under courses/*/canvas/{INVENTORY.md,inventory.json}
 courses/*/sources/extracted/
 courses/*/canvas/unpacked/
 **/imscc-unpacked/
+
+# GitHub rejects blobs >100MB; keep these archives local (see sources/README, live-lessons/README)
+courses/*/sources/*.imscc
+courses/*/live-lessons/archives/*.zip
 
 # Temporary
 *.tmp
