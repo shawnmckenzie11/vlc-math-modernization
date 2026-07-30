@@ -1,0 +1,15 @@
+---
+description: SMART Notebook live-lesson conventions under courses/*/live-lessons
+globs: courses/*/live-lessons/**
+alwaysApply: false
+---
+
+# SMART Notebook live lessons
+
+- Medium for sync Zoom math classes: **SMART Notebook** (`.notebook` = ZIP)
+- MCF3M tree: `courses/MCF3M/live-lessons/` (archive + `modules/` + inventory)
+- Phase 1: inventory/organize only — use `python3 scripts/inventory_smart_notebook.py`
+- Phase 2: extract `.notebook` contents only when asked; prefer scratch dirs
+- Do not invent curriculum codes; query `courses/MCF3M/curriculum/mcf3m.sqlite`
+- Agent brief: `agents/smart-notebook-lessons.md`
+- Skill: `.cursor/skills/smart-notebook-lessons/SKILL.md`

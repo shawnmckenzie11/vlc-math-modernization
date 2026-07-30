@@ -10,6 +10,10 @@ alwaysApply: false
 - Inherits all `frameworks/` ELC constants
 - Curriculum DB: `courses/MCF3M/curriculum/mcf3m.sqlite`
 - Sources: curriculum PDF + Canvas `.imscc` in `courses/MCF3M/sources/`
+- Canvas inventory: `courses/MCF3M/canvas/INVENTORY.md` (unpack under `canvas/unpacked/`)
+- Live lessons: SMART Notebook under `courses/MCF3M/live-lessons/` (see inventory)
 - Strands: A Quadratic Functions, B Exponential Functions, C Trigonometric Functions
-- Query via `python scripts/query_expectations.py` — do not invent expectations
+- Query via `python3 scripts/query_expectations.py` — do not invent expectations
+- Canvas structure: `agents/canvas-course-updater.md` / `python3 scripts/canvas_*.py`
 - Read `courses/MCF3M/AGENTS.md` for course agent notes
+- Rebuild posture: current Canvas + Notebook module/lesson trees are a **baseline archive**, not permanent IA — remove/add/merge deliberately; preserve `.imscc` and `live-lessons/archives/`

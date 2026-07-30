@@ -19,7 +19,7 @@ courses/        Per-course content (MCF3M first)
 agents/         Agent prompts & workflows
 scripts/        Extraction & query tooling
 .cursor/rules/  Always-on Cursor rules
-.cursor/skills/ Project skills (semester, curriculum)
+.cursor/skills/ Project skills (semester, curriculum, canvas, smart-notebook)
 ```
 
 ## Non-negotiables
@@ -32,6 +32,28 @@ scripts/        Extraction & query tooling
 - Prefer teaching-content conventions over generic app-code patterns
 - Do not commit unless Shawn asks
 
+
+## Course inheritance & agent harness
+
+Every course inherits shared ELC constants under `frameworks/` (school, class structure, semester, Canvas LMS). New courses copy the `courses/MCF3M/` shape: `AGENTS.md`, `sources/`, `curriculum/`, `canvas/`, `live-lessons/`, `modules/`.
+
+For trickle-down work, **harness the specialized agents** rather than reinventing workflows:
+
+| Concern | Agent / tooling |
+|---------|-----------------|
+| Curriculum expectations | [`agents/curriculum-extractor.md`](agents/curriculum-extractor.md) · `scripts/query_expectations.py` |
+| Semester / pacing | [`agents/semester-context.md`](agents/semester-context.md) · `frameworks/semester.json` |
+| Canvas structure (IMSCC) | [`agents/canvas-course-updater.md`](agents/canvas-course-updater.md) · `scripts/canvas_*.py` |
+| Sync Zoom lessons (Notebook) | [`agents/smart-notebook-lessons.md`](agents/smart-notebook-lessons.md) · `live-lessons/` inventory |
+
+## Rebuild posture (MCF3M and later courses)
+
+Current Canvas modules/pages and SMART Notebook lesson trees are a **baseline archive**, not a frozen information architecture. Rebuilds may remove, add, or merge modules and lessons. Do **not** treat inventory titles or order as immutable requirements.
+
+- Preserve source archives (`.imscc` under `sources/`, `live-lessons/archives/`) when restructuring; edit working copies / produce new structures deliberately.
+- After structural changes, regenerate inventories; link new/changed content to curriculum expectations where relevant.
+- Keep sync (Notebook) and async (Canvas) aligned by **module intent**, not by old numbering alone.
+
 ## Active course
 
 **MCF3M** — see [`courses/MCF3M/AGENTS.md`](courses/MCF3M/AGENTS.md)
@@ -42,3 +64,5 @@ scripts/        Extraction & query tooling
 |-------|------|----------|
 | Semester context | [`agents/semester-context.md`](agents/semester-context.md) | Pacing, calendars, “what week” |
 | Curriculum extractor | [`agents/curriculum-extractor.md`](agents/curriculum-extractor.md) | Extract/update/query expectations |
+| Canvas course updater | [`agents/canvas-course-updater.md`](agents/canvas-course-updater.md) | Modules/pages/IMSCC edits, Canvas re-pack |
+| SMART Notebook live lessons | [`agents/smart-notebook-lessons.md`](agents/smart-notebook-lessons.md) | Sync Zoom `.notebook` inventory, module mapping, future extraction |

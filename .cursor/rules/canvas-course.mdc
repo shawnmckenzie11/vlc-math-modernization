@@ -1,0 +1,15 @@
+---
+description: Canvas IMSCC working-tree conventions for MCF3M course updates
+globs: courses/MCF3M/canvas/**
+alwaysApply: false
+---
+
+# Canvas course working tree (MCF3M)
+
+- Archive source of truth: `courses/MCF3M/sources/mcf3m-canvas-export.imscc`
+- Edit in `courses/MCF3M/canvas/unpacked/` (gitignored); do not commit media-heavy unpacks
+- Commit/regenerate `courses/MCF3M/canvas/INVENTORY.md` + `inventory.json` after structural changes
+- Agent brief: `agents/canvas-course-updater.md`; skill: `.cursor/skills/canvas-course-updater/SKILL.md`
+- Key files: `imsmanifest.xml`, `course_settings/module_meta.xml`, `wiki_content/*.html`
+- Never invent expectation codes; query `courses/MCF3M/curriculum/mcf3m.sqlite`
+- Pack to a **new** `.imscc` via `python3 scripts/canvas_pack.py` — do not overwrite the source archive

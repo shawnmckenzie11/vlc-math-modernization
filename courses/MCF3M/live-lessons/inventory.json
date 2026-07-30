@@ -1,0 +1,1063 @@
+{
+  "course": "MCF3M",
+  "medium": "SMART Notebook",
+  "generated": "2026-07-30",
+  "modules_dir": "courses/MCF3M/live-lessons/modules",
+  "summary": {
+    "module_folders": 10,
+    "file_count": 93,
+    "total_bytes": 69241244,
+    "total_human": "66.0 MB",
+    "by_extension": {
+      "docx": 1,
+      "notebook": 69,
+      "notebook(1)": 1,
+      "pdf": 7,
+      "png": 13,
+      "xlsx": 2
+    },
+    "notebook_count": 69
+  },
+  "modules": {
+    "exam": {
+      "folder": "Exam Outline",
+      "module_id": "exam",
+      "module_number": null,
+      "title": "Exam Outline",
+      "file_count": 4,
+      "size_bytes": 223233,
+      "size_human": "218.0 KB",
+      "files": [
+        {
+          "path": "Exam Outline/Exam Outline 2.notebook",
+          "filename": "Exam Outline 2.notebook",
+          "extension": "notebook",
+          "size_bytes": 61626,
+          "size_human": "60.2 KB",
+          "lesson_code": null,
+          "variant": "teacher",
+          "title": "Exam Outline 2"
+        },
+        {
+          "path": "Exam Outline/Exam Outline.notebook",
+          "filename": "Exam Outline.notebook",
+          "extension": "notebook",
+          "size_bytes": 26601,
+          "size_human": "26.0 KB",
+          "lesson_code": null,
+          "variant": "teacher",
+          "title": "Exam Outline"
+        },
+        {
+          "path": "Exam Outline/Practice Exam Discussion (student).notebook",
+          "filename": "Practice Exam Discussion (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 127822,
+          "size_human": "124.8 KB",
+          "lesson_code": null,
+          "variant": "student",
+          "title": "Practice Exam Discussion"
+        },
+        {
+          "path": "Exam Outline/Practice Exam Discussion.notebook",
+          "filename": "Practice Exam Discussion.notebook",
+          "extension": "notebook",
+          "size_bytes": 7184,
+          "size_human": "7.0 KB",
+          "lesson_code": null,
+          "variant": "teacher",
+          "title": "Practice Exam Discussion"
+        }
+      ]
+    },
+    "learning-skills": {
+      "folder": "Learning Skills",
+      "module_id": "learning-skills",
+      "module_number": null,
+      "title": "Learning Skills",
+      "file_count": 1,
+      "size_bytes": 154447,
+      "size_human": "150.8 KB",
+      "files": [
+        {
+          "path": "Learning Skills/MCF3M Learning Skills Self-Reflection (Mid) (Responses).xlsx",
+          "filename": "MCF3M Learning Skills Self-Reflection (Mid) (Responses).xlsx",
+          "extension": "xlsx",
+          "size_bytes": 154447,
+          "size_human": "150.8 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "MCF3M Learning Skills Self-Reflection (Mid) (Responses)"
+        }
+      ]
+    },
+    "module-1": {
+      "folder": "Module 1 - Intro to the Quadratic Function",
+      "module_id": "module-1",
+      "module_number": 1,
+      "title": "Intro to the Quadratic Function",
+      "file_count": 17,
+      "size_bytes": 36795923,
+      "size_human": "35.1 MB",
+      "files": [
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L0 - Course Introduction (student).notebook",
+          "filename": "3M M1L0 - Course Introduction (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 5293872,
+          "size_human": "5.0 MB",
+          "lesson_code": "M1L0",
+          "variant": "student",
+          "title": "Course Introduction"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L0 - Course Introduction.notebook",
+          "filename": "3M M1L0 - Course Introduction.notebook",
+          "extension": "notebook",
+          "size_bytes": 5279131,
+          "size_human": "5.0 MB",
+          "lesson_code": "M1L0",
+          "variant": "teacher",
+          "title": "Course Introduction"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L1 - Intro to Functions (student).notebook",
+          "filename": "3M M1L1 - Intro to Functions (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 1784104,
+          "size_human": "1.7 MB",
+          "lesson_code": "M1L1",
+          "variant": "student",
+          "title": "Intro to Functions"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L1 - Intro to Functions.notebook",
+          "filename": "3M M1L1 - Intro to Functions.notebook",
+          "extension": "notebook",
+          "size_bytes": 1664057,
+          "size_human": "1.6 MB",
+          "lesson_code": "M1L1",
+          "variant": "teacher",
+          "title": "Intro to Functions"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L1 - Intro to Functions.pdf",
+          "filename": "3M M1L1 - Intro to Functions.pdf",
+          "extension": "pdf",
+          "size_bytes": 1756993,
+          "size_human": "1.7 MB",
+          "lesson_code": "M1L1",
+          "variant": null,
+          "title": "Intro to Functions"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L1.5 - Open Office Wrap Up.notebook",
+          "filename": "3M M1L1.5 - Open Office Wrap Up.notebook",
+          "extension": "notebook",
+          "size_bytes": 1682850,
+          "size_human": "1.6 MB",
+          "lesson_code": "M1L1.5",
+          "variant": "teacher",
+          "title": "Open Office Wrap Up"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L1.5 - Open Office Wrap Up.pdf",
+          "filename": "3M M1L1.5 - Open Office Wrap Up.pdf",
+          "extension": "pdf",
+          "size_bytes": 1814194,
+          "size_human": "1.7 MB",
+          "lesson_code": "M1L1.5",
+          "variant": null,
+          "title": "Open Office Wrap Up"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L2 - Transformations of Quadratics (student).notebook",
+          "filename": "3M M1L2 - Transformations of Quadratics (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 2921854,
+          "size_human": "2.8 MB",
+          "lesson_code": "M1L2",
+          "variant": "student",
+          "title": "Transformations of Quadratics"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L2 - Transformations of Quadratics.notebook",
+          "filename": "3M M1L2 - Transformations of Quadratics.notebook",
+          "extension": "notebook",
+          "size_bytes": 2759635,
+          "size_human": "2.6 MB",
+          "lesson_code": "M1L2",
+          "variant": "teacher",
+          "title": "Transformations of Quadratics"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L2 - Transformations of Quadratics.pdf",
+          "filename": "3M M1L2 - Transformations of Quadratics.pdf",
+          "extension": "pdf",
+          "size_bytes": 3522032,
+          "size_human": "3.4 MB",
+          "lesson_code": "M1L2",
+          "variant": null,
+          "title": "Transformations of Quadratics"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L4 - Quadratic Domain & Range (student).notebook",
+          "filename": "3M M1L4 - Quadratic Domain & Range (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 151671,
+          "size_human": "148.1 KB",
+          "lesson_code": "M1L4",
+          "variant": "student",
+          "title": "Quadratic Domain & Range"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L4 - Quadratic Domain & Range.notebook",
+          "filename": "3M M1L4 - Quadratic Domain & Range.notebook",
+          "extension": "notebook",
+          "size_bytes": 3096771,
+          "size_human": "3.0 MB",
+          "lesson_code": "M1L4",
+          "variant": "teacher",
+          "title": "Quadratic Domain & Range"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/3M M1L4 - Quadratic Domain & Range.pdf",
+          "filename": "3M M1L4 - Quadratic Domain & Range.pdf",
+          "extension": "pdf",
+          "size_bytes": 4219067,
+          "size_human": "4.0 MB",
+          "lesson_code": "M1L4",
+          "variant": null,
+          "title": "Quadratic Domain & Range"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/M1L3 BO1.png",
+          "filename": "M1L3 BO1.png",
+          "extension": "png",
+          "size_bytes": 212423,
+          "size_human": "207.4 KB",
+          "lesson_code": "M1L3",
+          "variant": null,
+          "title": "M1L3 BO1"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/M1L3 BO2.png",
+          "filename": "M1L3 BO2.png",
+          "extension": "png",
+          "size_bytes": 212423,
+          "size_human": "207.4 KB",
+          "lesson_code": "M1L3",
+          "variant": null,
+          "title": "M1L3 BO2"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/M1L3 BO3.png",
+          "filename": "M1L3 BO3.png",
+          "extension": "png",
+          "size_bytes": 212423,
+          "size_human": "207.4 KB",
+          "lesson_code": "M1L3",
+          "variant": null,
+          "title": "M1L3 BO3"
+        },
+        {
+          "path": "Module 1 - Intro to the Quadratic Function/M1L3 BO4.png",
+          "filename": "M1L3 BO4.png",
+          "extension": "png",
+          "size_bytes": 212423,
+          "size_human": "207.4 KB",
+          "lesson_code": "M1L3",
+          "variant": null,
+          "title": "M1L3 BO4"
+        }
+      ]
+    },
+    "module-2": {
+      "folder": "Module 2 - Algebra of Quadratic Expressions",
+      "module_id": "module-2",
+      "module_number": 2,
+      "title": "Algebra of Quadratic Expressions",
+      "file_count": 7,
+      "size_bytes": 3075126,
+      "size_human": "2.9 MB",
+      "files": [
+        {
+          "path": "Module 2 - Algebra of Quadratic Expressions/3M M2L1 - Multiplying Polynomials (student).notebook",
+          "filename": "3M M2L1 - Multiplying Polynomials (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 1076820,
+          "size_human": "1.0 MB",
+          "lesson_code": "M2L1",
+          "variant": "student",
+          "title": "Multiplying Polynomials"
+        },
+        {
+          "path": "Module 2 - Algebra of Quadratic Expressions/3M M2L1 - Multiplying Polynomials.notebook",
+          "filename": "3M M2L1 - Multiplying Polynomials.notebook",
+          "extension": "notebook",
+          "size_bytes": 1197606,
+          "size_human": "1.1 MB",
+          "lesson_code": "M2L1",
+          "variant": "teacher",
+          "title": "Multiplying Polynomials"
+        },
+        {
+          "path": "Module 2 - Algebra of Quadratic Expressions/3M M2L2 - Trinomial Factoring (student).notebook",
+          "filename": "3M M2L2 - Trinomial Factoring (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 263870,
+          "size_human": "257.7 KB",
+          "lesson_code": "M2L2",
+          "variant": "student",
+          "title": "Trinomial Factoring"
+        },
+        {
+          "path": "Module 2 - Algebra of Quadratic Expressions/3M M2L2 - Trinomial Factoring.notebook",
+          "filename": "3M M2L2 - Trinomial Factoring.notebook",
+          "extension": "notebook",
+          "size_bytes": 27253,
+          "size_human": "26.6 KB",
+          "lesson_code": "M2L2",
+          "variant": "teacher",
+          "title": "Trinomial Factoring"
+        },
+        {
+          "path": "Module 2 - Algebra of Quadratic Expressions/3M M2L3 - Factoring Special Cases (student 2).notebook",
+          "filename": "3M M2L3 - Factoring Special Cases (student 2).notebook",
+          "extension": "notebook",
+          "size_bytes": 154129,
+          "size_human": "150.5 KB",
+          "lesson_code": "M2L3",
+          "variant": "student",
+          "title": "Factoring Special Cases"
+        },
+        {
+          "path": "Module 2 - Algebra of Quadratic Expressions/3M M2L3 - Factoring Special Cases (student).notebook",
+          "filename": "3M M2L3 - Factoring Special Cases (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 316719,
+          "size_human": "309.3 KB",
+          "lesson_code": "M2L3",
+          "variant": "student",
+          "title": "Factoring Special Cases"
+        },
+        {
+          "path": "Module 2 - Algebra of Quadratic Expressions/3M M2L3 - Factoring Special Cases.notebook",
+          "filename": "3M M2L3 - Factoring Special Cases.notebook",
+          "extension": "notebook",
+          "size_bytes": 38729,
+          "size_human": "37.8 KB",
+          "lesson_code": "M2L3",
+          "variant": "teacher",
+          "title": "Factoring Special Cases"
+        }
+      ]
+    },
+    "module-3": {
+      "folder": "Module 3 - Standard and Factored Form",
+      "module_id": "module-3",
+      "module_number": 3,
+      "title": "Standard and Factored Form",
+      "file_count": 10,
+      "size_bytes": 2153968,
+      "size_human": "2.1 MB",
+      "files": [
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L1 - Explore Quadratic Relationships (student).notebook",
+          "filename": "3M M3L1 - Explore Quadratic Relationships (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 350774,
+          "size_human": "342.6 KB",
+          "lesson_code": "M3L1",
+          "variant": "student",
+          "title": "Explore Quadratic Relationships"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L1 - Explore Quadratic Relationships.notebook",
+          "filename": "3M M3L1 - Explore Quadratic Relationships.notebook",
+          "extension": "notebook",
+          "size_bytes": 83554,
+          "size_human": "81.6 KB",
+          "lesson_code": "M3L1",
+          "variant": "teacher",
+          "title": "Explore Quadratic Relationships"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L2 - Solving by Factoring and Graphing (student).notebook",
+          "filename": "3M M3L2 - Solving by Factoring and Graphing (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 417103,
+          "size_human": "407.3 KB",
+          "lesson_code": "M3L2",
+          "variant": "student",
+          "title": "Solving by Factoring and Graphing"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L2 - Solving by Factoring and Graphing.notebook",
+          "filename": "3M M3L2 - Solving by Factoring and Graphing.notebook",
+          "extension": "notebook",
+          "size_bytes": 58993,
+          "size_human": "57.6 KB",
+          "lesson_code": "M3L2",
+          "variant": "teacher",
+          "title": "Solving by Factoring and Graphing"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L3 - Solving Application Problems.notebook",
+          "filename": "3M M3L3 - Solving Application Problems.notebook",
+          "extension": "notebook",
+          "size_bytes": 331908,
+          "size_human": "324.1 KB",
+          "lesson_code": "M3L3",
+          "variant": "teacher",
+          "title": "Solving Application Problems"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L3 - Solving Application Problems.notebook(1)",
+          "filename": "3M M3L3 - Solving Application Problems.notebook(1)",
+          "extension": "notebook(1)",
+          "size_bytes": 291670,
+          "size_human": "284.8 KB",
+          "lesson_code": "M3L3",
+          "variant": null,
+          "title": "Solving Application Problems"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L4 - Creating Models & Applications (student).notebook",
+          "filename": "3M M3L4 - Creating Models & Applications (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 251450,
+          "size_human": "245.6 KB",
+          "lesson_code": "M3L4",
+          "variant": "student",
+          "title": "Creating Models & Applications"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L4 - Creating Models & Applications.notebook",
+          "filename": "3M M3L4 - Creating Models & Applications.notebook",
+          "extension": "notebook",
+          "size_bytes": 147602,
+          "size_human": "144.1 KB",
+          "lesson_code": "M3L4",
+          "variant": "teacher",
+          "title": "Creating Models & Applications"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/3M M3L4 - Quadratic Models from Data.notebook",
+          "filename": "3M M3L4 - Quadratic Models from Data.notebook",
+          "extension": "notebook",
+          "size_bytes": 207256,
+          "size_human": "202.4 KB",
+          "lesson_code": "M3L4",
+          "variant": "teacher",
+          "title": "Quadratic Models from Data"
+        },
+        {
+          "path": "Module 3 - Standard and Factored Form/MCF3M M3 Math Portfolio Assignment_.docx",
+          "filename": "MCF3M M3 Math Portfolio Assignment_.docx",
+          "extension": "docx",
+          "size_bytes": 13658,
+          "size_human": "13.3 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "MCF3M M3 Math Portfolio Assignment_"
+        }
+      ]
+    },
+    "module-4": {
+      "folder": "Module 4 - Standard and Vertex Form",
+      "module_id": "module-4",
+      "module_number": 4,
+      "title": "Standard and Vertex Form",
+      "file_count": 7,
+      "size_bytes": 3400924,
+      "size_human": "3.2 MB",
+      "files": [
+        {
+          "path": "Module 4 - Standard and Vertex Form/3M M4L1 - Completing the Square (student).notebook",
+          "filename": "3M M4L1 - Completing the Square (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 231259,
+          "size_human": "225.8 KB",
+          "lesson_code": "M4L1",
+          "variant": "student",
+          "title": "Completing the Square"
+        },
+        {
+          "path": "Module 4 - Standard and Vertex Form/3M M4L1 - Completing the Square.notebook",
+          "filename": "3M M4L1 - Completing the Square.notebook",
+          "extension": "notebook",
+          "size_bytes": 24659,
+          "size_human": "24.1 KB",
+          "lesson_code": "M4L1",
+          "variant": "teacher",
+          "title": "Completing the Square"
+        },
+        {
+          "path": "Module 4 - Standard and Vertex Form/3M M4L2 - The Quadratic Formula & Discriminant (student).notebook",
+          "filename": "3M M4L2 - The Quadratic Formula & Discriminant (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 1109795,
+          "size_human": "1.1 MB",
+          "lesson_code": "M4L2",
+          "variant": "student",
+          "title": "The Quadratic Formula & Discriminant"
+        },
+        {
+          "path": "Module 4 - Standard and Vertex Form/3M M4L2 - The Quadratic Formula & Discriminant.notebook",
+          "filename": "3M M4L2 - The Quadratic Formula & Discriminant.notebook",
+          "extension": "notebook",
+          "size_bytes": 864764,
+          "size_human": "844.5 KB",
+          "lesson_code": "M4L2",
+          "variant": "teacher",
+          "title": "The Quadratic Formula & Discriminant"
+        },
+        {
+          "path": "Module 4 - Standard and Vertex Form/3M M4L3 - Using a Strategy to Solve a Quadratic Problem (student).notebook",
+          "filename": "3M M4L3 - Using a Strategy to Solve a Quadratic Problem (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 281190,
+          "size_human": "274.6 KB",
+          "lesson_code": "M4L3",
+          "variant": "student",
+          "title": "Using a Strategy to Solve a Quadratic Problem"
+        },
+        {
+          "path": "Module 4 - Standard and Vertex Form/3M M4L3 - Using a Strategy to Solve a Quadratic Problem.notebook",
+          "filename": "3M M4L3 - Using a Strategy to Solve a Quadratic Problem.notebook",
+          "extension": "notebook",
+          "size_bytes": 46770,
+          "size_human": "45.7 KB",
+          "lesson_code": "M4L3",
+          "variant": "teacher",
+          "title": "Using a Strategy to Solve a Quadratic Problem"
+        },
+        {
+          "path": "Module 4 - Standard and Vertex Form/3M M4L3 - Using a Strategy to Solve a Quadratic Problem.pdf",
+          "filename": "3M M4L3 - Using a Strategy to Solve a Quadratic Problem.pdf",
+          "extension": "pdf",
+          "size_bytes": 842487,
+          "size_human": "822.7 KB",
+          "lesson_code": "M4L3",
+          "variant": null,
+          "title": "Using a Strategy to Solve a Quadratic Problem"
+        }
+      ]
+    },
+    "module-5": {
+      "folder": "Module 5 - Trigonometry",
+      "module_id": "module-5",
+      "module_number": 5,
+      "title": "Trigonometry",
+      "file_count": 8,
+      "size_bytes": 3433009,
+      "size_human": "3.3 MB",
+      "files": [
+        {
+          "path": "Module 5 - Trigonometry/Lesson 1 - Right Angle Trigonometry (student).notebook",
+          "filename": "Lesson 1 - Right Angle Trigonometry (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 268618,
+          "size_human": "262.3 KB",
+          "lesson_code": null,
+          "variant": "student",
+          "title": "Right Angle Trigonometry"
+        },
+        {
+          "path": "Module 5 - Trigonometry/Lesson 1 - Right Angle Trigonometry.notebook",
+          "filename": "Lesson 1 - Right Angle Trigonometry.notebook",
+          "extension": "notebook",
+          "size_bytes": 129715,
+          "size_human": "126.7 KB",
+          "lesson_code": null,
+          "variant": "teacher",
+          "title": "Right Angle Trigonometry"
+        },
+        {
+          "path": "Module 5 - Trigonometry/Lesson 1 - Right Angle Trigonometry.pdf",
+          "filename": "Lesson 1 - Right Angle Trigonometry.pdf",
+          "extension": "pdf",
+          "size_bytes": 366947,
+          "size_human": "358.3 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "Right Angle Trigonometry"
+        },
+        {
+          "path": "Module 5 - Trigonometry/Lesson 2 - Sine & Cosine Law (student).notebook",
+          "filename": "Lesson 2 - Sine & Cosine Law (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 516923,
+          "size_human": "504.8 KB",
+          "lesson_code": null,
+          "variant": "student",
+          "title": "Sine & Cosine Law"
+        },
+        {
+          "path": "Module 5 - Trigonometry/Lesson 2 - Sine & Cosine Law.notebook",
+          "filename": "Lesson 2 - Sine & Cosine Law.notebook",
+          "extension": "notebook",
+          "size_bytes": 307495,
+          "size_human": "300.3 KB",
+          "lesson_code": null,
+          "variant": "teacher",
+          "title": "Sine & Cosine Law"
+        },
+        {
+          "path": "Module 5 - Trigonometry/Lesson 2 - Sine & Cosine Law.pdf",
+          "filename": "Lesson 2 - Sine & Cosine Law.pdf",
+          "extension": "pdf",
+          "size_bytes": 761505,
+          "size_human": "743.7 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "Sine & Cosine Law"
+        },
+        {
+          "path": "Module 5 - Trigonometry/Lesson 2.5 Word Problems Student.notebook",
+          "filename": "Lesson 2.5 Word Problems Student.notebook",
+          "extension": "notebook",
+          "size_bytes": 1066981,
+          "size_human": "1.0 MB",
+          "lesson_code": null,
+          "variant": "teacher",
+          "title": "Lesson 2.5 Word Problems Student"
+        },
+        {
+          "path": "Module 5 - Trigonometry/Lesson 2.5 Word Problems.notebook",
+          "filename": "Lesson 2.5 Word Problems.notebook",
+          "extension": "notebook",
+          "size_bytes": 14825,
+          "size_human": "14.5 KB",
+          "lesson_code": null,
+          "variant": "teacher",
+          "title": "Lesson 2.5 Word Problems"
+        }
+      ]
+    },
+    "module-6": {
+      "folder": "Module 6 - Sinusodial Functions",
+      "module_id": "module-6",
+      "module_number": 6,
+      "title": "Sinusodial Functions",
+      "file_count": 8,
+      "size_bytes": 11435254,
+      "size_human": "10.9 MB",
+      "files": [
+        {
+          "path": "Module 6 - Sinusodial Functions/3M Module 6 Lesson 0 - Explore Key Question (student).notebook",
+          "filename": "3M Module 6 Lesson 0 - Explore Key Question (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 1296509,
+          "size_human": "1.2 MB",
+          "lesson_code": "M6L0",
+          "variant": "student",
+          "title": "Explore Key Question"
+        },
+        {
+          "path": "Module 6 - Sinusodial Functions/3M Module 6 Lesson 0 - Explore Key Question.notebook",
+          "filename": "3M Module 6 Lesson 0 - Explore Key Question.notebook",
+          "extension": "notebook",
+          "size_bytes": 351430,
+          "size_human": "343.2 KB",
+          "lesson_code": "M6L0",
+          "variant": "teacher",
+          "title": "Explore Key Question"
+        },
+        {
+          "path": "Module 6 - Sinusodial Functions/3M Module 6 Lesson 1 - Periodic Functions (student).notebook",
+          "filename": "3M Module 6 Lesson 1 - Periodic Functions (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 1043509,
+          "size_human": "1019.1 KB",
+          "lesson_code": "M6L1",
+          "variant": "student",
+          "title": "Periodic Functions"
+        },
+        {
+          "path": "Module 6 - Sinusodial Functions/3M Module 6 Lesson 1 - Periodic Functions.notebook",
+          "filename": "3M Module 6 Lesson 1 - Periodic Functions.notebook",
+          "extension": "notebook",
+          "size_bytes": 4527035,
+          "size_human": "4.3 MB",
+          "lesson_code": "M6L1",
+          "variant": "teacher",
+          "title": "Periodic Functions"
+        },
+        {
+          "path": "Module 6 - Sinusodial Functions/3M Module 6 Lesson 2 - The Sine Function & Transformations (student).notebook",
+          "filename": "3M Module 6 Lesson 2 - The Sine Function & Transformations (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 2484277,
+          "size_human": "2.4 MB",
+          "lesson_code": "M6L2",
+          "variant": "student",
+          "title": "The Sine Function & Transformations"
+        },
+        {
+          "path": "Module 6 - Sinusodial Functions/3M Module 6 Lesson 2 - The Sine Function & Transformations.notebook",
+          "filename": "3M Module 6 Lesson 2 - The Sine Function & Transformations.notebook",
+          "extension": "notebook",
+          "size_bytes": 914592,
+          "size_human": "893.2 KB",
+          "lesson_code": "M6L2",
+          "variant": "teacher",
+          "title": "The Sine Function & Transformations"
+        },
+        {
+          "path": "Module 6 - Sinusodial Functions/3M Module 6 Lesson 3 - Applications of sinx (student).notebook",
+          "filename": "3M Module 6 Lesson 3 - Applications of sinx (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 681440,
+          "size_human": "665.5 KB",
+          "lesson_code": "M6L3",
+          "variant": "student",
+          "title": "Applications of sinx"
+        },
+        {
+          "path": "Module 6 - Sinusodial Functions/3M Module 6 Lesson 3 - Applications of sinx.notebook",
+          "filename": "3M Module 6 Lesson 3 - Applications of sinx.notebook",
+          "extension": "notebook",
+          "size_bytes": 136462,
+          "size_human": "133.3 KB",
+          "lesson_code": "M6L3",
+          "variant": "teacher",
+          "title": "Applications of sinx"
+        }
+      ]
+    },
+    "module-7": {
+      "folder": "Module 7 - Exponential Functions",
+      "module_id": "module-7",
+      "module_number": 7,
+      "title": "Exponential Functions",
+      "file_count": 12,
+      "size_bytes": 4667525,
+      "size_human": "4.5 MB",
+      "files": [
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 1 - Exponent Rules (student).notebook",
+          "filename": "3M Module 7 Lesson 1 - Exponent Rules (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 352360,
+          "size_human": "344.1 KB",
+          "lesson_code": "M7L1",
+          "variant": "student",
+          "title": "Exponent Rules"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 1 - Exponent Rules.notebook",
+          "filename": "3M Module 7 Lesson 1 - Exponent Rules.notebook",
+          "extension": "notebook",
+          "size_bytes": 309604,
+          "size_human": "302.3 KB",
+          "lesson_code": "M7L1",
+          "variant": "teacher",
+          "title": "Exponent Rules"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 2 - Rational Exponents (student).notebook",
+          "filename": "3M Module 7 Lesson 2 - Rational Exponents (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 293798,
+          "size_human": "286.9 KB",
+          "lesson_code": "M7L2",
+          "variant": "student",
+          "title": "Rational Exponents"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 2 - Rational Exponents.notebook",
+          "filename": "3M Module 7 Lesson 2 - Rational Exponents.notebook",
+          "extension": "notebook",
+          "size_bytes": 112572,
+          "size_human": "109.9 KB",
+          "lesson_code": "M7L2",
+          "variant": "teacher",
+          "title": "Rational Exponents"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 2.5 - Rational Exponents 2.notebook",
+          "filename": "3M Module 7 Lesson 2.5 - Rational Exponents 2.notebook",
+          "extension": "notebook",
+          "size_bytes": 769447,
+          "size_human": "751.4 KB",
+          "lesson_code": "M7L2.5",
+          "variant": "teacher",
+          "title": "Rational Exponents 2"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 3 - Exploring Exponential Functions (student).notebook",
+          "filename": "3M Module 7 Lesson 3 - Exploring Exponential Functions (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 832134,
+          "size_human": "812.6 KB",
+          "lesson_code": "M7L3",
+          "variant": "student",
+          "title": "Exploring Exponential Functions"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 3 - Exploring Exponential Functions.notebook",
+          "filename": "3M Module 7 Lesson 3 - Exploring Exponential Functions.notebook",
+          "extension": "notebook",
+          "size_bytes": 713591,
+          "size_human": "696.9 KB",
+          "lesson_code": "M7L3",
+          "variant": "teacher",
+          "title": "Exploring Exponential Functions"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 4 - Applications of Exponential Functions (student).notebook",
+          "filename": "3M Module 7 Lesson 4 - Applications of Exponential Functions (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 745063,
+          "size_human": "727.6 KB",
+          "lesson_code": "M7L4",
+          "variant": "student",
+          "title": "Applications of Exponential Functions"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/3M Module 7 Lesson 4 - Applications of Exponential Functions.notebook",
+          "filename": "3M Module 7 Lesson 4 - Applications of Exponential Functions.notebook",
+          "extension": "notebook",
+          "size_bytes": 415814,
+          "size_human": "406.1 KB",
+          "lesson_code": "M7L4",
+          "variant": "teacher",
+          "title": "Applications of Exponential Functions"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/M6L2 - Breakout 1.png",
+          "filename": "M6L2 - Breakout 1.png",
+          "extension": "png",
+          "size_bytes": 59230,
+          "size_human": "57.8 KB",
+          "lesson_code": "M6L2",
+          "variant": null,
+          "title": "Breakout 1"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/M6L2 - Breakout 2.png",
+          "filename": "M6L2 - Breakout 2.png",
+          "extension": "png",
+          "size_bytes": 59230,
+          "size_human": "57.8 KB",
+          "lesson_code": "M6L2",
+          "variant": null,
+          "title": "Breakout 2"
+        },
+        {
+          "path": "Module 7 - Exponential Functions/Personal Finance Questions (Responses).xlsx",
+          "filename": "Personal Finance Questions (Responses).xlsx",
+          "extension": "xlsx",
+          "size_bytes": 4682,
+          "size_human": "4.6 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "Personal Finance Questions (Responses)"
+        }
+      ]
+    },
+    "module-8": {
+      "folder": "Module 8 - Finance",
+      "module_id": "module-8",
+      "module_number": 8,
+      "title": "Finance",
+      "file_count": 19,
+      "size_bytes": 3901835,
+      "size_human": "3.7 MB",
+      "files": [
+        {
+          "path": "Module 8 - Finance/3M M8L1 - Simple & Compound Interest (student).notebook",
+          "filename": "3M M8L1 - Simple & Compound Interest (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 182764,
+          "size_human": "178.5 KB",
+          "lesson_code": "M8L1",
+          "variant": "student",
+          "title": "Simple & Compound Interest"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L1 - Simple & Compound Interest.notebook",
+          "filename": "3M M8L1 - Simple & Compound Interest.notebook",
+          "extension": "notebook",
+          "size_bytes": 65742,
+          "size_human": "64.2 KB",
+          "lesson_code": "M8L1",
+          "variant": "teacher",
+          "title": "Simple & Compound Interest"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L2 - Annuities (student).notebook",
+          "filename": "3M M8L2 - Annuities (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 541964,
+          "size_human": "529.3 KB",
+          "lesson_code": "M8L2",
+          "variant": "student",
+          "title": "Annuities"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L2 - Annuities.notebook",
+          "filename": "3M M8L2 - Annuities.notebook",
+          "extension": "notebook",
+          "size_bytes": 185746,
+          "size_human": "181.4 KB",
+          "lesson_code": "M8L2",
+          "variant": "teacher",
+          "title": "Annuities"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L3 - Annuities & TVM Solver (student).notebook",
+          "filename": "3M M8L3 - Annuities & TVM Solver (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 288237,
+          "size_human": "281.5 KB",
+          "lesson_code": "M8L3",
+          "variant": "student",
+          "title": "Annuities & TVM Solver"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L3 - Annuities & TVM Solver.notebook",
+          "filename": "3M M8L3 - Annuities & TVM Solver.notebook",
+          "extension": "notebook",
+          "size_bytes": 154614,
+          "size_human": "151.0 KB",
+          "lesson_code": "M8L3",
+          "variant": "teacher",
+          "title": "Annuities & TVM Solver"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L4 - Comparing Saving and Investing Methods (student).notebook",
+          "filename": "3M M8L4 - Comparing Saving and Investing Methods (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 458716,
+          "size_human": "448.0 KB",
+          "lesson_code": "M8L4",
+          "variant": "student",
+          "title": "Comparing Saving and Investing Methods"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L4 - Comparing Saving and Investing Methods.notebook",
+          "filename": "3M M8L4 - Comparing Saving and Investing Methods.notebook",
+          "extension": "notebook",
+          "size_bytes": 361431,
+          "size_human": "353.0 KB",
+          "lesson_code": "M8L4",
+          "variant": "teacher",
+          "title": "Comparing Saving and Investing Methods"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L5 - Credit Cards & Credit Score (student).notebook",
+          "filename": "3M M8L5 - Credit Cards & Credit Score (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 422583,
+          "size_human": "412.7 KB",
+          "lesson_code": "M8L5",
+          "variant": "student",
+          "title": "Credit Cards & Credit Score"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L5 - Credit Cards & Credit Score.notebook",
+          "filename": "3M M8L5 - Credit Cards & Credit Score.notebook",
+          "extension": "notebook",
+          "size_bytes": 421450,
+          "size_human": "411.6 KB",
+          "lesson_code": "M8L5",
+          "variant": "teacher",
+          "title": "Credit Cards & Credit Score"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L6 - The Cost of Making Money (student).notebook",
+          "filename": "3M M8L6 - The Cost of Making Money (student).notebook",
+          "extension": "notebook",
+          "size_bytes": 38511,
+          "size_human": "37.6 KB",
+          "lesson_code": "M8L6",
+          "variant": "student",
+          "title": "The Cost of Making Money"
+        },
+        {
+          "path": "Module 8 - Finance/3M M8L6 - The Cost of Making Money.notebook",
+          "filename": "3M M8L6 - The Cost of Making Money.notebook",
+          "extension": "notebook",
+          "size_bytes": 31255,
+          "size_human": "30.5 KB",
+          "lesson_code": "M8L6",
+          "variant": "teacher",
+          "title": "The Cost of Making Money"
+        },
+        {
+          "path": "Module 8 - Finance/M8C5 Instructions.png",
+          "filename": "M8C5 Instructions.png",
+          "extension": "png",
+          "size_bytes": 132791,
+          "size_human": "129.7 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "M8C5 Instructions"
+        },
+        {
+          "path": "Module 8 - Finance/M8C6 1.png",
+          "filename": "M8C6 1.png",
+          "extension": "png",
+          "size_bytes": 94089,
+          "size_human": "91.9 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "M8C6 1"
+        },
+        {
+          "path": "Module 8 - Finance/M8C6 2.png",
+          "filename": "M8C6 2.png",
+          "extension": "png",
+          "size_bytes": 94089,
+          "size_human": "91.9 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "M8C6 2"
+        },
+        {
+          "path": "Module 8 - Finance/M8C6 3.png",
+          "filename": "M8C6 3.png",
+          "extension": "png",
+          "size_bytes": 94089,
+          "size_human": "91.9 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "M8C6 3"
+        },
+        {
+          "path": "Module 8 - Finance/M8C6 BANKS.png",
+          "filename": "M8C6 BANKS.png",
+          "extension": "png",
+          "size_bytes": 110660,
+          "size_human": "108.1 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "M8C6 BANKS"
+        },
+        {
+          "path": "Module 8 - Finance/M8C6 CC.png",
+          "filename": "M8C6 CC.png",
+          "extension": "png",
+          "size_bytes": 125896,
+          "size_human": "122.9 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "M8C6 CC"
+        },
+        {
+          "path": "Module 8 - Finance/M8C6 STOCKS.png",
+          "filename": "M8C6 STOCKS.png",
+          "extension": "png",
+          "size_bytes": 97208,
+          "size_human": "94.9 KB",
+          "lesson_code": null,
+          "variant": null,
+          "title": "M8C6 STOCKS"
+        }
+      ]
+    }
+  }
+}

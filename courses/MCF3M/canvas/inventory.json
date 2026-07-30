@@ -1,0 +1,2360 @@
+{
+  "generated_at": "2026-07-30T15:08:08Z",
+  "source": "unpacked",
+  "imscc_path": "courses/MCF3M/sources/mcf3m-canvas-export.imscc",
+  "unpacked_path": "courses/MCF3M/canvas/unpacked",
+  "course": {
+    "title": "Functions and Applications, Grade 11, University/College Preparation",
+    "course_code": "MCF3M-SM",
+    "identifier": "gfe3112a0210b7a19919da29c58642786"
+  },
+  "manifest": {
+    "schema": "IMS Common Cartridge",
+    "schemaversion": "1.1.0",
+    "manifest_identifier": "g1d6ad7559f2f6fa2dde2126414395f99",
+    "title": "Functions and Applications, Grade 11, University/College Preparation",
+    "export_date": "2026-07-13"
+  },
+  "counts": {
+    "modules": 12,
+    "module_items": 102,
+    "wiki_pages": 111,
+    "assignments": 14,
+    "quizzes": 32,
+    "manifest_resources": 844,
+    "files": 899,
+    "content_types": {
+      "WikiPage": 71,
+      "Attachment": 1,
+      "ContextModuleSubHeader": 2,
+      "Quizzes::Quiz": 20,
+      "DiscussionTopic": 1,
+      "Assignment": 7
+    }
+  },
+  "files": {
+    "total_files": 899,
+    "top_level": {
+      "web_resources": 372,
+      "lti_resource_links": 121,
+      "wiki_content": 111,
+      "non_cc_assessments": 105,
+      "course_settings": 11,
+      "g0bc4b897f480d855c2ac1165d89a2462": 2,
+      "g15bafe74afcba5624bb6aa77f9ec51d3": 2,
+      "g179f8c8cc4858ee96a143392f6b3854f": 2,
+      "g21c91a36a1eb532c64ed8b362d35529c": 2,
+      "g261b23df8172f3e9389b9e537a318413": 2,
+      "g2695f04211d27ddca69908f3b57a47f0": 2,
+      "g27243d0c6be877831dfabd71426388e4": 2,
+      "g2a083daa442f79822426db83307e2e24": 2,
+      "g317262047924687fb3eb8e59dd573ac8": 2,
+      "g32b5fabde871662c5e70fc0ce07aa7bc": 2,
+      "g35f6cc6fd2a78d9b95ed942239779773": 2,
+      "g367900f4dc4bffa16d7204258fc0499d": 2,
+      "g3bb89480630e59b99868d7a2cc7834d3": 2,
+      "g500f634738e7201df1b09d5ea2feca11": 2,
+      "g5208f55a9f4487d15ae886ed5efb34f5": 2,
+      "g52b3c38840f03e80ee1608e376777a4f": 2,
+      "g5902c965b742ef57dab97e62633eaa5f": 2,
+      "g5ae4f5645b86efcd3dc1dcc86d298224": 2,
+      "g68c7ddd2ba58c0cceb69e498b8eedc41": 2,
+      "g6ddd28e96a570152af1a7b965af654eb": 2,
+      "g6f59361a14ce3bb869e8067ce2ff6259": 2,
+      "g71a6fedc1700029419fb748bb0d6fa62": 2,
+      "g72f842c8d7865d1426bc8b018c9b4aa1": 2,
+      "g832164204bc8a8613d574ab276c07a99": 2,
+      "g8c75a868c0fa649449c84738f2a31683": 2,
+      "g8f266617a6ba47185a5501b209cdc216": 2,
+      "g926b03dc6385d479119bd0efd345b76b": 2,
+      "g93320e730aeb5dbaabfcfba96ba5978c": 2,
+      "g9b4a32fd6e287c153ff3dacfb052bd92": 2,
+      "g9fc25aee4ca17f0e8707c319d9a62bdd": 2,
+      "ga18bd212363f69d4d060b1d838ea77b8": 2,
+      "ga788bf16731116a79e9df9f860bd043d": 2,
+      "gaa1160505872fea650e096906a9e9d67": 2,
+      "gad9c523ecb4d7563c8ab83eb36855709": 2,
+      "gadd516963856b873838f189a242b4756": 2,
+      "gb76447175b9354f79ec13030ec85f5cf": 2,
+      "gbc4f632fec134aaf4813f8a73e5ad30b": 2,
+      "gbd6b3843b9d5ef0fa79c84bd58bd3f79": 2,
+      "gbff8ffd6547a72b97a162320e49aca47": 2,
+      "gcdd919bebe2c93143e41fb005cfc0e95": 2,
+      "gcf812d7291e0e105e70afccd57dbf391": 2,
+      "gd7b363bdddcc9cb8c6bc08c61da42df4": 2,
+      "ge6ffa7c91b85b226599d03c73d94bf04": 2,
+      "geeab86220e782a3604f2e435eba68a99": 2,
+      "gf0ebbcc6e554da177f6156b0ee9645ff": 2,
+      "gfe3ce2fbf7a81d4d81236834e94fcf08": 2,
+      "g0104e3a9ade487025716a4a11acf4c0a.xml": 1,
+      "g06a242fe7f8beb4509d91f022e525469.xml": 1,
+      "g0a93f7d3a50ee9c063320023e52e05ad.xml": 1,
+      "g0b9e32ead5b1d2eeaa9403e733b4b2bb.xml": 1,
+      "g0e460de0e7d6f63e0bb7f7c020b25de0.xml": 1,
+      "g0fcafcb8f921ff51386cb6577540153d.xml": 1,
+      "g11b60b37d294392f6654d9821fc49b00.xml": 1,
+      "g177819511236f5fdaa8e9858c99d1698.xml": 1,
+      "g17a87ebd0a4fa4fdd8d3b04fe8ead447.xml": 1,
+      "g1a443d3d1fc4522544e6ba4c764eae2d.xml": 1,
+      "g209f331a35bd97f449ba90617db523ac.xml": 1,
+      "g21f422c954777e19bbe3195914f4a64d.xml": 1,
+      "g223ef9fdb396f0913ca017952746586d.xml": 1,
+      "g26dacd5ad6b1e94633bf62026ac60517.xml": 1,
+      "g27a50674a466a5b6242352a6aed27a5f.xml": 1,
+      "g28f121292631e6d332a81bef20a2a9c0.xml": 1,
+      "g2d5673e44cbb88bda9dd820ecd0e8dae.xml": 1,
+      "g387ef5dfc393837f9e4271f011c679d0.xml": 1,
+      "g38b45f3190a455d3444020bd407fc359.xml": 1,
+      "g39b15afe325fff7e56e08d0fd0c14066.xml": 1,
+      "g3b428824ff7f4b82a1fc9781ff5e67a3.xml": 1,
+      "g3cf28fc07d2b3b42deda1cb785f1db91.xml": 1,
+      "g405ed2fedbf25c16d40c151e9958979e.xml": 1,
+      "g4159c10385e9f6b778e0b4ef520b199e.xml": 1,
+      "g4582f1ad9f2630371dcd05ef9e507063.xml": 1,
+      "g4907f0aaf361308e8b13a63e3a013c26.xml": 1,
+      "g49dc063fb8a2fa6bda1549394ad3de54.xml": 1,
+      "g4e1f002df1cfff7d7dcc406894fc640f.xml": 1,
+      "g4fef80073e93b8d9a31031ebe36e3cc2.xml": 1,
+      "g5240726653f254ee353845dda560fbf6.xml": 1,
+      "g55cc917f88690bda2269e3103a2f452a.xml": 1,
+      "g5977a3ba93fdc2cd1f73e888ae5b7df9.xml": 1,
+      "g5b270efa4d0b54d037e4c0df64645055.xml": 1,
+      "g5e61315cac7055dcc4668db373f0d307.xml": 1,
+      "g5fef895d3baf84ec12a4778f0e4976ad.xml": 1,
+      "g627a13b6aef904c5831184e3c151b940.xml": 1,
+      "g641a9f79438a086541e2d7582b6da385.xml": 1,
+      "g65a05b2b00018e8e0c7fabe88c6d5826.xml": 1,
+      "g6c90fb008b8e4015a911516534df78e2.xml": 1,
+      "g710fcb969d8a45c427573517d5b9421e.xml": 1,
+      "g7285a99713f79e248475fabddb3d23ba.xml": 1,
+      "g7c3cd50775b0504ad2784a29a3d8b9ca.xml": 1,
+      "g7cc056142a114dcde55673c06dfd42ec.xml": 1,
+      "g7d871c8ec8352916e521bcdfa073d613.xml": 1,
+      "g7df97b956a8bcf55cd33e0e86099e952.xml": 1,
+      "g8840e7eb1cc224d69c404c6b0431335d.xml": 1,
+      "g8b6c0f13f10a0a3ba21402388a110dc6.xml": 1,
+      "g906f782930db1fbe2b7382d75c7353bc.xml": 1,
+      "g92da9edf835c23b167ccbdb614e172c2.xml": 1,
+      "g95cd159379d352922f5f8140c1eaf5b5.xml": 1,
+      "g9a1750270fabb24bba3140adc57a59b0.xml": 1,
+      "g9ac80309c5415394b699cdde719f6142.xml": 1,
+      "g9ae0781bcbbf6a9a08b48844ba3eab73.xml": 1,
+      "g9ae65f525b648156885d3aa53a545545.xml": 1,
+      "g9aee4ad584d838bac7679f7b6f6746f6.xml": 1,
+      "g9e3291d9a7e7ffeeff4ae193894cfb66.xml": 1,
+      "g9f0436fdcfb2feb7e2332b179b3c8e11.xml": 1,
+      "ga14064bb411890a0ad5b269c316b998b.xml": 1,
+      "gae44c4dd134357ee999f8980bb687d69.xml": 1,
+      "gaeaad6fa82ab721a7e494b23b68d971a.xml": 1,
+      "gb1200eac3f75841329c70308ccda4799.xml": 1,
+      "gb4681b110b85d0db57c9c1bf0c70cc85.xml": 1,
+      "gba721c795d0fa1922bc4f4c89a83f318.xml": 1,
+      "gbb09867810aed2a5c6ffc882572f906d.xml": 1,
+      "gbbeec09533f6bc094b24356b8fbcf475.xml": 1,
+      "gbd2f557d8e8ad876de080c73641ef4e5.xml": 1,
+      "gbdd37ba3222e8d3de89fbfef103df185.xml": 1,
+      "gc9427e3940de0c27ecc499dcf0fd5f74.xml": 1,
+      "gc96f7ab2832563a5696335fd462dd96d.xml": 1,
+      "gcba5662eaa902a768c4b90cd849ad2c7.xml": 1,
+      "gcc1f3013d6f80c49ac3d1bcf5cb2f7a5.xml": 1,
+      "gcee354f92bff83696cf4f77ecd1a0167.xml": 1,
+      "gd118c6208c5260b71352627372163b99.xml": 1,
+      "gd1ce6405cf28f9ef3c7d6f34b9872866.xml": 1,
+      "gd588340dea21ed536801fdd6e99e8f33.xml": 1,
+      "gd80956513c471d4142a7e45fb57e3205.xml": 1,
+      "gd94652d0de5a425888c0def67a1d8b78.xml": 1,
+      "gd9fc8beb051c04f45fedfedee5ce9528.xml": 1,
+      "gdb9eb890188cd168d91666c373583db4.xml": 1,
+      "ge22b2252c84d40f157ff7b1c20db684b.xml": 1,
+      "ge669908dd4cde9d0473912dbdd6762c8.xml": 1,
+      "gef43bf56773813e192b299ff872cb499.xml": 1,
+      "gf0774795e12a05242e117d71d1ba17b8.xml": 1,
+      "gf40da587969b1d9d44aa076b3ea7d897.xml": 1,
+      "gf7b18eab1bd506100231356102a6666f.xml": 1,
+      "gffdec7865aa024adb5f630f6340278d4.xml": 1,
+      "imsmanifest.xml": 1
+    },
+    "wiki_html_count": 111,
+    "web_resources_count": 372,
+    "lti_count": 121,
+    "non_cc_assessments_count": 105
+  },
+  "modules": [
+    {
+      "identifier": "g8a704dce20f9e25e7fdf522524df3d75",
+      "title": "Module 0: Introduction to MCF3M",
+      "workflow_state": "unpublished",
+      "position": 1,
+      "require_sequential_progress": true,
+      "item_count": 13,
+      "items": [
+        {
+          "identifier": "g3e1181bd83760c51663f4c339016f5b6",
+          "title": "Welcome to MCF3M!",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "g4443faf436d533889976e6dc6a88560e",
+          "href": "wiki_content/welcome-to-mcf3m.html"
+        },
+        {
+          "identifier": "g176ad0a53780c4c517e68cae75806d9a",
+          "title": "Success Strategies for Online Learning",
+          "content_type": "Attachment",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gee51f27d95db0aab3b6b8c857b4bfbe9",
+          "href": "web_resources/Success Strategies for Online Learning (1).pdf"
+        },
+        {
+          "identifier": "g5ce5028cbb98c985faac3a5c234ea338",
+          "title": "Learn First, Practice Next",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 3,
+          "indent": 0,
+          "identifierref": "g8aeb9e10024f4dee60c9c4d9c9412d23",
+          "href": "wiki_content/learn-first-practice-next.html"
+        },
+        {
+          "identifier": "g162ab2b03c6041f0e0f3d94b5bccca49",
+          "title": "Learning Skills",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 4,
+          "indent": 0,
+          "identifierref": "g772b6a6109a813e89de760a6bd394753",
+          "href": "wiki_content/learning-skills.html"
+        },
+        {
+          "identifier": "g5423a57b002ec0ad18543023ac9469ec",
+          "title": "Math Online - How will this work?",
+          "content_type": "ContextModuleSubHeader",
+          "workflow_state": "active",
+          "position": 5,
+          "indent": 0,
+          "identifierref": null,
+          "href": null
+        },
+        {
+          "identifier": "gcbe1cde8c7b1af073a8d6f03498c0442",
+          "title": "Writing/Typing Math Online",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 6,
+          "indent": 0,
+          "identifierref": "gdaab1386e9b4ecb9b5431d58641336c7",
+          "href": "wiki_content/writing-slash-typing-math-online.html"
+        },
+        {
+          "identifier": "g6635052b65355f4f52bb96654b587813",
+          "title": "Create Account: Textbook",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 7,
+          "indent": 0,
+          "identifierref": "ga9fc1f58f4784b4245a936839e15527d",
+          "href": "wiki_content/create-account-textbook.html"
+        },
+        {
+          "identifier": "g079ceb053049d5d21cc650c0699b50d8",
+          "title": "Checkpoint: Course Outline",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 8,
+          "indent": 1,
+          "identifierref": "g179f8c8cc4858ee96a143392f6b3854f",
+          "href": null
+        },
+        {
+          "identifier": "gcfa18a6da4bc927ec524e4d562bdf16b",
+          "title": "Honorlock Camera Setup for Tests",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 9,
+          "indent": 0,
+          "identifierref": "g1599ca8a70a5b93e2ec4d4e2b250d744",
+          "href": "wiki_content/honorlock-camera-setup-for-tests.html"
+        },
+        {
+          "identifier": "g77b837cc5db5585bb525fa3101faa0f2",
+          "title": "Understanding Honorlock Requirements Quiz",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 10,
+          "indent": 1,
+          "identifierref": "g9fc25aee4ca17f0e8707c319d9a62bdd",
+          "href": null
+        },
+        {
+          "identifier": "gd2422ec129d1364f94f00005e8b8eea4",
+          "title": "More About You",
+          "content_type": "ContextModuleSubHeader",
+          "workflow_state": "active",
+          "position": 11,
+          "indent": 0,
+          "identifierref": null,
+          "href": null
+        },
+        {
+          "identifier": "g5d5dab4e59c5e1a1990455a56c32c17a",
+          "title": "Introduce Yourself to the Class",
+          "content_type": "DiscussionTopic",
+          "workflow_state": "active",
+          "position": 12,
+          "indent": 1,
+          "identifierref": "g11b60b37d294392f6654d9821fc49b00",
+          "href": null
+        },
+        {
+          "identifier": "g3f0f68be1d38e56a3052018babfca793",
+          "title": "Test",
+          "content_type": "WikiPage",
+          "workflow_state": "unpublished",
+          "position": 13,
+          "indent": 0,
+          "identifierref": "g55c4d2f387173745063e7fb5c05dd0d9",
+          "href": "wiki_content/test.html"
+        }
+      ]
+    },
+    {
+      "identifier": "gb21cd3447c76b3abff43e48205816c53",
+      "title": "Module 1: Introduction to the Quadratic Function",
+      "workflow_state": "active",
+      "position": 2,
+      "require_sequential_progress": false,
+      "item_count": 16,
+      "items": [
+        {
+          "identifier": "g6d0c02471efdd79f580ab7a273784e46",
+          "title": "Learning Goals",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "gfa3060ec1a1b862c45bad018d538c56d",
+          "href": "wiki_content/learning-goals.html"
+        },
+        {
+          "identifier": "ga734e3e8be1935b185e692c94f4e4d77",
+          "title": "M1C1 Live Class Notes",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 1,
+          "identifierref": "g69822e17a7c8065812b1629b5ef831ed",
+          "href": "wiki_content/m1c1-live-class-notes.html"
+        },
+        {
+          "identifier": "gb9acc521298968499b00894fc4eeff64",
+          "title": "Lesson 1: Characteristics of a Function",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 3,
+          "indent": 0,
+          "identifierref": "ga2a5f45db1e4efba420697ac3fb8cf0f",
+          "href": "wiki_content/lesson-1-characteristics-of-a-function.html"
+        },
+        {
+          "identifier": "gc0ae790ddded166ef9eab84e1e6e3cd8",
+          "title": "Lesson 2: Comparing Rates of Change in Linear & Quadratic Functions",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 4,
+          "indent": 0,
+          "identifierref": "g93922e5ddf1921b83eacd3ac334a9fcc",
+          "href": "wiki_content/lesson-2-comparing-rates-of-change-in-linear-and-quadratic-functions.html"
+        },
+        {
+          "identifier": "g371b3ef6da27c78421eeb3a9df7b9594",
+          "title": "Lesson 3: Function Notation",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 5,
+          "indent": 0,
+          "identifierref": "g919e2207202d506a366d951d7259710e",
+          "href": "wiki_content/lesson-3-function-notation.html"
+        },
+        {
+          "identifier": "gf70a899cc717e615b8d7597a28a7ca5e",
+          "title": "M1C2 Live Class Notes",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 6,
+          "indent": 1,
+          "identifierref": "g3c503475d7eb91d5303c76c5f870651c",
+          "href": "wiki_content/m1c2-live-class-notes.html"
+        },
+        {
+          "identifier": "g0efd9f4d18c726609c21334b5a8b9a7f",
+          "title": "Function Notation: Quiz (Remotely Proctored)",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "unpublished",
+          "position": 7,
+          "indent": 1,
+          "identifierref": "g68c7ddd2ba58c0cceb69e498b8eedc41",
+          "href": null
+        },
+        {
+          "identifier": "g5eefa8ab32a24646506b014b4bd48091",
+          "title": "M1C3 Live Class Notes",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 8,
+          "indent": 1,
+          "identifierref": "g9cf49113d7a5114a378386aae7c8ecc6",
+          "href": "wiki_content/m1c3-live-class-notes.html"
+        },
+        {
+          "identifier": "ga0379524a90f89b8fe6a7301263dc396",
+          "title": "Lesson 4: Exploring Transformations of Quadratic Functions",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 9,
+          "indent": 0,
+          "identifierref": "g5001820bb0ad3798cd7c7e27693b4dbb",
+          "href": "wiki_content/lesson-4-exploring-transformations-of-quadratic-functions.html"
+        },
+        {
+          "identifier": "gc970b844a0231f7068574a77d3e274f9",
+          "title": "Lesson 5: Graphing Quadratic Functions using Transformations",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 10,
+          "indent": 0,
+          "identifierref": "gfb65b68511e9ea2d08e8f81c506dd8cf",
+          "href": "wiki_content/lesson-5-graphing-quadratic-functions-using-transformations.html"
+        },
+        {
+          "identifier": "g508714f655824679d289b54596fad61f",
+          "title": "Lesson 6: Using Multiple Transformations to Graph Quadratic Functions",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 11,
+          "indent": 0,
+          "identifierref": "gb1f8d19bcf3dbf114b302aa39607f0be",
+          "href": "wiki_content/lesson-6-using-multiple-transformations-to-graph-quadratic-functions.html"
+        },
+        {
+          "identifier": "g102c6e55e23bb3b1a76d66a96d76d2d0",
+          "title": "M1C4 Live Class Notes",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 12,
+          "indent": 1,
+          "identifierref": "g612b83de9091047132b7a3211a2fb680",
+          "href": "wiki_content/m1c4-live-class-notes.html"
+        },
+        {
+          "identifier": "g479ec5bc5f8064dd98101694e7312e70",
+          "title": "Lesson 7: The Domain and Range of a Quadratic Function",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 13,
+          "indent": 0,
+          "identifierref": "g0f3751ef7232f725adbc03f75a093b44",
+          "href": "wiki_content/lesson-7-the-domain-and-range-of-a-quadratic-function.html"
+        },
+        {
+          "identifier": "g536b6965659316c80dc1907c0e13e749",
+          "title": "Module 1 Portfolio Assignment",
+          "content_type": "Assignment",
+          "workflow_state": "active",
+          "position": 14,
+          "indent": 2,
+          "identifierref": "g317262047924687fb3eb8e59dd573ac8",
+          "href": "g317262047924687fb3eb8e59dd573ac8/module-1-portfolio-assignment.html"
+        },
+        {
+          "identifier": "g894a96a4f9d8bb742601443c5025cc9b",
+          "title": "Review for Module 1 Test",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 15,
+          "indent": 0,
+          "identifierref": "gd87d0e763d1402ffd943dc43a92e2ed2",
+          "href": "wiki_content/review-for-module-1-test.html"
+        },
+        {
+          "identifier": "g0fb32d7038b181f171cb89b293625805",
+          "title": "MCF 3M Module 1 Test",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 16,
+          "indent": 2,
+          "identifierref": "g3bb89480630e59b99868d7a2cc7834d3",
+          "href": null
+        }
+      ]
+    },
+    {
+      "identifier": "g47817dcf8ab5b96374791fbc2e73ce13",
+      "title": "Module 2: Algebra of Quadratic Expressions",
+      "workflow_state": "active",
+      "position": 3,
+      "require_sequential_progress": false,
+      "item_count": 14,
+      "items": [
+        {
+          "identifier": "gc03c7ac1b7b1791b649df1fde99b3858",
+          "title": "Lesson 1: Expanding Polynomials PART 1",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "ga109329088c14a5c17832af3496b928b",
+          "href": "wiki_content/lesson-1-expanding-polynomials-part-1.html"
+        },
+        {
+          "identifier": "g273736525d2f18c537d328f7b1f24a9f",
+          "title": "Lesson 2: Expanding Polynomials PART 2",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gb3cb06c80214ddb3a396116462726312",
+          "href": "wiki_content/lesson-2-expanding-polynomials-part-2.html"
+        },
+        {
+          "identifier": "g2572d4c2ae6b7602eeba30135e8d0fde",
+          "title": "Expanding Polynomials Quiz",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "unpublished",
+          "position": 3,
+          "indent": 1,
+          "identifierref": "g6f59361a14ce3bb869e8067ce2ff6259",
+          "href": null
+        },
+        {
+          "identifier": "g73aadeed6e09566afc8711b4c039ad1f",
+          "title": "Lesson 3: Common Factoring",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 4,
+          "indent": 0,
+          "identifierref": "geff3863b765f7349f7ced53a3b2db5c3",
+          "href": "wiki_content/lesson-3-common-factoring.html"
+        },
+        {
+          "identifier": "gf602d36b97ff47406d3847e82007a3f2",
+          "title": "Common Factoring Quiz",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "unpublished",
+          "position": 5,
+          "indent": 1,
+          "identifierref": "gfe3ce2fbf7a81d4d81236834e94fcf08",
+          "href": null
+        },
+        {
+          "identifier": "g5ddf0795469d21d60025a6b778da76cd",
+          "title": "Lesson 4: Factoring Simple Trinomials",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 6,
+          "indent": 0,
+          "identifierref": "g6299c444da6408c7496738a345aebbad",
+          "href": "wiki_content/lesson-4-factoring-simple-trinomials.html"
+        },
+        {
+          "identifier": "gd000d729ae7d99ce5643af9c8b985cb7",
+          "title": "Factoring Simple Trinomials",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 7,
+          "indent": 1,
+          "identifierref": "gad9c523ecb4d7563c8ab83eb36855709",
+          "href": null
+        },
+        {
+          "identifier": "g63955c7a1bd0a83aab1d44e14e0a82ed",
+          "title": "Mid-Chapter Review",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 8,
+          "indent": 0,
+          "identifierref": "g971e4d6e8ad8071c82126c6567b510f5",
+          "href": "wiki_content/mid-chapter-review.html"
+        },
+        {
+          "identifier": "gf3eae8c76bef206fb3f3bc5d008fcdc1",
+          "title": "Lesson 5: Factoring Harder Trinomials",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 9,
+          "indent": 0,
+          "identifierref": "g8d048291406f4c4b4c971da497125f5f",
+          "href": "wiki_content/lesson-5-factoring-harder-trinomials.html"
+        },
+        {
+          "identifier": "gca04fd65e169ffd0c9c87861e4c6d863",
+          "title": "Lesson 6: Special Cases",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 10,
+          "indent": 0,
+          "identifierref": "gb1cb44f59634ff28a7ca0af07247bd0e",
+          "href": "wiki_content/lesson-6-special-cases.html"
+        },
+        {
+          "identifier": "g12844102d3f8d7562644a5b50b2e1dd0",
+          "title": "Factoring: Putting it all Together",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 11,
+          "indent": 1,
+          "identifierref": "g6f52093db5da22c0b095328709a325e9",
+          "href": "wiki_content/factoring-putting-it-all-together.html"
+        },
+        {
+          "identifier": "g1d961be6e0536f614ac8b06778057057",
+          "title": "Module 2 Portfolio Assignment",
+          "content_type": "Assignment",
+          "workflow_state": "active",
+          "position": 12,
+          "indent": 0,
+          "identifierref": "gadd516963856b873838f189a242b4756",
+          "href": "gadd516963856b873838f189a242b4756/module-2-portfolio-assignment.html"
+        },
+        {
+          "identifier": "g1a149aa10f5c16e9550ec8f7f8cb5c9d",
+          "title": "Review for Test",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 13,
+          "indent": 0,
+          "identifierref": "g9eb2d184104653679d841cc74e795ca4",
+          "href": "wiki_content/review-for-test.html"
+        },
+        {
+          "identifier": "g4c3c343f734257611b18046da2c9f875",
+          "title": "MCF3M Module 2 Test",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 14,
+          "indent": 2,
+          "identifierref": "g9b4a32fd6e287c153ff3dacfb052bd92",
+          "href": null
+        }
+      ]
+    },
+    {
+      "identifier": "g979fecd6d0a201b08c41e1dc2ca44cff",
+      "title": "Module 3: Working with Quadratic Functions",
+      "workflow_state": "active",
+      "position": 4,
+      "require_sequential_progress": false,
+      "item_count": 12,
+      "items": [
+        {
+          "identifier": "g9fa005951c9ea27073ea84c451cb0ae7",
+          "title": "Lesson 1: Relating Standard & Factored Form",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "gc127c9c769856379910eaee9bb7fc5ce",
+          "href": "wiki_content/lesson-1-relating-standard-and-factored-form.html"
+        },
+        {
+          "identifier": "g45c822ebf6559c5ae3955d066a2e7815",
+          "title": "Lesson 2: Solving Quadratic Equations by Graphing",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gd7b8898c56f1b5c0396fffb379b668e4",
+          "href": "wiki_content/lesson-2-solving-quadratic-equations-by-graphing.html"
+        },
+        {
+          "identifier": "ga9223eb38befa380c379d83e6a2d15a5",
+          "title": "Module 3: Mid-Chapter Review",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 3,
+          "indent": 1,
+          "identifierref": "gbb440a604b21280649c80972ee154985",
+          "href": "wiki_content/module-3-mid-chapter-review.html"
+        },
+        {
+          "identifier": "g4c5542060f692a956c31fd3acd768203",
+          "title": "Lesson 3: Solving Quadratic Functions by Factoring",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 4,
+          "indent": 0,
+          "identifierref": "ga5ffc9e6ebfe3e71df7d1a98a3dde8c0",
+          "href": "wiki_content/lesson-3-solving-quadratic-functions-by-factoring.html"
+        },
+        {
+          "identifier": "g948ff1d8c8557a0f2e758f70e07d3759",
+          "title": "Lesson 4: Solving Problems Involving Quadratics",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 5,
+          "indent": 0,
+          "identifierref": "g9f3f194eea2323c6c0b84f29d6ff3aae",
+          "href": "wiki_content/lesson-4-solving-problems-involving-quadratics.html"
+        },
+        {
+          "identifier": "g2366467b9e4c0837db92cef15c83568e",
+          "title": "3.5 Homework Questions - Solutions with Recordings",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 6,
+          "indent": 1,
+          "identifierref": "ge9dfc001436e13af4f61bb51ed5b768d",
+          "href": "wiki_content/3-dot-5-homework-questions-solutions-with-recordings.html"
+        },
+        {
+          "identifier": "g72b69691907e791bda59afc440b3f552",
+          "title": "Lesson 5: Creating a Quadratic Model from Data",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 7,
+          "indent": 0,
+          "identifierref": "g6dcd2d6e905b0a554bef865885ce5dc1",
+          "href": "wiki_content/lesson-5-creating-a-quadratic-model-from-data.html"
+        },
+        {
+          "identifier": "g940015303379bf806a64a4f45b1f0762",
+          "title": "Review for Module 3 Test",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 8,
+          "indent": 0,
+          "identifierref": "gf69777e86f4d8726b574b9d86f4f7043",
+          "href": "wiki_content/review-for-module-3-test.html"
+        },
+        {
+          "identifier": "gf3f9dff436205fa2d2ee8fe09a0d601f",
+          "title": "Honorlock Camera Setup for Tests",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 9,
+          "indent": 0,
+          "identifierref": "g1599ca8a70a5b93e2ec4d4e2b250d744",
+          "href": "wiki_content/honorlock-camera-setup-for-tests.html"
+        },
+        {
+          "identifier": "g2cae41fb9a3421dbcebd9ba7bcd004ad",
+          "title": "Understanding Honorlock Requirements Quiz (classic)",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 10,
+          "indent": 1,
+          "identifierref": "g9fc25aee4ca17f0e8707c319d9a62bdd",
+          "href": null
+        },
+        {
+          "identifier": "g291b54120e4451d7d43d55aa8876458c",
+          "title": "Module 3 Portfolio Assignment",
+          "content_type": "Assignment",
+          "workflow_state": "active",
+          "position": 11,
+          "indent": 1,
+          "identifierref": "g71a6fedc1700029419fb748bb0d6fa62",
+          "href": "g71a6fedc1700029419fb748bb0d6fa62/module-3-portfolio-assignment.html"
+        },
+        {
+          "identifier": "g1ee766c89cc50e7af00a46e9957467f8",
+          "title": "MCF3M Module 3 Test",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 12,
+          "indent": 0,
+          "identifierref": "gbd6b3843b9d5ef0fa79c84bd58bd3f79",
+          "href": null
+        }
+      ]
+    },
+    {
+      "identifier": "ge66ebe723e9859097b9a35f68e5fd1bf",
+      "title": "Module 4: Quadratic Models",
+      "workflow_state": "active",
+      "position": 5,
+      "require_sequential_progress": false,
+      "item_count": 10,
+      "items": [
+        {
+          "identifier": "gd7beb2d7395797886bc242770289627d",
+          "title": "Lesson 1: The Vertex Form of a Quadratic Function",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "g62d9dc2d21d91b0d21bdcfe3ce171770",
+          "href": "wiki_content/lesson-1-the-vertex-form-of-a-quadratic-function.html"
+        },
+        {
+          "identifier": "g4062f7f29fd4730eb6803cd463eef047",
+          "title": "Lesson2: Relating the Standard & Vertex Forms: Completing the Square",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gcdbb5ba783004bf8c09a7bdeeeb041ac",
+          "href": "wiki_content/lesson2-relating-the-standard-and-vertex-forms-completing-the-square.html"
+        },
+        {
+          "identifier": "g2af000ecb923b72a3c70875145f65a52",
+          "title": "Complete the Square: Hmwk Qs",
+          "content_type": "WikiPage",
+          "workflow_state": "unpublished",
+          "position": 3,
+          "indent": 1,
+          "identifierref": "g9b9255325cd91bcfc18f57f7af90225e",
+          "href": "wiki_content/complete-the-square-hmwk-qs.html"
+        },
+        {
+          "identifier": "gae029668972d997c49143f57d6f17196",
+          "title": "Complete the Square: Quiz",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "unpublished",
+          "position": 4,
+          "indent": 1,
+          "identifierref": "gaa1160505872fea650e096906a9e9d67",
+          "href": null
+        },
+        {
+          "identifier": "g27da4bf5a29286956aa521aaef97664d",
+          "title": "Lesson 3: Solving Quadratic Equations: Quadratic Formula",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 5,
+          "indent": 0,
+          "identifierref": "gd1ad2eeaf658d94e569d1c8a5c133554",
+          "href": "wiki_content/lesson-3-solving-quadratic-equations-quadratic-formula.html"
+        },
+        {
+          "identifier": "g2fceaccbc9ae727adb40fd336dfb5e8f",
+          "title": "Module 4: Mid-Chapter Review",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 6,
+          "indent": 1,
+          "identifierref": "g6d7e8d5e690699cba98f309a3e66931f",
+          "href": "wiki_content/module-4-mid-chapter-review.html"
+        },
+        {
+          "identifier": "g2c95d29bdf33fdd0daea06f4d90f0338",
+          "title": "Lesson 4: Discriminant",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 7,
+          "indent": 0,
+          "identifierref": "ga31dbb23bbe56af134dd7bcbc8b16100",
+          "href": "wiki_content/lesson-4-discriminant.html"
+        },
+        {
+          "identifier": "gc3768b907791ebf2b52d5212d79ed4da",
+          "title": "Lesson 5: Using Quadratic Models to Solve Problems",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 8,
+          "indent": 0,
+          "identifierref": "g648f0d9073e1dac58f34c26d3280d5de",
+          "href": "wiki_content/lesson-5-using-quadratic-models-to-solve-problems.html"
+        },
+        {
+          "identifier": "ga341680884a4e3f84682ab34e20ecc25",
+          "title": "Module 4: Review",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 9,
+          "indent": 0,
+          "identifierref": "g471825edfb4597319ee31eedf6d78b7c",
+          "href": "wiki_content/module-4-review.html"
+        },
+        {
+          "identifier": "geb1a1a1c0e22ccb11f7c8853bcc4d5a6",
+          "title": "Module 4: Test (Remotely Proctored)",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 10,
+          "indent": 0,
+          "identifierref": "ge6ffa7c91b85b226599d03c73d94bf04",
+          "href": null
+        }
+      ]
+    },
+    {
+      "identifier": "g7ef9dc612726002ed23b85c5c31f8ca3",
+      "title": "Module 5: Trigonometry & Acute Triangles",
+      "workflow_state": "active",
+      "position": 6,
+      "require_sequential_progress": false,
+      "item_count": 10,
+      "items": [
+        {
+          "identifier": "g8f774081b32940cb75e4baaaff073e66",
+          "title": "Lesson 1: Trigonometric Ratios",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "gc7688be117bee4806185e17d32fefde2",
+          "href": "wiki_content/lesson-1-trigonometric-ratios.html"
+        },
+        {
+          "identifier": "g66aa832d1f05ec3998daebe803e3dd52",
+          "title": "Trig Warm-Up Quiz",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "unpublished",
+          "position": 2,
+          "indent": 1,
+          "identifierref": "g27243d0c6be877831dfabd71426388e4",
+          "href": null
+        },
+        {
+          "identifier": "g69c8a7f3ea304af09f29ea06a840c0aa",
+          "title": "Lesson 2: Applying the Primary Trig Ratios",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 3,
+          "indent": 0,
+          "identifierref": "gdda737bfa26929c1290e4ab5f2a8ed3b",
+          "href": "wiki_content/lesson-2-applying-the-primary-trig-ratios.html"
+        },
+        {
+          "identifier": "ga099ffe1bfb6e7695d2b4abbdc6e3880",
+          "title": "Trig Ratios Quiz",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "unpublished",
+          "position": 5,
+          "indent": 0,
+          "identifierref": "g832164204bc8a8613d574ab276c07a99",
+          "href": null
+        },
+        {
+          "identifier": "g2dfc17dd9c215a8d7de81bd9dcee5653",
+          "title": "Lesson 3: Solving Problems by Using Right-Triangle Models",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 6,
+          "indent": 0,
+          "identifierref": "g8d3f8a35f16a91e3b83866bdd8f0042b",
+          "href": "wiki_content/lesson-3-solving-problems-by-using-right-triangle-models.html"
+        },
+        {
+          "identifier": "g967464c032e7d17a03d7c1c5e33b0906",
+          "title": "Lesson 4: Cosine & Sine Law",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 7,
+          "indent": 0,
+          "identifierref": "gfee4328d8cfba7004a41dbd9e532bbdf",
+          "href": "wiki_content/lesson-4-cosine-and-sine-law.html"
+        },
+        {
+          "identifier": "gbb099c56bc0ebea9ad9ee9aebe853a6e",
+          "title": "Lesson 5: Solving Problems by Using Acute-Triangle Models",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 8,
+          "indent": 0,
+          "identifierref": "gd55ae81f6e2868530113ab7d3fe74009",
+          "href": "wiki_content/lesson-5-solving-problems-by-using-acute-triangle-models.html"
+        },
+        {
+          "identifier": "g1bfe7a722418416258e0c333f99ceb49",
+          "title": "Module 5: Review",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 10,
+          "indent": 0,
+          "identifierref": "g459d68fe13ffbf2afc37d2cb93d3fc95",
+          "href": "wiki_content/module-5-review.html"
+        },
+        {
+          "identifier": "g173ad44fbdd77f40c6a4acaa04b6f009",
+          "title": "Module 5 Portfolio Assignment",
+          "content_type": "Assignment",
+          "workflow_state": "active",
+          "position": 11,
+          "indent": 2,
+          "identifierref": "gb76447175b9354f79ec13030ec85f5cf",
+          "href": "gb76447175b9354f79ec13030ec85f5cf/module-5-portfolio-assignment.html"
+        },
+        {
+          "identifier": "g9b51976886c0091a388cd83772ef55c0",
+          "title": "Module 5: Test (Remotely Proctored)",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 12,
+          "indent": 0,
+          "identifierref": "g5ae4f5645b86efcd3dc1dcc86d298224",
+          "href": null
+        }
+      ]
+    },
+    {
+      "identifier": "ge3d674b426bdeb5fc474ea236490ef79",
+      "title": "Module 6: Sinusoidal Functions",
+      "workflow_state": "active",
+      "position": 7,
+      "require_sequential_progress": false,
+      "item_count": 7,
+      "items": [
+        {
+          "identifier": "g2530312e1f3271347837eb2ddb9eea46",
+          "title": "Lesson 1: Periodic Functions",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "g4fe21371dbfe932eaf7400f89b94c38e",
+          "href": "wiki_content/lesson-1-periodic-functions.html"
+        },
+        {
+          "identifier": "g8a15f2e78590abcb9b6adf8ff342a33e",
+          "title": "Lesson 2: Sinusoidal Functions",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gb5c8ebed07d841aa37eb6e48e78ff24f",
+          "href": "wiki_content/lesson-2-sinusoidal-functions.html"
+        },
+        {
+          "identifier": "g54f515f339a4119479b46294f4669e1c",
+          "title": "Mid-Chapter Review-2",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 3,
+          "indent": 0,
+          "identifierref": "g41b3fca6f4b66b7654f6ecdb201830d3",
+          "href": "wiki_content/mid-chapter-review-2.html"
+        },
+        {
+          "identifier": "g442da826e1343fbbb9b7855044701fbf",
+          "title": "Lesson 3: Transformations of the Sine Function",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 4,
+          "indent": 0,
+          "identifierref": "gf3c5b8c23a8f8fe7c22a56fee11c109c",
+          "href": "wiki_content/lesson-3-transformations-of-the-sine-function.html"
+        },
+        {
+          "identifier": "g96966b6e0557041b4780227d0501589c",
+          "title": "Module 6: Review",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 5,
+          "indent": 0,
+          "identifierref": "gc23f84716ba57846d9ab9174160ec5b4",
+          "href": "wiki_content/module-6-review.html"
+        },
+        {
+          "identifier": "gf8ae36d4ddd3d4bbec5d2c58ebb4de80",
+          "title": "Module 6 Portfolio Assignment",
+          "content_type": "Assignment",
+          "workflow_state": "active",
+          "position": 7,
+          "indent": 0,
+          "identifierref": "ga18bd212363f69d4d060b1d838ea77b8",
+          "href": "ga18bd212363f69d4d060b1d838ea77b8/module-6-portfolio-assignment.html"
+        },
+        {
+          "identifier": "g7e1a5bfd142f5ca29903fae1909df1f0",
+          "title": "Module 6: Test (Remotely Proctored)",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 8,
+          "indent": 0,
+          "identifierref": "gbff8ffd6547a72b97a162320e49aca47",
+          "href": null
+        }
+      ]
+    },
+    {
+      "identifier": "g0f3c79903d6e64705cbf1db77e79cd4e",
+      "title": "Module 7: Exponential Functions",
+      "workflow_state": "active",
+      "position": 8,
+      "require_sequential_progress": false,
+      "item_count": 6,
+      "items": [
+        {
+          "identifier": "g8adf08118b7a8b9e9ac899a4d780af70",
+          "title": "Laws of Exponents & Integer Exponents",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "ge534817bcfeffc5e6c38cba033791771",
+          "href": "wiki_content/laws-of-exponents-and-integer-exponents.html"
+        },
+        {
+          "identifier": "g42d6246545e9e29c36e3fd0bfef32310",
+          "title": "Working with Rational Exponents",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gf90431088281ba1193235eb916a48598",
+          "href": "wiki_content/working-with-rational-exponents.html"
+        },
+        {
+          "identifier": "g9ef14c333e9501fd55cfa8a98c67981b",
+          "title": "Exploring Exponential Functions, Growth & Decay",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 3,
+          "indent": 0,
+          "identifierref": "g7ddfae468ef276314fe90d5d509de0e6",
+          "href": "wiki_content/exploring-exponential-functions-growth-and-decay.html"
+        },
+        {
+          "identifier": "ge92f51b51e5273cb1b350489b4fffbd3",
+          "title": "Module 7: Review",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 4,
+          "indent": 0,
+          "identifierref": "g96be1a3497b4219045f1403d0d28d51b",
+          "href": "wiki_content/module-7-review.html"
+        },
+        {
+          "identifier": "g491341742c9052aa60da9d588f1b6048",
+          "title": "Module 7 Portfolio Assignment",
+          "content_type": "Assignment",
+          "workflow_state": "active",
+          "position": 5,
+          "indent": 0,
+          "identifierref": "g52b3c38840f03e80ee1608e376777a4f",
+          "href": "g52b3c38840f03e80ee1608e376777a4f/module-7-portfolio-assignment.html"
+        },
+        {
+          "identifier": "gd941609940448bfa382b0e6820b36f2a",
+          "title": "Module 7 Test",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 6,
+          "indent": 1,
+          "identifierref": "g0bc4b897f480d855c2ac1165d89a2462",
+          "href": null
+        }
+      ]
+    },
+    {
+      "identifier": "g04984502c86a0500f6364a4fd21c200d",
+      "title": "Module 8: Solving Financial Problems Involving Exponential Functions",
+      "workflow_state": "active",
+      "position": 9,
+      "require_sequential_progress": false,
+      "item_count": 7,
+      "items": [
+        {
+          "identifier": "gad1c676dad72114b0dc55814b0e9152e",
+          "title": "Module 8 Minds-On: Test Your Financial Literacy!",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 1,
+          "indent": 0,
+          "identifierref": "g6ddd28e96a570152af1a7b965af654eb",
+          "href": null
+        },
+        {
+          "identifier": "gf44b59f56bf9b4455dc7044ea6ab3323",
+          "title": "Lesson 1: Simple & Compound Interest",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gac2bc94dd477cf07c333de623c25dc39",
+          "href": "wiki_content/lesson-1-simple-and-compound-interest.html"
+        },
+        {
+          "identifier": "gea3b3b7ded0cb99d9348937b4e147cdb",
+          "title": "Lesson 2: Compound Interest - Future Value",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 3,
+          "indent": 0,
+          "identifierref": "gb691ca25d9383976a3c209f658998cfa",
+          "href": "wiki_content/lesson-2-compound-interest-future-value.html"
+        },
+        {
+          "identifier": "g3a9c510ac29afec0593b6989332e5fd0",
+          "title": "Lesson 3: Compound Interest - Present Value",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 4,
+          "indent": 0,
+          "identifierref": "g7680b3a0fe2c17bb0ee694694b614f72",
+          "href": "wiki_content/lesson-3-compound-interest-present-value.html"
+        },
+        {
+          "identifier": "ge8891b6ae7352e4b39a3cda13f688ff6",
+          "title": "Lesson 4: Annuities - Future Value",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 5,
+          "indent": 0,
+          "identifierref": "g23128b64f187c16572ff4e085412606a",
+          "href": "wiki_content/lesson-4-annuities-future-value.html"
+        },
+        {
+          "identifier": "gc2c169f7b496d36bb3726f80e4e4cb22",
+          "title": "Lesson 5: Regular/Simple Annuities - Present Value",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 6,
+          "indent": 0,
+          "identifierref": "g4d9cd66fb413e2f1250a9c5bb40f8efc",
+          "href": "wiki_content/lesson-5-regular-slash-simple-annuities-present-value.html"
+        },
+        {
+          "identifier": "g29942035c717fcb4f1e9f18e98777b57",
+          "title": "MCF3M Module 8 Assignment (classic)",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 7,
+          "indent": 0,
+          "identifierref": "g72f842c8d7865d1426bc8b018c9b4aa1",
+          "href": null
+        }
+      ]
+    },
+    {
+      "identifier": "gc46986bbd5b5c3448d40fc951b49180c",
+      "title": "FINAL CULMINATING ASSIGNMENTS",
+      "workflow_state": "unpublished",
+      "position": 10,
+      "require_sequential_progress": false,
+      "item_count": 3,
+      "items": [
+        {
+          "identifier": "g454cc7702cff79a217ca36ee29c62d25",
+          "title": "Final Exam LIVE: Review",
+          "content_type": "WikiPage",
+          "workflow_state": "unpublished",
+          "position": 1,
+          "indent": 1,
+          "identifierref": "gaf477e604d6dace7471e7cb5f2401494",
+          "href": "wiki_content/final-exam-live-review.html"
+        },
+        {
+          "identifier": "g0ab85be6952c3dfe1e15db268d7b97c9",
+          "title": "Final Exam - Review Handout 2",
+          "content_type": "WikiPage",
+          "workflow_state": "unpublished",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "g8809152ac8596c372271e2b219b6542d",
+          "href": "wiki_content/final-exam-review-handout-2.html"
+        },
+        {
+          "identifier": "gacd4b22ed052325a7dca156bb32f2e03",
+          "title": "Final Culminating Assignment",
+          "content_type": "Assignment",
+          "workflow_state": "unpublished",
+          "position": 3,
+          "indent": 0,
+          "identifierref": "g2a083daa442f79822426db83307e2e24",
+          "href": "g2a083daa442f79822426db83307e2e24/final-culminating-assignment.html"
+        }
+      ]
+    },
+    {
+      "identifier": "g86972ff803bb9e6f358365675825b18d",
+      "title": "Final Exam - Practice & Information",
+      "workflow_state": "active",
+      "position": 11,
+      "require_sequential_progress": false,
+      "item_count": 3,
+      "items": [
+        {
+          "identifier": "g3c3b61404ccd0c02cde9a33f7a463719",
+          "title": "Final Exam - Review Handout 1",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gec367a6ee7a27963b96159719e4a1172",
+          "href": "wiki_content/final-exam-review-handout-1.html"
+        },
+        {
+          "identifier": "g4565bfba636caeb78dba145b86c00b8e",
+          "title": "Formulas",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 3,
+          "indent": 0,
+          "identifierref": "gf1f1e30a8c582542ca4af9d9ed936ebd",
+          "href": "wiki_content/formulas.html"
+        },
+        {
+          "identifier": "g72e97d0ae4b018855743cf4158e38f4c",
+          "title": "Final Exam Details",
+          "content_type": "WikiPage",
+          "workflow_state": "active",
+          "position": 4,
+          "indent": 0,
+          "identifierref": "g00c8793559fcd1a0c2e3097add4e7868",
+          "href": "wiki_content/final-exam-details.html"
+        }
+      ]
+    },
+    {
+      "identifier": "g9a4aab597eed35c5f8cb8af4621af9dd",
+      "title": "FINAL EXAM",
+      "workflow_state": "active",
+      "position": 12,
+      "require_sequential_progress": false,
+      "item_count": 1,
+      "items": [
+        {
+          "identifier": "g617d029ef144f718f191ad1238fb2f32",
+          "title": "MCF3M FINAL EXAM - June 23rd 1:00 PM",
+          "content_type": "Quizzes::Quiz",
+          "workflow_state": "active",
+          "position": 2,
+          "indent": 0,
+          "identifierref": "gcdd919bebe2c93143e41fb005cfc0e95",
+          "href": null
+        }
+      ]
+    }
+  ],
+  "wiki_pages": [
+    {
+      "path": "wiki_content/3-dot-5-homework-questions-solutions-with-recordings.html",
+      "title": "3.5 Homework Questions - Solutions with Recordings",
+      "identifier": "ge9dfc001436e13af4f61bb51ed5b768d",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/complete-the-square-hmwk-qs.html",
+      "title": "Complete the Square: Hmwk Qs",
+      "identifier": "g9b9255325cd91bcfc18f57f7af90225e",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/create-account-textbook.html",
+      "title": "Create Account: Textbook",
+      "identifier": "ga9fc1f58f4784b4245a936839e15527d",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/day-2-recording.html",
+      "title": "Day 2: Recording",
+      "identifier": "gc3a6d2e5daedc6e318116318a5a1c467",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/day-3-recording.html",
+      "title": "Day 3: Recording",
+      "identifier": "g98c001e0ad4bbd4d3a7127708c8735e5",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/day-4-and-5-recording.html",
+      "title": "Day 4 &amp; 5: Recording",
+      "identifier": "gd9be5b984146294b0a5f74a5169ad8e3",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/day1-recording.html",
+      "title": "Day1: Recording",
+      "identifier": "ga754b05dada10666a0a54ae0ae093e27",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/dec-13th-live-recording.html",
+      "title": "Dec 13th Live: Recording",
+      "identifier": "g9b7844a674e1b5039deda52daaa5460d",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/dec-15th-live-recording.html",
+      "title": "Dec. 15th Live: Recording",
+      "identifier": "g215a4d42df7c272095b674112e387de1",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/dec-1st-live-recording.html",
+      "title": "Dec. 1st Live: Recording",
+      "identifier": "ge5324ef4edfac6ba4b062ad7e54bd4af",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/dec-6th-live-recording.html",
+      "title": "Dec. 6th Live: Recording",
+      "identifier": "gf834ccccfc4d2479718f6f0a8230ab4c",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/dec-8th-live-recording.html",
+      "title": "Dec. 8th Live: Recording",
+      "identifier": "g74b3169ae03456a8de421d2d5d9b07c9",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/discriminant-part-2.html",
+      "title": "Discriminant (Part 2)",
+      "identifier": "g0c88d9b2f832752c854a58d131ec2d74",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/equatio-mobile-in-canvas.html",
+      "title": "EquatIO Mobile in Canvas",
+      "identifier": "gdc8c2abbdad716789d1492ed250336dc",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/equation-editor.html",
+      "title": "Equation Editor",
+      "identifier": "g3d6aade157513b8bf8b8f5f84a32e709",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/exploring-exponential-functions-growth-and-decay.html",
+      "title": "Exploring Exponential Functions, Growth &amp; Decay",
+      "identifier": "g7ddfae468ef276314fe90d5d509de0e6",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/factoring-putting-it-all-together.html",
+      "title": "Factoring: Putting it all Together",
+      "identifier": "g6f52093db5da22c0b095328709a325e9",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/final-exam-details.html",
+      "title": "Final Exam Details",
+      "identifier": "g00c8793559fcd1a0c2e3097add4e7868",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/final-exam-live-review.html",
+      "title": "Final Exam LIVE: Review",
+      "identifier": "gaf477e604d6dace7471e7cb5f2401494",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/final-exam-review-handout-1.html",
+      "title": "Final Exam - Review Handout 1",
+      "identifier": "gec367a6ee7a27963b96159719e4a1172",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/final-exam-review-handout-2.html",
+      "title": "Final Exam - Review Handout 2",
+      "identifier": "g8809152ac8596c372271e2b219b6542d",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/formulas.html",
+      "title": "Formulas",
+      "identifier": "gf1f1e30a8c582542ca4af9d9ed936ebd",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/front-page-new.html",
+      "title": "Front Page NEW",
+      "identifier": "gf69225bf80a8703e5e524169a7fce62e",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/front-page.html",
+      "title": "Front Page",
+      "identifier": "g93d9410e295fbd22838ae09a5b49de34",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/handwriting-assignment-answers.html",
+      "title": "Handwriting Assignment Answers",
+      "identifier": "g9561b32cca144e70ff8d8b9f3ef3085f",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/hmwk-qs-page-416-videos.html",
+      "title": "Hmwk Qs Page 416: Videos",
+      "identifier": "g02d902436beb87e98b8e85ba3a1c9cce",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/honorlock-camera-setup-for-tests.html",
+      "title": "Honorlock Camera Setup for Tests",
+      "identifier": "g1599ca8a70a5b93e2ec4d4e2b250d744",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/jan-10th-live-recording.html",
+      "title": "Jan. 10th Live: Recording",
+      "identifier": "gf42bbd537c85ce40dccaf2161058fd6f",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/jan-5th-live-recording.html",
+      "title": "Jan 5th Live: Recording",
+      "identifier": "g76aa16a163f48c893123cc8dbb4f888d",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/january-12th-live-recording.html",
+      "title": "January 12th Live: Recording",
+      "identifier": "g3734b671bcec40c5bdcc79170db9a284",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/laws-of-exponents-and-integer-exponents.html",
+      "title": "Laws of Exponents &amp; Integer Exponents",
+      "identifier": "ge534817bcfeffc5e6c38cba033791771",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/learn-first-practice-next.html",
+      "title": "Learn First, Practice Next",
+      "identifier": "g8aeb9e10024f4dee60c9c4d9c9412d23",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/learning-goals.html",
+      "title": "Learning Goals",
+      "identifier": "gfa3060ec1a1b862c45bad018d538c56d",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/learning-skills.html",
+      "title": "Learning Skills",
+      "identifier": "g772b6a6109a813e89de760a6bd394753",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-1-and-2-recording.html",
+      "title": "Lesson 1 &amp; 2: Recording",
+      "identifier": "g1ca5f379d607f78769c5f18fa1e31963",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/lesson-1-characteristics-of-a-function.html",
+      "title": "Lesson 1: Characteristics of a Function",
+      "identifier": "ga2a5f45db1e4efba420697ac3fb8cf0f",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-1-expanding-polynomials-part-1.html",
+      "title": "Lesson 1: Expanding Polynomials PART 1",
+      "identifier": "ga109329088c14a5c17832af3496b928b",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-1-periodic-functions.html",
+      "title": "Lesson 1: Periodic Functions",
+      "identifier": "g4fe21371dbfe932eaf7400f89b94c38e",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-1-relating-standard-and-factored-form.html",
+      "title": "Lesson 1: Relating Standard &amp; Factored Form",
+      "identifier": "gc127c9c769856379910eaee9bb7fc5ce",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-1-simple-and-compound-interest.html",
+      "title": "Lesson 1: Simple &amp; Compound Interest",
+      "identifier": "gac2bc94dd477cf07c333de623c25dc39",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-1-the-vertex-form-of-a-quadratic-function.html",
+      "title": "Lesson 1: The Vertex Form of a Quadratic Function",
+      "identifier": "g62d9dc2d21d91b0d21bdcfe3ce171770",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-1-trigonometric-ratios.html",
+      "title": "Lesson 1: Trigonometric Ratios",
+      "identifier": "gc7688be117bee4806185e17d32fefde2",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-2-applying-the-primary-trig-ratios.html",
+      "title": "Lesson 2: Applying the Primary Trig Ratios",
+      "identifier": "gdda737bfa26929c1290e4ab5f2a8ed3b",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-2-comparing-rates-of-change-in-linear-and-quadratic-functions.html",
+      "title": "Lesson 2: Comparing Rates of Change in Linear &amp; Quadratic Functions",
+      "identifier": "g93922e5ddf1921b83eacd3ac334a9fcc",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-2-compound-interest-future-value.html",
+      "title": "Lesson 2: Compound Interest - Future Value",
+      "identifier": "gb691ca25d9383976a3c209f658998cfa",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-2-expanding-polynomials-part-2.html",
+      "title": "Lesson 2: Expanding Polynomials PART 2",
+      "identifier": "gb3cb06c80214ddb3a396116462726312",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-2-sinusoidal-functions.html",
+      "title": "Lesson 2: Sinusoidal Functions",
+      "identifier": "gb5c8ebed07d841aa37eb6e48e78ff24f",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-2-solving-quadratic-equations-by-graphing.html",
+      "title": "Lesson 2: Solving Quadratic Equations by Graphing",
+      "identifier": "gd7b8898c56f1b5c0396fffb379b668e4",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-3-common-factoring.html",
+      "title": "Lesson 3: Common Factoring",
+      "identifier": "geff3863b765f7349f7ced53a3b2db5c3",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-3-compound-interest-present-value.html",
+      "title": "Lesson 3: Compound Interest - Present Value",
+      "identifier": "g7680b3a0fe2c17bb0ee694694b614f72",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-3-function-notation.html",
+      "title": "Lesson 3: Function Notation",
+      "identifier": "g919e2207202d506a366d951d7259710e",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-3-solving-problems-by-using-right-triangle-models.html",
+      "title": "Lesson 3: Solving Problems by Using Right-Triangle Models",
+      "identifier": "g8d3f8a35f16a91e3b83866bdd8f0042b",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-3-solving-quadratic-equations-quadratic-formula.html",
+      "title": "Lesson 3: Solving Quadratic Equations: Quadratic Formula",
+      "identifier": "gd1ad2eeaf658d94e569d1c8a5c133554",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-3-solving-quadratic-functions-by-factoring.html",
+      "title": "Lesson 3: Solving Quadratic Functions by Factoring",
+      "identifier": "ga5ffc9e6ebfe3e71df7d1a98a3dde8c0",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-3-transformations-of-the-sine-function.html",
+      "title": "Lesson 3: Transformations of the Sine Function",
+      "identifier": "gf3c5b8c23a8f8fe7c22a56fee11c109c",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-4-annuities-future-value.html",
+      "title": "Lesson 4: Annuities - Future Value",
+      "identifier": "g23128b64f187c16572ff4e085412606a",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-4-cosine-and-sine-law.html",
+      "title": "Lesson 4: Cosine &amp; Sine Law",
+      "identifier": "gfee4328d8cfba7004a41dbd9e532bbdf",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-4-discriminant.html",
+      "title": "Lesson 4: Discriminant",
+      "identifier": "ga31dbb23bbe56af134dd7bcbc8b16100",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-4-exploring-transformations-of-quadratic-functions.html",
+      "title": "Lesson 4: Exploring Transformations of Quadratic Functions",
+      "identifier": "g5001820bb0ad3798cd7c7e27693b4dbb",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-4-factoring-simple-trinomials.html",
+      "title": "Lesson 4: Factoring Simple Trinomials",
+      "identifier": "g6299c444da6408c7496738a345aebbad",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-4-solving-problems-involving-quadratics.html",
+      "title": "Lesson 4: Solving Problems Involving Quadratics",
+      "identifier": "g9f3f194eea2323c6c0b84f29d6ff3aae",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-5-creating-a-quadratic-model-from-data.html",
+      "title": "Lesson 5: Creating a Quadratic Model from Data",
+      "identifier": "g6dcd2d6e905b0a554bef865885ce5dc1",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-5-factoring-harder-trinomials.html",
+      "title": "Lesson 5: Factoring Harder Trinomials",
+      "identifier": "g8d048291406f4c4b4c971da497125f5f",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-5-graphing-quadratic-functions-using-transformations.html",
+      "title": "Lesson 5: Graphing Quadratic Functions using Transformations",
+      "identifier": "gfb65b68511e9ea2d08e8f81c506dd8cf",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-5-regular-slash-simple-annuities-present-value.html",
+      "title": "Lesson 5: Regular/Simple Annuities - Present Value",
+      "identifier": "g4d9cd66fb413e2f1250a9c5bb40f8efc",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-5-solving-problems-by-using-acute-triangle-models.html",
+      "title": "Lesson 5: Solving Problems by Using Acute-Triangle Models",
+      "identifier": "gd55ae81f6e2868530113ab7d3fe74009",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-5-using-quadratic-models-to-solve-problems.html",
+      "title": "Lesson 5: Using Quadratic Models to Solve Problems",
+      "identifier": "g648f0d9073e1dac58f34c26d3280d5de",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-6-special-cases.html",
+      "title": "Lesson 6: Special Cases",
+      "identifier": "gb1cb44f59634ff28a7ca0af07247bd0e",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-6-using-multiple-transformations-to-graph-quadratic-functions.html",
+      "title": "Lesson 6: Using Multiple Transformations to Graph Quadratic Functions",
+      "identifier": "gb1f8d19bcf3dbf114b302aa39607f0be",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson-7-the-domain-and-range-of-a-quadratic-function.html",
+      "title": "Lesson 7: The Domain and Range of a Quadratic Function",
+      "identifier": "g0f3751ef7232f725adbc03f75a093b44",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/lesson2-relating-the-standard-and-vertex-forms-completing-the-square.html",
+      "title": "Lesson2: Relating the Standard &amp; Vertex Forms: Completing the Square",
+      "identifier": "gcdbb5ba783004bf8c09a7bdeeeb041ac",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/m1c1-live-class-notes.html",
+      "title": "M1C1 Live Class Notes",
+      "identifier": "g69822e17a7c8065812b1629b5ef831ed",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/m1c2-live-class-notes.html",
+      "title": "M1C2 Live Class Notes",
+      "identifier": "g3c503475d7eb91d5303c76c5f870651c",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/m1c3-live-class-notes.html",
+      "title": "M1C3 Live Class Notes",
+      "identifier": "g9cf49113d7a5114a378386aae7c8ecc6",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/m1c4-live-class-notes.html",
+      "title": "M1C4 Live Class Notes",
+      "identifier": "g612b83de9091047132b7a3211a2fb680",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/mid-chapter-review-2.html",
+      "title": "Mid-Chapter Review-2",
+      "identifier": "g41b3fca6f4b66b7654f6ecdb201830d3",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/mid-chapter-review.html",
+      "title": "Mid-Chapter Review",
+      "identifier": "g971e4d6e8ad8071c82126c6567b510f5",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/module-3-mid-chapter-review.html",
+      "title": "Module 3: Mid-Chapter Review",
+      "identifier": "gbb440a604b21280649c80972ee154985",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/module-4-mid-chapter-review.html",
+      "title": "Module 4: Mid-Chapter Review",
+      "identifier": "g6d7e8d5e690699cba98f309a3e66931f",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/module-4-review.html",
+      "title": "Module 4: Review",
+      "identifier": "g471825edfb4597319ee31eedf6d78b7c",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/module-5-review.html",
+      "title": "Module 5: Review",
+      "identifier": "g459d68fe13ffbf2afc37d2cb93d3fc95",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/module-6-review.html",
+      "title": "Module 6: Review",
+      "identifier": "gc23f84716ba57846d9ab9174160ec5b4",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/module-7-review.html",
+      "title": "Module 7: Review",
+      "identifier": "g96be1a3497b4219045f1403d0d28d51b",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/more-help-with-lesson-1.html",
+      "title": "More Help with Lesson 1",
+      "identifier": "ge9aae2c54c368687c110483a59fe54a1",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-10th-live-recording.html",
+      "title": "Nov. 10th Live: Recording",
+      "identifier": "gc594c637cc0972d32a6bfeb68929ccba",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-17th-live-recording-2.html",
+      "title": "Nov. 17th Live: Recording-2",
+      "identifier": "ge981c5d07b9a02a56cba4c4d34f8760d",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-17th-live-recording.html",
+      "title": "Nov. 17th Live: Recording",
+      "identifier": "g3e765187f4909e6101d95a94adedac7e",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-1st-live-recording.html",
+      "title": "Nov 1st Live: Recording",
+      "identifier": "g1a04bd0adf8711d92058e25f01d41380",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-22nd-live-recording.html",
+      "title": "Nov. 22nd Live: Recording",
+      "identifier": "g5f2e44cef2994656183c1c0b4fb32ee1",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-24th-live-recording.html",
+      "title": "Nov. 24th Live: Recording",
+      "identifier": "gbbef0f4936423fdcfe07cad5c8a8767d",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-29th-live-recording.html",
+      "title": "Nov. 29th Live: Recording",
+      "identifier": "gc04966062cadc41d97e6c56c47e034ad",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-3rd-live-recording.html",
+      "title": "Nov. 3rd Live: Recording",
+      "identifier": "ge3d91528a5e6b2a962b474a9124be893",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/nov-8th-live-recording.html",
+      "title": "Nov. 8th Live: Recording",
+      "identifier": "g7bbfa66f046b25ce69a7de5d66f719a0",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/oct-20th-live-recording.html",
+      "title": "Oct. 20th Live: Recording",
+      "identifier": "gbbbc4e09987e71785adb1ad5d82359e2",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/oct-25th-live-recording.html",
+      "title": "Oct. 25th Live: Recording",
+      "identifier": "g03e2aadd7bc35316de1ee452e4e8ff93",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/oct-27th-live-recording.html",
+      "title": "Oct. 27th Live: Recording",
+      "identifier": "g43ce2da4c9cec6ef26ddd864228e4a9b",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/oct-4th-live-recording.html",
+      "title": "Oct. 4th Live: Recording",
+      "identifier": "g2a78794009bb9423bc955b41770fde8c",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/october-13th-live-recording.html",
+      "title": "October 13th Live: Recording",
+      "identifier": "gf2d525325c0db1ea9d777af72e6f21e4",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/october-18th-live-recording.html",
+      "title": "October 18th Live: Recording",
+      "identifier": "gba2db57eb6e8a970cbacb280130ac6c8",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/review-for-module-1-test.html",
+      "title": "Review for Module 1 Test",
+      "identifier": "gd87d0e763d1402ffd943dc43a92e2ed2",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/review-for-module-3-test.html",
+      "title": "Review for Module 3 Test",
+      "identifier": "gf69777e86f4d8726b574b9d86f4f7043",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/review-for-test.html",
+      "title": "Review for Test",
+      "identifier": "g9eb2d184104653679d841cc74e795ca4",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/sept-13-live-session-recording.html",
+      "title": "Sept. 13 Live Session: Recording",
+      "identifier": "g9cec1636c93d09363829dc897cc5d586",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/sept-15th-live-session-recording.html",
+      "title": "Sept. 15th Live Session: Recording",
+      "identifier": "g617daf874c5857e94627b1f09aa5445a",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/sept-22nd-live-recording.html",
+      "title": "Sept. 22nd Live: Recording",
+      "identifier": "g9e9211862da0acf913cbd21e69a31aa9",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/sept-29th-live-recording.html",
+      "title": "Sept. 29th Live: Recording",
+      "identifier": "gaf2699e6ec6999cd22576513c831868f",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/test.html",
+      "title": "Test",
+      "identifier": "g55c4d2f387173745063e7fb5c05dd0d9",
+      "workflow_state": "unpublished"
+    },
+    {
+      "path": "wiki_content/using-technology-for-graphing-and-inserting-images-in-assignments.html",
+      "title": "Using Technology for Graphing &amp; Inserting Images in Assignments",
+      "identifier": "ga60738bf37395061441d91294c5f9b5c",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/welcome-to-mcf3m.html",
+      "title": "Welcome to MCF3M!",
+      "identifier": "g4443faf436d533889976e6dc6a88560e",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/working-with-rational-exponents.html",
+      "title": "Working with Rational Exponents",
+      "identifier": "gf90431088281ba1193235eb916a48598",
+      "workflow_state": "active"
+    },
+    {
+      "path": "wiki_content/writing-slash-typing-math-online.html",
+      "title": "Writing/Typing Math Online",
+      "identifier": "gdaab1386e9b4ecb9b5431d58641336c7",
+      "workflow_state": "active"
+    }
+  ],
+  "assignments": [
+    {
+      "identifier": "g2a083daa442f79822426db83307e2e24",
+      "title": "Final Culminating Assignment",
+      "workflow_state": "unpublished",
+      "grading_type": "points",
+      "submission_types": "online_upload",
+      "points_possible": "79.0",
+      "folder": "g2a083daa442f79822426db83307e2e24",
+      "html": "g2a083daa442f79822426db83307e2e24/final-culminating-assignment.html"
+    },
+    {
+      "identifier": "g317262047924687fb3eb8e59dd573ac8",
+      "title": "Module 1 Portfolio Assignment",
+      "workflow_state": "published",
+      "grading_type": "points",
+      "submission_types": "online_url,media_recording,online_upload",
+      "points_possible": "10.0",
+      "folder": "g317262047924687fb3eb8e59dd573ac8",
+      "html": "g317262047924687fb3eb8e59dd573ac8/module-1-portfolio-assignment.html"
+    },
+    {
+      "identifier": "g15bafe74afcba5624bb6aa77f9ec51d3",
+      "title": "Module 2 Assignment",
+      "workflow_state": "unpublished",
+      "grading_type": "points",
+      "submission_types": "none",
+      "points_possible": null,
+      "folder": "g15bafe74afcba5624bb6aa77f9ec51d3",
+      "html": "g15bafe74afcba5624bb6aa77f9ec51d3/module-2-assignment.html"
+    },
+    {
+      "identifier": "gadd516963856b873838f189a242b4756",
+      "title": "Module 2 Portfolio Assignment",
+      "workflow_state": "published",
+      "grading_type": "points",
+      "submission_types": "online_url,media_recording,online_upload",
+      "points_possible": "10.0",
+      "folder": "gadd516963856b873838f189a242b4756",
+      "html": "gadd516963856b873838f189a242b4756/module-2-portfolio-assignment.html"
+    },
+    {
+      "identifier": "g71a6fedc1700029419fb748bb0d6fa62",
+      "title": "Module 3 Portfolio Assignment",
+      "workflow_state": "published",
+      "grading_type": "points",
+      "submission_types": "online_url,media_recording,online_upload",
+      "points_possible": "10.0",
+      "folder": "g71a6fedc1700029419fb748bb0d6fa62",
+      "html": "g71a6fedc1700029419fb748bb0d6fa62/module-3-portfolio-assignment.html"
+    },
+    {
+      "identifier": "gbc4f632fec134aaf4813f8a73e5ad30b",
+      "title": "Module 3: Assignment",
+      "workflow_state": "unpublished",
+      "grading_type": "points",
+      "submission_types": "none",
+      "points_possible": null,
+      "folder": "gbc4f632fec134aaf4813f8a73e5ad30b",
+      "html": "gbc4f632fec134aaf4813f8a73e5ad30b/module-3-assignment.html"
+    },
+    {
+      "identifier": "gf0ebbcc6e554da177f6156b0ee9645ff",
+      "title": "Module 4 Assignment (Remotely Proctored)",
+      "workflow_state": "unpublished",
+      "grading_type": "points",
+      "submission_types": "online_upload",
+      "points_possible": "78.0",
+      "folder": "gf0ebbcc6e554da177f6156b0ee9645ff",
+      "html": "gf0ebbcc6e554da177f6156b0ee9645ff/module-4-assignment-remotely-proctored.html"
+    },
+    {
+      "identifier": "gb76447175b9354f79ec13030ec85f5cf",
+      "title": "Module 5 Portfolio Assignment",
+      "workflow_state": "published",
+      "grading_type": "points",
+      "submission_types": "online_url,online_upload",
+      "points_possible": "10.0",
+      "folder": "gb76447175b9354f79ec13030ec85f5cf",
+      "html": "gb76447175b9354f79ec13030ec85f5cf/module-5-portfolio-assignment.html"
+    },
+    {
+      "identifier": "g500f634738e7201df1b09d5ea2feca11",
+      "title": "Module 5: Assignment (Remotely Proctored)",
+      "workflow_state": "unpublished",
+      "grading_type": "points",
+      "submission_types": "online_upload",
+      "points_possible": "38.0",
+      "folder": "g500f634738e7201df1b09d5ea2feca11",
+      "html": "g500f634738e7201df1b09d5ea2feca11/module-5-assignment-remotely-proctored.html"
+    },
+    {
+      "identifier": "ga18bd212363f69d4d060b1d838ea77b8",
+      "title": "Module 6 Portfolio Assignment",
+      "workflow_state": "published",
+      "grading_type": "points",
+      "submission_types": "online_url,media_recording,online_upload",
+      "points_possible": "10.0",
+      "folder": "ga18bd212363f69d4d060b1d838ea77b8",
+      "html": "ga18bd212363f69d4d060b1d838ea77b8/module-6-portfolio-assignment.html"
+    },
+    {
+      "identifier": "ga788bf16731116a79e9df9f860bd043d",
+      "title": "Module 6: Assignment",
+      "workflow_state": "unpublished",
+      "grading_type": "points",
+      "submission_types": "online_upload",
+      "points_possible": "43.0",
+      "folder": "ga788bf16731116a79e9df9f860bd043d",
+      "html": "ga788bf16731116a79e9df9f860bd043d/module-6-assignment.html"
+    },
+    {
+      "identifier": "g52b3c38840f03e80ee1608e376777a4f",
+      "title": "Module 7 Portfolio Assignment",
+      "workflow_state": "published",
+      "grading_type": "points",
+      "submission_types": "online_url,online_upload",
+      "points_possible": "10.0",
+      "folder": "g52b3c38840f03e80ee1608e376777a4f",
+      "html": "g52b3c38840f03e80ee1608e376777a4f/module-7-portfolio-assignment.html"
+    },
+    {
+      "identifier": "g5902c965b742ef57dab97e62633eaa5f",
+      "title": "Module 7: Assignment",
+      "workflow_state": "unpublished",
+      "grading_type": "points",
+      "submission_types": "online_upload",
+      "points_possible": "64.0",
+      "folder": "g5902c965b742ef57dab97e62633eaa5f",
+      "html": "g5902c965b742ef57dab97e62633eaa5f/module-7-assignment.html"
+    },
+    {
+      "identifier": "geeab86220e782a3604f2e435eba68a99",
+      "title": "Testing",
+      "workflow_state": "unpublished",
+      "grading_type": "points",
+      "submission_types": "none",
+      "points_possible": null,
+      "folder": "geeab86220e782a3604f2e435eba68a99",
+      "html": "geeab86220e782a3604f2e435eba68a99/testing.html"
+    }
+  ],
+  "quizzes": [
+    {
+      "identifier": "g179f8c8cc4858ee96a143392f6b3854f",
+      "title": "Checkpoint: Course Outline",
+      "quiz_type": "practice_quiz",
+      "points_possible": "4.0",
+      "folder": "g179f8c8cc4858ee96a143392f6b3854f"
+    },
+    {
+      "identifier": "gfe3ce2fbf7a81d4d81236834e94fcf08",
+      "title": "Common Factoring Quiz",
+      "quiz_type": "assignment",
+      "points_possible": "4.0",
+      "folder": "gfe3ce2fbf7a81d4d81236834e94fcf08"
+    },
+    {
+      "identifier": "gaa1160505872fea650e096906a9e9d67",
+      "title": "Complete the Square: Quiz",
+      "quiz_type": "assignment",
+      "points_possible": "10.0",
+      "folder": "gaa1160505872fea650e096906a9e9d67"
+    },
+    {
+      "identifier": "g35f6cc6fd2a78d9b95ed942239779773",
+      "title": "Culminating Assignment",
+      "quiz_type": "assignment",
+      "points_possible": "0.0",
+      "folder": "g35f6cc6fd2a78d9b95ed942239779773"
+    },
+    {
+      "identifier": "g5208f55a9f4487d15ae886ed5efb34f5",
+      "title": "Expanding Polynomials Quiz",
+      "quiz_type": "assignment",
+      "points_possible": "11.0",
+      "folder": "g5208f55a9f4487d15ae886ed5efb34f5"
+    },
+    {
+      "identifier": "g6f59361a14ce3bb869e8067ce2ff6259",
+      "title": "Expanding Polynomials Quiz",
+      "quiz_type": "assignment",
+      "points_possible": "11.0",
+      "folder": "g6f59361a14ce3bb869e8067ce2ff6259"
+    },
+    {
+      "identifier": "gad9c523ecb4d7563c8ab83eb36855709",
+      "title": "Factoring Simple Trinomials",
+      "quiz_type": "assignment",
+      "points_possible": "6.0",
+      "folder": "gad9c523ecb4d7563c8ab83eb36855709"
+    },
+    {
+      "identifier": "g68c7ddd2ba58c0cceb69e498b8eedc41",
+      "title": "Function Notation: Quiz (Remotely P\u2026 (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "16.0",
+      "folder": "g68c7ddd2ba58c0cceb69e498b8eedc41"
+    },
+    {
+      "identifier": "g926b03dc6385d479119bd0efd345b76b",
+      "title": "MCF 3M Culminating Activity",
+      "quiz_type": "assignment",
+      "points_possible": "75.0",
+      "folder": "g926b03dc6385d479119bd0efd345b76b"
+    },
+    {
+      "identifier": "g367900f4dc4bffa16d7204258fc0499d",
+      "title": "MCF 3M Module 1 Assignment",
+      "quiz_type": "assignment",
+      "points_possible": "40.0",
+      "folder": "g367900f4dc4bffa16d7204258fc0499d"
+    },
+    {
+      "identifier": "g3bb89480630e59b99868d7a2cc7834d3",
+      "title": "MCF 3M Module 1 Test",
+      "quiz_type": "assignment",
+      "points_possible": "30.0",
+      "folder": "g3bb89480630e59b99868d7a2cc7834d3"
+    },
+    {
+      "identifier": "gcdd919bebe2c93143e41fb005cfc0e95",
+      "title": "MCF3M FINAL EXAM - June 23rd 1:00 PM",
+      "quiz_type": "assignment",
+      "points_possible": "45.0",
+      "folder": "gcdd919bebe2c93143e41fb005cfc0e95"
+    },
+    {
+      "identifier": "gcf812d7291e0e105e70afccd57dbf391",
+      "title": "MCF3M FINAL EXAM January 27, 2025 at 9:00AM (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "45.0",
+      "folder": "gcf812d7291e0e105e70afccd57dbf391"
+    },
+    {
+      "identifier": "gbd6b3843b9d5ef0fa79c84bd58bd3f79",
+      "title": "MCF3M Module 3 Test",
+      "quiz_type": "assignment",
+      "points_possible": "32.0",
+      "folder": "gbd6b3843b9d5ef0fa79c84bd58bd3f79"
+    },
+    {
+      "identifier": "g72f842c8d7865d1426bc8b018c9b4aa1",
+      "title": "MCF3M Module 8 Assignment",
+      "quiz_type": "assignment",
+      "points_possible": "33.0",
+      "folder": "g72f842c8d7865d1426bc8b018c9b4aa1"
+    },
+    {
+      "identifier": "g2695f04211d27ddca69908f3b57a47f0",
+      "title": "Module 1: Introduction to the Quadratic Function TEST",
+      "quiz_type": "assignment",
+      "points_possible": "33.0",
+      "folder": "g2695f04211d27ddca69908f3b57a47f0"
+    },
+    {
+      "identifier": "g8c75a868c0fa649449c84738f2a31683",
+      "title": "Module 2 Assignment",
+      "quiz_type": "assignment",
+      "points_possible": "63.0",
+      "folder": "g8c75a868c0fa649449c84738f2a31683"
+    },
+    {
+      "identifier": "g9b4a32fd6e287c153ff3dacfb052bd92",
+      "title": "Module 2 Test",
+      "quiz_type": "assignment",
+      "points_possible": "36.0",
+      "folder": "g9b4a32fd6e287c153ff3dacfb052bd92"
+    },
+    {
+      "identifier": "g261b23df8172f3e9389b9e537a318413",
+      "title": "Module 2 Test (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "32.0",
+      "folder": "g261b23df8172f3e9389b9e537a318413"
+    },
+    {
+      "identifier": "g21c91a36a1eb532c64ed8b362d35529c",
+      "title": "Module 3: TEST (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "30.0",
+      "folder": "g21c91a36a1eb532c64ed8b362d35529c"
+    },
+    {
+      "identifier": "g32b5fabde871662c5e70fc0ce07aa7bc",
+      "title": "Module 4: Test  (classic) (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "41.0",
+      "folder": "g32b5fabde871662c5e70fc0ce07aa7bc"
+    },
+    {
+      "identifier": "ge6ffa7c91b85b226599d03c73d94bf04",
+      "title": "Module 4: Test (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "30.0",
+      "folder": "ge6ffa7c91b85b226599d03c73d94bf04"
+    },
+    {
+      "identifier": "g5ae4f5645b86efcd3dc1dcc86d298224",
+      "title": "Module 5: Test (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "27.0",
+      "folder": "g5ae4f5645b86efcd3dc1dcc86d298224"
+    },
+    {
+      "identifier": "gd7b363bdddcc9cb8c6bc08c61da42df4",
+      "title": "Module 5: Test (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "33.0",
+      "folder": "gd7b363bdddcc9cb8c6bc08c61da42df4"
+    },
+    {
+      "identifier": "g93320e730aeb5dbaabfcfba96ba5978c",
+      "title": "Module 6: Test (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "23.0",
+      "folder": "g93320e730aeb5dbaabfcfba96ba5978c"
+    },
+    {
+      "identifier": "gbff8ffd6547a72b97a162320e49aca47",
+      "title": "Module 6: Test (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "33.0",
+      "folder": "gbff8ffd6547a72b97a162320e49aca47"
+    },
+    {
+      "identifier": "g0bc4b897f480d855c2ac1165d89a2462",
+      "title": "Module 7 Test",
+      "quiz_type": "assignment",
+      "points_possible": "29.0",
+      "folder": "g0bc4b897f480d855c2ac1165d89a2462"
+    },
+    {
+      "identifier": "g8f266617a6ba47185a5501b209cdc216",
+      "title": "Module 7: Test (Remotely Proctored)",
+      "quiz_type": "assignment",
+      "points_possible": "37.0",
+      "folder": "g8f266617a6ba47185a5501b209cdc216"
+    },
+    {
+      "identifier": "g6ddd28e96a570152af1a7b965af654eb",
+      "title": "Module 8 Minds-On: Test Your Financial Literacy!",
+      "quiz_type": "practice_quiz",
+      "points_possible": "10.0",
+      "folder": "g6ddd28e96a570152af1a7b965af654eb"
+    },
+    {
+      "identifier": "g832164204bc8a8613d574ab276c07a99",
+      "title": "Trig Ratios Quiz",
+      "quiz_type": "assignment",
+      "points_possible": "18.0",
+      "folder": "g832164204bc8a8613d574ab276c07a99"
+    },
+    {
+      "identifier": "g27243d0c6be877831dfabd71426388e4",
+      "title": "Trig Warm-Up Quiz",
+      "quiz_type": "assignment",
+      "points_possible": "6.0",
+      "folder": "g27243d0c6be877831dfabd71426388e4"
+    },
+    {
+      "identifier": "g9fc25aee4ca17f0e8707c319d9a62bdd",
+      "title": "Understanding Honorlock Requirements Quiz",
+      "quiz_type": "practice_quiz",
+      "points_possible": "5.0",
+      "folder": "g9fc25aee4ca17f0e8707c319d9a62bdd"
+    }
+  ]
+}

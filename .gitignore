@@ -21,7 +21,9 @@ Thumbs.db
 !.env.example
 
 # Extracted IMSCC unpack (large); keep the .imscc archive under sources/
+# Committed inventory lives under courses/*/canvas/{INVENTORY.md,inventory.json}
 courses/*/sources/extracted/
+courses/*/canvas/unpacked/
 **/imscc-unpacked/
 
 # Temporary

@@ -11,12 +11,16 @@ courses/<CODE>/       # one folder per course code (MCF3M, …)
   AGENTS.md           # course agent notes (inherits frameworks/)
   sources/            # PDFs, IMSCC, immutable inputs
   curriculum/         # expectations DB + markdown
+  canvas/             # IMSCC inventory + gitignored unpacked/
+  live-lessons/       # SMART Notebook sync materials + inventory
   modules/            # lesson/module drafts
 agents/               # cross-cutting agent prompts
 scripts/              # tooling
 ```
 
 - New courses copy the `courses/MCF3M/` shape and inherit `frameworks/` + root `AGENTS.md`.
+- Harness specialized agents for trickle-down work (curriculum, semester, Canvas IMSCC, SMART Notebook) — see root `AGENTS.md`.
+- Course module/lesson inventories are baselines for rebuilds, not frozen IA; preserve source archives when restructuring.
 - Put shared school rules only under `frameworks/` or `.cursor/rules/`, not duplicated per course.
 - Teaching content > app scaffolding. Docstrings required on new functions/methods.
 - Do not commit unless explicitly asked.
