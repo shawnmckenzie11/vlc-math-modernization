@@ -1,0 +1,29 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+!.cursor/
+
+# Local / secrets
+.env
+.env.*
+!.env.example
+
+# Extracted IMSCC unpack (large); keep the .imscc archive under sources/
+courses/*/sources/extracted/
+**/imscc-unpacked/
+
+# Temporary
+*.tmp
+_preserve/

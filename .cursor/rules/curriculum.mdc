@@ -1,0 +1,13 @@
+---
+description: Ontario curriculum adherence and expectation sourcing
+alwaysApply: true
+---
+
+# Curriculum adherence
+
+- Align lessons and assessments to Ontario curriculum expectations.
+- For MCF3M, query `courses/MCF3M/curriculum/mcf3m.sqlite` or markdown mirrors — do **not** invent expectation codes or wording.
+- Keep overall vs specific expectations distinct; link examples to their parent expectation.
+- Prefer expectation codes (e.g. `A1.3`, `B3.2`) in teacher/agent docs; student-facing text can be plain language.
+- Source PDF: `courses/MCF3M/sources/ontario-math-curriculum-gr-11-12.pdf`
+- If extraction is incomplete or unverified, mark it clearly — never silently fabricate.

@@ -1,0 +1,22 @@
+---
+description: Multi-course repo layout and course inheritance conventions
+alwaysApply: true
+---
+
+# Repo conventions
+
+```
+frameworks/           # shared ELC constants (inherit these)
+courses/<CODE>/       # one folder per course code (MCF3M, …)
+  AGENTS.md           # course agent notes (inherits frameworks/)
+  sources/            # PDFs, IMSCC, immutable inputs
+  curriculum/         # expectations DB + markdown
+  modules/            # lesson/module drafts
+agents/               # cross-cutting agent prompts
+scripts/              # tooling
+```
+
+- New courses copy the `courses/MCF3M/` shape and inherit `frameworks/` + root `AGENTS.md`.
+- Put shared school rules only under `frameworks/` or `.cursor/rules/`, not duplicated per course.
+- Teaching content > app scaffolding. Docstrings required on new functions/methods.
+- Do not commit unless explicitly asked.

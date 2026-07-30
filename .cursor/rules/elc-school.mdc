@@ -1,0 +1,26 @@
+---
+description: ELC school identity, online delivery, and shared framework inheritance
+alwaysApply: true
+---
+
+# ELC teaching constants
+
+Shawn teaches **online** at **ELC** (Ontario). Shared facts live in `frameworks/`.
+
+## Always true
+
+- Async: Canvas module lesson pages
+- Sync: **two 75-minute** Zoom live classes / week
+- Friday: **75-minute** flexible office-hours Zoom
+- Curriculum: Ontario Math Gr 11/12; active build is **MCF3M**
+- Semester state: read `frameworks/semester.json` before pacing
+
+## Before planning lessons or pacing
+
+1. Load `frameworks/school.md`, `frameworks/class-structure.md`, `frameworks/canvas-lms.md`
+2. Load `frameworks/semester.json` (phase + dates)
+3. Load the course `courses/<CODE>/AGENTS.md` (MCF3M first)
+
+## Inheritance
+
+Course folders inherit school frameworks. Do not invent conflicting school-level rules inside a course. Course files may only add course-specific notes.

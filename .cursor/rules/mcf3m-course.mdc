@@ -1,0 +1,15 @@
+---
+description: MCF3M course-specific guidance when working under courses/MCF3M
+globs: courses/MCF3M/**
+alwaysApply: false
+---
+
+# MCF3M
+
+- Full name: Functions and Applications, Grade 11, University/College Preparation
+- Inherits all `frameworks/` ELC constants
+- Curriculum DB: `courses/MCF3M/curriculum/mcf3m.sqlite`
+- Sources: curriculum PDF + Canvas `.imscc` in `courses/MCF3M/sources/`
+- Strands: A Quadratic Functions, B Exponential Functions, C Trigonometric Functions
+- Query via `python scripts/query_expectations.py` — do not invent expectations
+- Read `courses/MCF3M/AGENTS.md` for course agent notes
