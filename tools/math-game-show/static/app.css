@@ -326,6 +326,7 @@ table.sheet th.total { z-index: 3; background: #e3d7bf; }
 
 td.cell.present { background: var(--present); color: var(--present-ink); }
 td.cell.absent { background: var(--absent); color: var(--absent-ink); }
+td.cell { text-align: right; }
 td.total { text-align: right; }
 
 .log-link { font-size: 11px; font-weight: 400; display: block; }
@@ -338,6 +339,86 @@ td.total { text-align: right; }
   flex-wrap: wrap;
   margin-bottom: 14px;
 }
+
+.round-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  flex: 1 1 auto;
+}
+
+.round-label {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.round-clock {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.7rem;
+  font-weight: 700;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.view-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--ink);
+}
+
+.view-toggle button {
+  min-height: var(--tap);
+  padding: 8px 10px;
+  background: #fff;
+  color: var(--ink);
+  border: 0;
+  border-right: 1px solid var(--ink);
+  margin: 0;
+  font-size: 13px;
+}
+
+.view-toggle button:last-child { border-right: 0; }
+
+.view-toggle button.on {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+table.sheet td.cell.by-round {
+  white-space: normal;
+  font-size: 12px;
+  line-height: 1.25;
+  vertical-align: top;
+}
+
+.round-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: right;
+}
+
+.cell-score {
+  font-variant-numeric: tabular-nums;
+}
+
+td.cell.present.slice-lead {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.round-mix {
+  display: flex;
+  height: 3px;
+  margin: 0 0 3px;
+  background: #e4ddd0;
+  overflow: hidden;
+}
+
+.round-mix .mix-r1 { background: var(--accent); }
+.round-mix .mix-r2 { background: var(--accent-2); }
+.round-mix .mix-r3 { background: var(--ink); }
 
 .title-row {
   display: flex;
@@ -547,9 +628,33 @@ table.roster td.btns .rule-pick {
 
 table.roster td.now {
   text-align: right;
-  width: 4.75rem;
-  white-space: nowrap;
+  min-width: 5.5rem;
+  width: auto;
   font-weight: 700;
+}
+
+.now-total {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.now-rounds {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.now-r.on {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.now-dot {
+  margin: 0 2px;
+  color: var(--line);
 }
 
 table.roster tbody.team-head td {
@@ -623,13 +728,23 @@ table.roster tbody.player-block tr.player-line td {
 
 .hidden { display: none !important; }
 
-body.scoreboard.overlay .board-stage {
+body.scoreboard.overlay {
+  height: 100vh;
   min-height: 100vh;
+  overflow: hidden;
+}
+
+body.scoreboard.overlay .board-stage {
+  height: 100%;
+  min-height: 100%;
   justify-content: flex-end;
+  overflow: hidden;
 }
 
 body.scoreboard.overlay .espn-bar,
-body.scoreboard.overlay .final-board {
+body.scoreboard.overlay .final-board,
+body.scoreboard.overlay .round-banner,
+body.scoreboard.overlay .final-ticker {
   -webkit-app-region: drag;
 }
 
@@ -690,6 +805,31 @@ body.scoreboard {
   overflow: visible;
   position: relative;
   z-index: 3;
+}
+
+.round-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  width: 100%;
+  padding: 10px 18px 8px;
+  background: #0c0d10;
+  color: #f5c518;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: clamp(16px, 2.4vw, 26px);
+}
+
+.round-banner.hidden,
+.round-banner[hidden] {
+  display: none !important;
+}
+
+.round-banner #round-clock {
+  font-variant-numeric: tabular-nums;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  color: #f4f1ea;
 }
 
 .espn-team {
@@ -779,7 +919,8 @@ body.scoreboard {
   100% { opacity: 0; }
 }
 
-.board-stage.is-final .espn-bar {
+.board-stage.is-final .espn-bar,
+.board-stage.is-final .round-banner {
   display: none;
 }
 
@@ -814,13 +955,6 @@ body.scoreboard {
   font-size: clamp(14px, 2.2vw, 22px);
   color: #f5c518;
   animation: finalSlam 700ms ease both;
-}
-
-.final-header {
-  margin: 2px 0 8px;
-  font-size: clamp(12px, 1.8vw, 16px);
-  color: #8a8f99;
-  letter-spacing: 0.08em;
 }
 
 .final-list {
@@ -914,57 +1048,77 @@ body.scoreboard {
   color: #f5c518;
 }
 
-.final-roster-overlay {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+.final-ticker {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: rgba(7, 8, 10, 0.94);
-  border: 2px solid #f5c518;
-  box-shadow: 0 0 24px rgba(245, 197, 24, 0.32);
-  z-index: 4;
-  overflow: hidden;
-  animation: finalRise 420ms ease both;
+  align-items: stretch;
+  flex: 0 0 auto;
+  min-height: 38px;
+  background: #0a0b0e;
+  border-top: 2px solid #f5c518;
 }
 
-.final-roster-kicker {
-  margin: 0;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-size: clamp(11px, 1.6vw, 14px);
-  color: #f5c518;
+.final-ticker.hidden,
+.final-ticker[hidden] {
+  display: none !important;
 }
 
-.final-roster-names {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.final-ticker-kicker {
+  flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
-  max-height: 100%;
+  padding: 0 12px;
+  background: #f5c518;
+  color: #111;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: clamp(12px, 1.8vw, 16px);
+}
+
+.final-ticker-scroller {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
 }
 
-.final-roster-names li {
+.final-ticker-track {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding-left: 8px;
-  border-left: 3px solid var(--team, #f5c518);
-  font-size: clamp(15px, 2.2vw, 22px);
+  align-items: center;
+  width: max-content;
   white-space: nowrap;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
 }
 
-.final-player-team {
+.ticker-unit {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 6px 24px;
+  flex: 0 0 auto;
+}
+
+.final-ticker-track.is-moving {
+  animation: tickerCrawl var(--ticker-s, 22s) linear infinite;
+}
+
+.final-ticker-item {
+  font-size: clamp(16px, 2.4vw, 22px);
+  color: #f4f1ea;
+  border-left: 3px solid var(--team, #f5c518);
+  padding-left: 8px;
+}
+
+.final-ticker-team {
   color: #8a8f99;
   font-size: 0.85em;
-  letter-spacing: 0.04em;
+}
+
+.final-ticker-dot {
+  color: #f5c518;
+  font-size: 0.55em;
 }
 
 body.scoreboard.overlay .board-stage.is-final {
@@ -973,7 +1127,55 @@ body.scoreboard.overlay .board-stage.is-final {
 
 body.scoreboard.overlay .final-board {
   flex: 1;
+  height: 100%;
   max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body.scoreboard.overlay .final-scores {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 6px 12px 4px;
+}
+
+body.scoreboard.overlay .final-kicker {
+  font-size: clamp(12px, 1.6vw, 16px);
+}
+
+body.scoreboard.overlay .final-list li {
+  padding: 6px 10px;
+}
+
+body.scoreboard.overlay .final-list li.winner {
+  padding: 8px 12px;
+}
+
+body.scoreboard.overlay .final-list li.winner .final-name {
+  font-size: clamp(18px, 2.8vw, 26px);
+}
+
+body.scoreboard.overlay .final-list li.winner .final-score {
+  font-size: clamp(22px, 3.8vw, 34px);
+}
+
+body.scoreboard.overlay .final-ticker {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 12;
+  min-height: 44px;
+}
+
+body.scoreboard.is-live .final-ticker,
+body.scoreboard.is-idle .final-ticker,
+body.scoreboard.is-final .final-ticker {
+  display: flex !important;
+}
+
+body.scoreboard.overlay .board-stage.is-live,
+body.scoreboard.overlay .board-stage.is-final {
+  justify-content: flex-end;
 }
 
 @keyframes finalSlam {
@@ -984,6 +1186,11 @@ body.scoreboard.overlay .final-board {
 @keyframes finalRise {
   0% { opacity: 0; transform: translateY(24px); }
   100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tickerCrawl {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
 }
 
 

@@ -7,7 +7,7 @@ import json
 import sqlite3
 import threading
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +21,7 @@ from schedule import (
     store_days,
     unique_header_label,
 )
+
 from teams import (
     assign_balanced,
     assign_manual,
@@ -65,6 +66,9 @@ CREATE TABLE IF NOT EXISTS session_scores (
     student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
     present INTEGER NOT NULL DEFAULT 0,
     points REAL NOT NULL DEFAULT 0,
+    points_r1 REAL NOT NULL DEFAULT 0,
+    points_r2 REAL NOT NULL DEFAULT 0,
+    points_r3 REAL NOT NULL DEFAULT 0,
     PRIMARY KEY (session_id, student_id)
 );
 
@@ -76,7 +80,10 @@ CREATE TABLE IF NOT EXISTS games (
     created_at TEXT NOT NULL,
     event_seq INTEGER NOT NULL DEFAULT 0,
     last_event_json TEXT,
-    owns_session INTEGER NOT NULL DEFAULT 0
+    owns_session INTEGER NOT NULL DEFAULT 0,
+    current_round INTEGER NOT NULL DEFAULT 1,
+    round_started_at TEXT,
+    round_duration_sec INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS point_events (
@@ -91,6 +98,7 @@ CREATE TABLE IF NOT EXISTS point_events (
     to_id INTEGER NOT NULL,
     amount INTEGER NOT NULL,
     team_rule TEXT,
+    round INTEGER NOT NULL DEFAULT 1,
     UNIQUE(session_id, seq)
 );
 
@@ -148,8 +156,35 @@ CREATE TABLE IF NOT EXISTS app_state (
 
 SCOREBOARD_GAME_KEY = "scoreboard_game_id"
 CURRENT_CLASS_KEY = "current_class_id"
+STAT_WINDOW_KEY_PREFIX = "stat_window:"
+STAT_WINDOWS = ("last_class", "last_week", "year")
+DEFAULT_STAT_WINDOW = "last_class"
+STAT_WINDOW_LABELS = {
+    "last_class": "last class",
+    "last_week": "last week",
+    "year": "this year",
+}
 
 TEAM_RULES = ("each_member", "split_members", "team_only")
+
+ROUND_TITLES = {
+    1: "Open Question Round",
+    2: "Team Challenge Question",
+    3: "Consolidation Round",
+}
+
+# Public scoreboard ticker: Leaders + Most Improved per teaching slice.
+LEADER_SLICES = (
+    ("points_r1", "Open Question Leaders", "Open Question Most Improved"),
+    ("points_r2", "Team Challenge Leaders", "Team Challenge Most Improved"),
+    ("points_r3", "Formative Leaders", "Formative Most Improved"),
+)
+
+ROUND_DURATIONS_SEC = {
+    1: 20 * 60,
+    2: 10 * 60,
+    3: 10 * 60,
+}
 
 
 def split_amount(amount: float, n_members: int) -> list[float]:
@@ -181,6 +216,164 @@ def as_points(value: Any) -> float:
         Value rounded to one tenth.
     """
     return round(float(value or 0), 1)
+
+
+def points_label(value: Any) -> str:
+    """Format a credit the way the scoreboard ticker prints it.
+
+    Args:
+        value: Raw numeric (int, float, or SQLite number).
+    """
+    n = as_points(value)
+    return str(int(n)) if n == int(n) else f"{n:.1f}"
+
+
+def normalize_stat_window(value: Any) -> str:
+    """Return a known stats-period key, or raise.
+
+    Args:
+        value: Teacher-selected window (``last_class``, ``last_week``, ``year``).
+    """
+    raw = str(value or "").strip()
+    if raw not in STAT_WINDOWS:
+        raise ValueError("window must be last_class, last_week, or year")
+    return raw
+
+
+def stat_window_label(window: str) -> str:
+    """Student-facing period phrase for the ticker kicker.
+
+    Args:
+        window: A value in ``STAT_WINDOWS``.
+    """
+    return STAT_WINDOW_LABELS.get(window, STAT_WINDOW_LABELS[DEFAULT_STAT_WINDOW])
+
+
+def leader_periods(
+    scored_ids: list[int], window: str
+) -> tuple[list[int], list[int] | None]:
+    """Current and prior session-id lists for Leaders / Most Improved.
+
+    Last week is the last two scored columns. Most Improved needs the
+    previous two (four scored columns). One scored column falls back to
+    last-class Leaders with no prior. This year uses every scored column
+    and has no prior period.
+
+    Args:
+        scored_ids: Session ids with at least one credited present score,
+            oldest first.
+        window: ``last_class``, ``last_week``, or ``year``.
+    """
+    if not scored_ids:
+        return [], None
+    chosen = window if window in STAT_WINDOWS else DEFAULT_STAT_WINDOW
+    if chosen == "year":
+        return list(scored_ids), None
+    if chosen == "last_week":
+        if len(scored_ids) < 2:
+            return [scored_ids[-1]], None
+        current = scored_ids[-2:]
+        prior = scored_ids[-4:-2] if len(scored_ids) >= 4 else None
+        return current, prior
+    current = [scored_ids[-1]]
+    prior = [scored_ids[-2]] if len(scored_ids) > 1 else None
+    return current, prior
+
+
+def member_round_points(score: dict[str, Any] | None) -> dict[str, float]:
+    """Individual credited points for a teacher-game member.
+
+    ``session_points`` is the running lesson total (R1+R2+R3). Round
+    buckets stay 0 for team-only ESPN awards, which never hit a student.
+
+    Args:
+        score: A ``session_scores`` slice, or ``None`` if the student
+            has no row yet.
+    """
+    row = score or {}
+    return {
+        "session_points": as_points(row.get("points")),
+        "points_r1": as_points(row.get("points_r1")),
+        "points_r2": as_points(row.get("points_r2")),
+        "points_r3": as_points(row.get("points_r3")),
+    }
+
+
+def round_title(round_n: int) -> str:
+    """Return the teacher-facing title for rounds 1–3.
+
+    Args:
+        round_n: Round index.
+
+    Returns:
+        Display name such as ``Open Question Round``.
+    """
+    return ROUND_TITLES.get(int(round_n), ROUND_TITLES[1])
+
+
+def round_remaining_sec(
+    started_at: str | None,
+    duration_sec: int | None,
+    *,
+    now: datetime | None = None,
+) -> int:
+    """Seconds left on a round clock, never below 0.
+
+    A full second must elapse before the count drops, so a just-started
+    20:00 round still reads 1200.
+
+    Args:
+        started_at: ISO timestamp when the round began, or None.
+        duration_sec: Planned length in seconds.
+        now: Optional clock (tests inject this).
+
+    Returns:
+        Remaining whole seconds, clamped at 0.
+    """
+    if not started_at or not duration_sec:
+        return 0
+    try:
+        started = datetime.fromisoformat(str(started_at))
+    except ValueError:
+        return 0
+    clock = now or datetime.now()
+    elapsed = (clock - started).total_seconds()
+    return max(0, int(duration_sec) - int(max(0, elapsed)))
+
+
+def round_ends_at(started_at: str | None, duration_sec: int | None) -> str | None:
+    """ISO end time for the round clock, or None if it has not started.
+
+    Args:
+        started_at: ISO timestamp when the round began.
+        duration_sec: Planned length in seconds.
+    """
+    if not started_at or not duration_sec:
+        return None
+    try:
+        started = datetime.fromisoformat(str(started_at))
+    except ValueError:
+        return None
+    return (started + timedelta(seconds=int(duration_sec))).isoformat()
+
+
+def round_ends_at_ms(started_at: str | None, duration_sec: int | None) -> int | None:
+    """UTC epoch milliseconds when the round clock hits 0:00.
+
+    Clients count down from this deadline so polls do not reset the display.
+
+    Args:
+        started_at: ISO timestamp when the round began.
+        duration_sec: Planned length in seconds.
+    """
+    if not started_at or not duration_sec:
+        return None
+    try:
+        started = datetime.fromisoformat(str(started_at))
+    except ValueError:
+        return None
+    end = started + timedelta(seconds=int(duration_sec))
+    return int(end.timestamp() * 1000)
 
 # Future TODO (Teacher Game Dashboard): allow students to award points to one
 # another. Scoring is teacher-only until then; keep the log `from` field.
@@ -216,6 +409,7 @@ class GameShowDB:
         """Add columns introduced after the first schema.
 
         Existing local DBs keep their data; ``owns_session`` defaults to 0.
+        Legacy ``session_scores.points`` become Round 1 totals.
         """
         game_cols = {
             row["name"]
@@ -235,6 +429,62 @@ class GameShowDB:
             self.conn.execute(
                 "ALTER TABLE sessions ADD COLUMN source TEXT NOT NULL DEFAULT 'game'"
             )
+        self._migrate_rounds()
+
+    def _migrate_rounds(self) -> None:
+        """Add round/timer columns and copy legacy points into Round 1.
+
+        Live games that predate the timer get Round 1 started at ``created_at``.
+        """
+        game_cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(games)").fetchall()
+        }
+        if "current_round" not in game_cols:
+            self.conn.execute(
+                "ALTER TABLE games ADD COLUMN current_round INTEGER NOT NULL DEFAULT 1"
+            )
+        if "round_started_at" not in game_cols:
+            self.conn.execute("ALTER TABLE games ADD COLUMN round_started_at TEXT")
+        if "round_duration_sec" not in game_cols:
+            self.conn.execute("ALTER TABLE games ADD COLUMN round_duration_sec INTEGER")
+        self.conn.execute(
+            """
+            UPDATE games
+            SET round_started_at = created_at,
+                round_duration_sec = ?
+            WHERE status = 'live' AND round_started_at IS NULL
+            """,
+            (ROUND_DURATIONS_SEC[1],),
+        )
+        score_cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(session_scores)").fetchall()
+        }
+        added_r1 = False
+        if "points_r1" not in score_cols:
+            self.conn.execute(
+                "ALTER TABLE session_scores ADD COLUMN points_r1 REAL NOT NULL DEFAULT 0"
+            )
+            added_r1 = True
+        if "points_r2" not in score_cols:
+            self.conn.execute(
+                "ALTER TABLE session_scores ADD COLUMN points_r2 REAL NOT NULL DEFAULT 0"
+            )
+        if "points_r3" not in score_cols:
+            self.conn.execute(
+                "ALTER TABLE session_scores ADD COLUMN points_r3 REAL NOT NULL DEFAULT 0"
+            )
+        if added_r1:
+            self.conn.execute("UPDATE session_scores SET points_r1 = points")
+        event_cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(point_events)").fetchall()
+        }
+        if "round" not in event_cols:
+            self.conn.execute(
+                'ALTER TABLE point_events ADD COLUMN "round" INTEGER NOT NULL DEFAULT 1'
+            )
 
     def _ensure_real_points(self, table: str) -> None:
         """Rebuild a scores table if ``points`` still has INTEGER affinity.
@@ -252,21 +502,44 @@ class GameShowDB:
             return
         self.conn.execute("PRAGMA foreign_keys = OFF")
         if table == "session_scores":
-            self.conn.executescript(
-                """
-                CREATE TABLE session_scores_v2 (
-                    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-                    student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-                    present INTEGER NOT NULL DEFAULT 0,
-                    points REAL NOT NULL DEFAULT 0,
-                    PRIMARY KEY (session_id, student_id)
-                );
-                INSERT INTO session_scores_v2
-                    SELECT session_id, student_id, present, points FROM session_scores;
-                DROP TABLE session_scores;
-                ALTER TABLE session_scores_v2 RENAME TO session_scores;
-                """
-            )
+            col_names = {row["name"] for row in cols}
+            if "points_r1" in col_names:
+                self.conn.executescript(
+                    """
+                    CREATE TABLE session_scores_v2 (
+                        session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+                        student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+                        present INTEGER NOT NULL DEFAULT 0,
+                        points REAL NOT NULL DEFAULT 0,
+                        points_r1 REAL NOT NULL DEFAULT 0,
+                        points_r2 REAL NOT NULL DEFAULT 0,
+                        points_r3 REAL NOT NULL DEFAULT 0,
+                        PRIMARY KEY (session_id, student_id)
+                    );
+                    INSERT INTO session_scores_v2
+                        SELECT session_id, student_id, present, points,
+                               points_r1, points_r2, points_r3
+                        FROM session_scores;
+                    DROP TABLE session_scores;
+                    ALTER TABLE session_scores_v2 RENAME TO session_scores;
+                    """
+                )
+            else:
+                self.conn.executescript(
+                    """
+                    CREATE TABLE session_scores_v2 (
+                        session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+                        student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+                        present INTEGER NOT NULL DEFAULT 0,
+                        points REAL NOT NULL DEFAULT 0,
+                        PRIMARY KEY (session_id, student_id)
+                    );
+                    INSERT INTO session_scores_v2
+                        SELECT session_id, student_id, present, points FROM session_scores;
+                    DROP TABLE session_scores;
+                    ALTER TABLE session_scores_v2 RENAME TO session_scores;
+                    """
+                )
         else:
             self.conn.executescript(
                 """
@@ -481,7 +754,8 @@ class GameShowDB:
             ]
             score_rows = self.conn.execute(
                 """
-                SELECT ss.session_id, ss.student_id, ss.present, ss.points
+                SELECT ss.session_id, ss.student_id, ss.present, ss.points,
+                       ss.points_r1, ss.points_r2, ss.points_r3
                 FROM session_scores ss
                 JOIN sessions se ON se.id = ss.session_id
                 WHERE se.class_id = ?
@@ -528,6 +802,9 @@ class GameShowDB:
             cells[key] = {
                 "present": bool(row["present"]),
                 "points": pts,
+                "points_r1": as_points(row["points_r1"]),
+                "points_r2": as_points(row["points_r2"]),
+                "points_r3": as_points(row["points_r3"]),
             }
         for row in sub_score_rows:
             cells[f"sub:{row['subtotal_id']}:{row['student_id']}"] = {
@@ -565,6 +842,7 @@ class GameShowDB:
             "totals": {str(k): v for k, v in totals.items()},
             "open_game": dict(open_game) if open_game else None,
             "time_options": list(TIME_OPTIONS),
+            "stat_window": self._get_stat_window(class_id),
         }
 
     def _live_session_ids(
@@ -1277,7 +1555,7 @@ class GameShowDB:
             self.conn.execute(
                 """
                 UPDATE session_scores
-                SET present = 0, points = 0
+                SET present = 0, points = 0, points_r1 = 0, points_r2 = 0, points_r3 = 0
                 WHERE session_id = ?
                 """,
                 (session_id,),
@@ -1378,13 +1656,26 @@ class GameShowDB:
             ).fetchall()
             for row in students:
                 sid = int(row["id"])
+                is_present = 1 if sid in present_set else 0
                 self.conn.execute(
                     """
                     UPDATE session_scores
-                    SET present = ?, points = CASE WHEN ? = 0 THEN 0 ELSE points END
+                    SET present = ?,
+                        points = CASE WHEN ? = 0 THEN 0 ELSE points END,
+                        points_r1 = CASE WHEN ? = 0 THEN 0 ELSE points_r1 END,
+                        points_r2 = CASE WHEN ? = 0 THEN 0 ELSE points_r2 END,
+                        points_r3 = CASE WHEN ? = 0 THEN 0 ELSE points_r3 END
                     WHERE session_id = ? AND student_id = ?
                     """,
-                    (1 if sid in present_set else 0, 1 if sid in present_set else 0, session_id, sid),
+                    (
+                        is_present,
+                        is_present,
+                        is_present,
+                        is_present,
+                        is_present,
+                        session_id,
+                        sid,
+                    ),
                 )
             # Drop any teams from a previous pass through this setup.
             self.conn.execute(
@@ -1552,10 +1843,61 @@ class GameShowDB:
                 )
                 if cur.rowcount != 1:
                     raise KeyError(f"team {team_id}")
-            self.conn.execute(
-                "UPDATE games SET status = 'live' WHERE id = ?", (game_id,)
-            )
+            going_live = game["status"] != "live"
+            if going_live:
+                self.conn.execute(
+                    """
+                    UPDATE games
+                    SET status = 'live',
+                        current_round = 1,
+                        round_started_at = ?,
+                        round_duration_sec = ?
+                    WHERE id = ?
+                    """,
+                    (self._now(), ROUND_DURATIONS_SEC[1], game_id),
+                )
+            else:
+                self.conn.execute(
+                    "UPDATE games SET status = 'live' WHERE id = ?", (game_id,)
+                )
             self._set_scoreboard_game(game_id)
+            self.conn.commit()
+        return self.game_state(class_id)
+
+    def start_round(self, class_id: int, round_number: int) -> dict[str, Any]:
+        """Advance the live game to Round 2 or Round 3.
+
+        Only the next round can be started (1→2→3). The timer hitting 0:00
+        does not advance the round; the teacher may start the next round
+        early.
+
+        Args:
+            class_id: Classes primary key.
+            round_number: ``2`` or ``3``.
+
+        Returns:
+            Updated game state with a fresh countdown.
+        """
+        target = int(round_number)
+        if target not in (2, 3):
+            raise ValueError("round must be 2 or 3")
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] != "live":
+                raise ValueError("Rounds start after Create Teams")
+            current = int(game["current_round"] or 1)
+            if target != current + 1:
+                raise ValueError(f"Cannot skip to round {target}")
+            self.conn.execute(
+                """
+                UPDATE games
+                SET current_round = ?,
+                    round_started_at = ?,
+                    round_duration_sec = ?
+                WHERE id = ?
+                """,
+                (target, self._now(), ROUND_DURATIONS_SEC[target], int(game["id"])),
+            )
             self.conn.commit()
         return self.game_state(class_id)
 
@@ -1593,22 +1935,34 @@ class GameShowDB:
         ).fetchall()
         return [int(r["student_id"]) for r in rows]
 
-    def _credit_student(self, session_id: int, student_id: int, amount: float) -> None:
+    def _credit_student(
+        self, session_id: int, student_id: int, amount: float, round_n: int = 1
+    ) -> None:
         """Add ``amount`` to a present student's credited session score.
+
+        Writes both the matching ``points_rN`` bucket and ``points`` (the sum).
+        Team-only buckets never call this method.
 
         Args:
             session_id: Sessions primary key.
             student_id: Students primary key.
             amount: Signed points (stored to one decimal place).
+            round_n: Current round 1–3; credits ``points_r1`` / ``points_r2`` /
+                ``points_r3``.
         """
         credit = as_points(amount)
+        n = int(round_n)
+        if n not in (1, 2, 3):
+            raise ValueError("round must be 1, 2, or 3")
+        col = f"points_r{n}"
         cur = self.conn.execute(
-            """
+            f"""
             UPDATE session_scores
-            SET points = ROUND(points + ?, 1)
+            SET points = ROUND(points + ?, 1),
+                {col} = ROUND({col} + ?, 1)
             WHERE session_id = ? AND student_id = ? AND present = 1
             """,
-            (credit, session_id, student_id),
+            (credit, credit, session_id, student_id),
         )
         if cur.rowcount != 1:
             raise KeyError(f"student {student_id} is not present this session")
@@ -1640,6 +1994,7 @@ class GameShowDB:
         to_id: int,
         amount: int,
         team_rule: str | None,
+        round_n: int = 1,
     ) -> dict[str, Any]:
         """Append an immutable point event and a JSONL line.
 
@@ -1651,20 +2006,22 @@ class GameShowDB:
             to_id: Student or team id.
             amount: Signed amount.
             team_rule: Team credit rule, or None for individual events.
+            round_n: Round the award belongs to (1–3).
 
         Returns:
             The log record written to JSONL.
         """
         ts = self._now()
+        n = int(round_n) if int(round_n) in (1, 2, 3) else 1
         self.conn.execute(
             """
             INSERT INTO point_events (
                 session_id, game_id, seq, ts, from_kind, from_id,
-                to_kind, to_id, amount, team_rule
+                to_kind, to_id, amount, team_rule, "round"
             )
-            VALUES (?, ?, ?, ?, 'teacher', NULL, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, 'teacher', NULL, ?, ?, ?, ?, ?)
             """,
-            (session_id, game_id, seq, ts, to_kind, to_id, amount, team_rule),
+            (session_id, game_id, seq, ts, to_kind, to_id, amount, team_rule, n),
         )
         record = {
             "ts": ts,
@@ -1674,6 +2031,7 @@ class GameShowDB:
             "to": to_id,
             "amount": amount,
             "team_rule": team_rule,
+            "round": n,
         }
         log_path = self._append_log(session_id, record)
         self.conn.execute(
@@ -1739,6 +2097,9 @@ class GameShowDB:
             game_id = int(game["id"])
             session_id = int(game["session_id"])
             seq = int(game["event_seq"] or 0) + 1
+            round_n = int(game["current_round"] or 1)
+            if round_n not in (1, 2, 3):
+                round_n = 1
             last_event: dict[str, Any]
             if kind == "student":
                 member = self.conn.execute(
@@ -1750,7 +2111,7 @@ class GameShowDB:
                 ).fetchone()
                 if member is None:
                     raise KeyError(f"student {target_id} is not on a live team")
-                self._credit_student(session_id, target_id, amount)
+                self._credit_student(session_id, target_id, amount, round_n)
                 team = dict(
                     self.conn.execute(
                         "SELECT * FROM game_teams WHERE id = ?",
@@ -1782,6 +2143,7 @@ class GameShowDB:
                     to_id=target_id,
                     amount=amount,
                     team_rule=None,
+                    round_n=round_n,
                 )
             else:
                 team_row = self.conn.execute(
@@ -1793,12 +2155,12 @@ class GameShowDB:
                 member_ids = self._team_member_ids(game_id, target_id)
                 if rule == "each_member":
                     for sid in member_ids:
-                        self._credit_student(session_id, sid, amount)
+                        self._credit_student(session_id, sid, amount, round_n)
                 elif rule == "split_members":
                     shares = split_amount(amount, len(member_ids))
                     for sid, share in zip(member_ids, shares, strict=True):
                         if share:
-                            self._credit_student(session_id, sid, share)
+                            self._credit_student(session_id, sid, share, round_n)
                     remainder = as_points(amount - sum(shares))
                     if remainder:
                         self._bump_team_bucket(game_id, target_id, remainder)
@@ -1827,6 +2189,7 @@ class GameShowDB:
                     to_id=target_id,
                     amount=amount,
                     team_rule=rule,
+                    round_n=round_n,
                 )
             self.conn.execute(
                 """
@@ -1883,6 +2246,10 @@ class GameShowDB:
     def game_state(self, class_id: int, game_id: int | None = None) -> dict[str, Any]:
         """Full teacher-game payload (setup or live).
 
+        Team members include ``session_points`` (the lesson sum) plus
+        ``points_r1`` / ``points_r2`` / ``points_r3`` for the teacher Now
+        triple. Team-only ESPN buckets are not in those fields.
+
         Args:
             class_id: Classes primary key.
             game_id: Optional specific game (including just-ended).
@@ -1912,9 +2279,16 @@ class GameShowDB:
                 int(r["student_id"]): {
                     "present": bool(r["present"]),
                     "points": as_points(r["points"]),
+                    "points_r1": as_points(r["points_r1"]),
+                    "points_r2": as_points(r["points_r2"]),
+                    "points_r3": as_points(r["points_r3"]),
                 }
                 for r in self.conn.execute(
-                    "SELECT student_id, present, points FROM session_scores WHERE session_id = ?",
+                    """
+                    SELECT student_id, present, points,
+                           points_r1, points_r2, points_r3
+                    FROM session_scores WHERE session_id = ?
+                    """,
                     (session["id"],),
                 )
             }
@@ -1952,6 +2326,7 @@ class GameShowDB:
                 last_event = json.loads(str(game["last_event_json"]))
             except json.JSONDecodeError:
                 last_event = None
+        round_info = self._round_fields(game)
         teams_out: list[dict[str, Any]] = []
         for team in teams:
             members = []
@@ -1960,12 +2335,12 @@ class GameShowDB:
                 sid = int(student["id"])
                 if team_of.get(sid) != int(team["id"]):
                     continue
-                pts = as_points(scores.get(sid, {}).get("points") or 0)
-                individual_sum = as_points(individual_sum + pts)
+                credited = member_round_points(scores.get(sid))
+                individual_sum = as_points(individual_sum + credited["session_points"])
                 members.append(
                     {
                         **student,
-                        "session_points": pts,
+                        **credited,
                         "career_total": as_points(totals.get(sid, 0)),
                     }
                 )
@@ -1990,13 +2365,14 @@ class GameShowDB:
                 "session_id": int(game["session_id"]),
                 "event_seq": int(game["event_seq"] or 0),
                 "last_event": last_event,
+                **round_info,
             },
             "session": session,
             "students": [
                 {
                     **s,
                     "present": scores.get(int(s["id"]), {}).get("present", False),
-                    "session_points": scores.get(int(s["id"]), {}).get("points", 0),
+                    **member_round_points(scores.get(int(s["id"]))),
                     "career_total": totals.get(int(s["id"]), 0),
                 }
                 for s in students
@@ -2020,6 +2396,29 @@ class GameShowDB:
             self._set_current_class(class_id)
             self.conn.commit()
 
+    def set_stat_window(
+        self, class_id: int, window: str, sort: str = "last"
+    ) -> dict[str, Any]:
+        """Persist the scoreboard stats period for this roster.
+
+        Args:
+            class_id: Classes primary key.
+            window: ``last_class``, ``last_week``, or ``year``.
+            sort: Dashboard sort passed through on the returned payload.
+        """
+        self.get_class(class_id)
+        chosen = normalize_stat_window(window)
+        with self._lock:
+            self.conn.execute(
+                """
+                INSERT INTO app_state (key, value) VALUES (?, ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """,
+                (self._stat_window_key(class_id), chosen),
+            )
+            self.conn.commit()
+        return self.dashboard(class_id, sort)
+
     def scoreboard(self, class_id: int | None = None) -> dict[str, Any]:
         """The one public scoreboard for the class the teacher is viewing.
 
@@ -2032,6 +2431,11 @@ class GameShowDB:
         """
         del class_id
         current_id = self._current_class_id()
+        window = (
+            self._get_stat_window(current_id)
+            if current_id is not None
+            else DEFAULT_STAT_WINDOW
+        )
         if current_id is not None:
             live_id = self._live_game_id_for_class(current_id)
             if live_id is not None:
@@ -2050,6 +2454,9 @@ class GameShowDB:
                         self.game_state(current_id, game_id=pinned_id),
                         live=False,
                     )
+        idle_leaders = (
+            self._scoreboard_leaders(current_id, window) if current_id is not None else []
+        )
         return {
             "ok": True,
             "live": False,
@@ -2061,6 +2468,14 @@ class GameShowDB:
             "status": None,
             "game_id": None,
             "class_id": current_id,
+            "round": None,
+            "round_title": None,
+            "round_ends_at": None,
+            "round_ends_at_ms": None,
+            "round_remaining_sec": None,
+            "leaders": idle_leaders,
+            "stat_window": window,
+            "stat_window_label": stat_window_label(window),
         }
 
     def _live_game_id_for_class(self, class_id: int) -> int | None:
@@ -2134,6 +2549,32 @@ class GameShowDB:
             (CURRENT_CLASS_KEY, str(int(class_id))),
         )
 
+    def _stat_window_key(self, class_id: int) -> str:
+        """Return the ``app_state`` key for a class's stats period.
+
+        Args:
+            class_id: Classes primary key.
+        """
+        return f"{STAT_WINDOW_KEY_PREFIX}{int(class_id)}"
+
+    def _get_stat_window(self, class_id: int) -> str:
+        """Return the saved stats window for a class (default last class).
+
+        Args:
+            class_id: Classes primary key.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT value FROM app_state WHERE key = ?",
+                (self._stat_window_key(class_id),),
+            ).fetchone()
+        if row is None:
+            return DEFAULT_STAT_WINDOW
+        raw = str(row["value"] or "").strip()
+        if raw not in STAT_WINDOWS:
+            return DEFAULT_STAT_WINDOW
+        return raw
+
     def _set_scoreboard_game(self, game_id: int | None) -> None:
         """Pin the public scoreboard to a game, or clear it.
 
@@ -2172,6 +2613,244 @@ class GameShowDB:
         names.sort(key=lambda row: row["first_name"].lower())
         return names
 
+    def _ticker_first_name(self, student: dict[str, Any], roster: list[dict[str, Any]]) -> str:
+        """First name for the public ticker; last name only when first names clash.
+
+        Args:
+            student: A students row.
+            roster: Students in the same class.
+        """
+        first = str(student.get("first_name") or "").strip() or "?"
+        key = first.lower()
+        clashes = [
+            row
+            for row in roster
+            if str(row.get("first_name") or "").strip().lower() == key
+        ]
+        if len(clashes) > 1:
+            last = str(student.get("last_display") or "").strip()
+            return f"{first} {last}".strip()
+        return first
+
+    def _leader_phrase(
+        self,
+        students: list[dict[str, Any]],
+        roster: list[dict[str, Any]],
+        score: float,
+        *,
+        plus: bool = False,
+    ) -> str:
+        """Compact 'Maya 12' / 'Maya & Jordan +4' for the ticker.
+
+        Args:
+            students: Named leaders in roster order.
+            roster: Full class roster for first-name clashes.
+            score: Points or improvement amount.
+            plus: Prefix the number with + (Most Improved).
+        """
+        names = [self._ticker_first_name(row, roster) for row in students]
+        pts = points_label(score)
+        if plus and as_points(score) > 0:
+            pts = f"+{pts}"
+        if len(names) == 1:
+            return f"{names[0]} {pts}"
+        if len(names) == 2:
+            return f"{names[0]} & {names[1]} {pts}"
+        if len(names) == 3:
+            return f"{names[0]}, {names[1]} & {names[2]} {pts}"
+        return f"{names[0]} +{len(names) - 1} {pts}"
+
+    def _session_has_credits(self, cells: dict[int, dict[str, Any]]) -> bool:
+        """True when a lesson column has at least one present credited score.
+
+        Args:
+            cells: ``student_id`` to present/round-points for one session.
+        """
+        for cell in cells.values():
+            if not cell.get("present"):
+                continue
+            if (
+                as_points(cell.get("points_r1")) > 0
+                or as_points(cell.get("points_r2")) > 0
+                or as_points(cell.get("points_r3")) > 0
+            ):
+                return True
+        return False
+
+    def _present_slice_average(
+        self,
+        student_id: int,
+        session_ids: list[int],
+        by_session: dict[int, dict[int, dict[str, Any]]],
+        key: str,
+    ) -> float | None:
+        """Mean of one slice across present lessons in the window.
+
+        Absent lessons are skipped so missing a class does not count as
+        zero. Returns ``None`` when the student was not present in any
+        lesson in ``session_ids``. Team-only ESPN buckets never appear
+        in these cells.
+
+        Args:
+            student_id: Students primary key.
+            session_ids: Window sessions, oldest first.
+            by_session: session_id → student_id → present/round points.
+            key: ``points_r1``, ``points_r2``, or ``points_r3``.
+        """
+        values: list[float] = []
+        for sid in session_ids:
+            cell = by_session.get(sid, {}).get(student_id)
+            if not cell or not cell.get("present"):
+                continue
+            values.append(as_points(cell.get(key)))
+        if not values:
+            return None
+        return as_points(sum(values) / len(values))
+
+    def _scoreboard_leaders(
+        self, class_id: int, window: str | None = None
+    ) -> list[str]:
+        """Open Question / Team Challenge / Formative leaders and most improved.
+
+        Uses scored class columns only (present + any round points > 0),
+        skipping an empty in-progress game. The saved stats window picks
+        last class, last two scored classes (a week), or every scored
+        column this year. A student counts if present in at least one
+        lesson in that window. Most Improved needs a prior period of the
+        same shape (previous class, or previous two classes). This year
+        has no prior window. First names only (last name on a clash).
+
+        Args:
+            class_id: Classes primary key.
+            window: Optional ``last_class`` / ``last_week`` / ``year``.
+                Defaults to the class's saved window.
+        """
+        chosen = (
+            window
+            if window in STAT_WINDOWS
+            else self._get_stat_window(class_id)
+        )
+        with self._lock:
+            sessions = [
+                dict(row)
+                for row in self.conn.execute(
+                    """
+                    SELECT id FROM sessions
+                    WHERE class_id = ?
+                    ORDER BY starts_at ASC, id ASC
+                    """,
+                    (class_id,),
+                )
+            ]
+            students = [
+                dict(row)
+                for row in self.conn.execute(
+                    """
+                    SELECT id, first_name, last_display
+                    FROM students WHERE class_id = ?
+                    ORDER BY last_display, first_name
+                    """,
+                    (class_id,),
+                )
+            ]
+            if not sessions:
+                return []
+            session_ids = [int(row["id"]) for row in sessions]
+            placeholders = ",".join("?" * len(session_ids))
+            score_rows = self.conn.execute(
+                f"""
+                SELECT session_id, student_id, present, points_r1, points_r2, points_r3
+                FROM session_scores
+                WHERE session_id IN ({placeholders})
+                """,
+                session_ids,
+            ).fetchall()
+        by_session: dict[int, dict[int, dict[str, Any]]] = {}
+        for row in score_rows:
+            by_session.setdefault(int(row["session_id"]), {})[int(row["student_id"])] = {
+                "present": bool(row["present"]),
+                "points_r1": as_points(row["points_r1"]),
+                "points_r2": as_points(row["points_r2"]),
+                "points_r3": as_points(row["points_r3"]),
+            }
+        scored_ids = [
+            sid for sid in session_ids if self._session_has_credits(by_session.get(sid, {}))
+        ]
+        if not scored_ids:
+            return []
+        current_ids, prior_ids = leader_periods(scored_ids, chosen)
+        if not current_ids:
+            return []
+        items: list[str] = []
+        for key, leader_label, improved_label in LEADER_SLICES:
+            scored: list[tuple[dict[str, Any], float]] = []
+            for student in students:
+                avg = self._present_slice_average(
+                    int(student["id"]), current_ids, by_session, key
+                )
+                if avg is None:
+                    continue
+                scored.append((student, avg))
+            if scored:
+                top = max(pts for _s, pts in scored)
+                if top > 0:
+                    leaders = [s for s, pts in scored if pts == top]
+                    items.append(
+                        f"{leader_label} · {self._leader_phrase(leaders, students, top)}"
+                    )
+            if not prior_ids:
+                continue
+            climbs: list[tuple[dict[str, Any], float]] = []
+            for student in students:
+                sid = int(student["id"])
+                cur_avg = self._present_slice_average(
+                    sid, current_ids, by_session, key
+                )
+                prev_avg = self._present_slice_average(
+                    sid, prior_ids, by_session, key
+                )
+                if cur_avg is None or prev_avg is None:
+                    continue
+                diff = as_points(cur_avg - prev_avg)
+                climbs.append((student, diff))
+            if not climbs:
+                continue
+            best = max(diff for _s, diff in climbs)
+            if best <= 0:
+                continue
+            leaders = [s for s, diff in climbs if diff == best]
+            items.append(
+                f"{improved_label} · {self._leader_phrase(leaders, students, best, plus=True)}"
+            )
+        return items
+
+    def _round_fields(self, game: dict[str, Any]) -> dict[str, Any]:
+        """Round index, title, timer end, and remaining seconds.
+
+        Timer expiry does not change ``current_round``. Remaining is never
+        negative.
+
+        Args:
+            game: A games row dict (status, current_round, round_started_at, …).
+        """
+        current = int(game.get("current_round") or 1)
+        if current not in ROUND_TITLES:
+            current = 1
+        live = str(game.get("status") or "") == "live"
+        started = game.get("round_started_at") if live else None
+        raw_dur = game.get("round_duration_sec") if live else None
+        duration_i = int(raw_dur) if raw_dur not in (None, "") else 0
+        started_s = str(started) if started else None
+        return {
+            "round": current,
+            "round_title": round_title(current),
+            "round_started_at": started_s,
+            "round_duration_sec": duration_i or None,
+            "round_ends_at": round_ends_at(started_s, duration_i),
+            "round_ends_at_ms": round_ends_at_ms(started_s, duration_i),
+            "round_remaining_sec": round_remaining_sec(started_s, duration_i),
+        }
+
     def _scoreboard_payload(self, state: dict[str, Any], live: bool) -> dict[str, Any]:
         """Build the public scoreboard JSON from a game-state payload.
 
@@ -2179,12 +2858,15 @@ class GameShowDB:
             state: Output of :meth:`game_state`.
             live: True when this game is in progress.
         """
-        return {
+        game = state["game"]
+        class_id = int(state["class"]["id"])
+        window = self._get_stat_window(class_id)
+        payload = {
             "ok": True,
             "live": live,
             "final": not live,
-            "game_id": state["game"]["id"],
-            "class_id": state["class"]["id"],
+            "game_id": game["id"],
+            "class_id": class_id,
             "teams": [
                 {
                     "id": t["id"],
@@ -2195,11 +2877,20 @@ class GameShowDB:
                 }
                 for t in state["teams"]
             ],
-            "last_event": state["game"]["last_event"],
-            "event_seq": state["game"]["event_seq"],
+            "last_event": game["last_event"],
+            "event_seq": game["event_seq"],
             "header": state["session"]["header_label"],
             "status": "live" if live else "ended",
+            "round": game.get("round"),
+            "round_title": game.get("round_title"),
+            "round_ends_at": game.get("round_ends_at"),
+            "round_ends_at_ms": game.get("round_ends_at_ms"),
+            "round_remaining_sec": game.get("round_remaining_sec"),
+            "leaders": self._scoreboard_leaders(class_id, window),
+            "stat_window": window,
+            "stat_window_label": stat_window_label(window),
         }
+        return payload
 
     def session_log_path(self, session_id: int) -> Path:
         """Return the JSONL log path for a session if it exists.

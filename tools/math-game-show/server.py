@@ -338,6 +338,13 @@ class GameShowHandler(BaseHTTPRequestHandler):
             state = db.rename_teams(int(rename.group(1)), names)
             self._send_json(200, {"ok": True, **state})
             return
+        round_post = re.match(r"^/api/classes/(\d+)/game/round$", path)
+        if round_post:
+            state = db.start_round(
+                int(round_post.group(1)), int(body.get("round") or 0)
+            )
+            self._send_json(200, {"ok": True, **state})
+            return
         score = re.match(r"^/api/classes/(\d+)/game/score$", path)
         if score:
             state = db.award_points(
@@ -410,6 +417,15 @@ class GameShowHandler(BaseHTTPRequestHandler):
                 int(rename_sub.group(1)),
                 int(body.get("id") or 0),
                 str(body.get("name") or ""),
+                sort=str(body.get("sort") or "last"),
+            )
+            self._send_json(200, {"ok": True, **dash})
+            return
+        stat_window = re.match(r"^/api/classes/(\d+)/stat-window$", path)
+        if stat_window:
+            dash = db.set_stat_window(
+                int(stat_window.group(1)),
+                str(body.get("window") or ""),
                 sort=str(body.get("sort") or "last"),
             )
             self._send_json(200, {"ok": True, **dash})

@@ -17,6 +17,18 @@
       <div class="row-actions">
         <a class="btn secondary" href="/">Return to Teacher Dashboard</a>
         <button type="button" class="secondary" id="sort-toggle">Sort: Last, First</button>
+        <div class="view-toggle" role="group" aria-label="Lesson score view">
+          <button type="button" class="on" data-round-view="total" aria-pressed="true" title="Lesson total">Total</button>
+          <button type="button" data-round-view="r1" aria-pressed="false" title="Open Question">Open Question</button>
+          <button type="button" data-round-view="r2" aria-pressed="false" title="Team Challenge">Team Challenge</button>
+          <button type="button" data-round-view="r3" aria-pressed="false" title="Formative">Formative</button>
+          <button type="button" data-round-view="all" aria-pressed="false" title="Stacked Open Question, Team Challenge, Formative">All</button>
+        </div>
+        <div class="view-toggle" id="stat-window-toggle" role="group" aria-label="Scoreboard stats period">
+          <button type="button" class="on" data-stat-window="last_class" aria-pressed="true" title="Leaders from the last scored class">Last class</button>
+          <button type="button" data-stat-window="last_week" aria-pressed="false" title="Leaders from the last two scored classes">Last week</button>
+          <button type="button" data-stat-window="year" aria-pressed="false" title="Leaders from every scored class this year">This year</button>
+        </div>
         <button type="button" id="begin">Begin a New Game</button>
       </div>
     </div>

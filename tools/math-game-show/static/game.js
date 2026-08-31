@@ -4,7 +4,10 @@ import {
   dashboardSort,
   displayName,
   escapeHtml,
+  formatCountdown,
   formatPoints,
+  lockRoundDeadline,
+  remainingUntilMs,
   hideError,
   showError,
   sortStudents,
@@ -26,6 +29,7 @@ let lastStamp = "";
 let latestState = null;
 let pendingTeam = null;
 let activeTeamId = null;
+let roundEndsAtMs = 0;
 
 /**
  * +/- buttons for an individual student (negatives allowed).
@@ -99,6 +103,24 @@ function scoreRow(kind, prior, name, now) {
 }
 
 /**
+ * Running Now total plus a read-only R1 · R2 · R3 line.
+ * Awards still hit the lesson sum; the current round is emphasized.
+ * @param {{session_points?: number, points_r1?: number, points_r2?: number, points_r3?: number}} row
+ * @param {number} round
+ * @returns {string}
+ */
+function nowScoreHtml(row, round) {
+  const total = escapeHtml(formatPoints(row.session_points));
+  const n = Number(round) || 1;
+  const parts = [1, 2, 3].map((index) => {
+    const value = escapeHtml(formatPoints(row[`points_r${index}`]));
+    const on = index === n ? " on" : "";
+    return `<span class="now-r${on}">${value}</span>`;
+  });
+  return `<div class="now-total">${total}</div><div class="now-rounds">${parts.join('<span class="now-dot">·</span>')}</div>`;
+}
+
+/**
  * Scoring controls in a row under the name/scores line.
  * @param {"team"|"player"} kind
  * @param {string} controls
@@ -115,13 +137,22 @@ function controlsRow(kind, controls) {
  */
 function render(state) {
   latestState = state;
+  paintRound(state);
   const stamp = JSON.stringify({
     pending: pendingTeam,
+    round: state.game?.round,
     teams: (state.teams || []).map((t) => [
       t.id,
       t.score,
       t.bucket,
-      t.members.map((m) => [m.id, m.session_points, m.career_total]),
+      t.members.map((m) => [
+        m.id,
+        m.session_points,
+        m.points_r1,
+        m.points_r2,
+        m.points_r3,
+        m.career_total,
+      ]),
     ]),
   });
   if (stamp === lastStamp) return;
@@ -135,6 +166,7 @@ function render(state) {
   root.innerHTML = (state.teams || [])
     .map((team) => {
       const members = sortStudents(team.members, nameSort);
+      const roundN = Number(state.game?.round) || 1;
       const playerBlocks = members
         .map(
           (s) => `<tbody class="player-block">
@@ -142,7 +174,7 @@ function render(state) {
               "player",
               escapeHtml(priorPoints(s)),
               escapeHtml(displayName(s, nameSort)),
-              escapeHtml(formatPoints(s.session_points))
+              nowScoreHtml(s, roundN)
             )}
             ${controlsRow("player", `<div class="pm">${studentButtons(s.id)}</div>`)}
           </tbody>`
@@ -166,6 +198,50 @@ function render(state) {
     .join("");
   if (pendingTeam) activeTeamId = pendingTeam.id;
   requestAnimationFrame(layoutTeams);
+}
+
+/**
+ * Seconds left until the locked round deadline.
+ * @returns {number}
+ */
+function displayedRemaining() {
+  return remainingUntilMs(roundEndsAtMs);
+}
+
+/**
+ * Paint ROUND N · title, countdown, and the next-round button.
+ * @param {any} state
+ */
+function paintRound(state) {
+  const game = state?.game || {};
+  const n = Number(game.round) || 1;
+  const title = game.round_title || "";
+  const label = document.getElementById("round-label");
+  if (label) label.textContent = `ROUND ${n} · ${title}`;
+  roundEndsAtMs = lockRoundDeadline(roundEndsAtMs, game.round_ends_at_ms);
+  paintClock();
+  const btn = document.getElementById("start-round");
+  if (!btn) return;
+  if (n === 1) {
+    btn.hidden = false;
+    btn.textContent = "Start Round 2";
+    btn.dataset.round = "2";
+  } else if (n === 2) {
+    btn.hidden = false;
+    btn.textContent = "Start Round 3";
+    btn.dataset.round = "3";
+  } else {
+    btn.hidden = true;
+    delete btn.dataset.round;
+  }
+}
+
+/**
+ * Write the interpolated countdown without rebuilding the team board.
+ */
+function paintClock() {
+  const clock = document.getElementById("round-clock");
+  if (clock) clock.textContent = formatCountdown(displayedRemaining());
 }
 
 /**
@@ -270,6 +346,23 @@ document.getElementById("student-view").addEventListener("click", () => {
   applyStudentView();
 });
 
+document.getElementById("start-round").addEventListener("click", async () => {
+  const btn = document.getElementById("start-round");
+  const next = Number(btn?.dataset.round);
+  if (!next) return;
+  hideError("#error");
+  try {
+    const state = await api(`/api/classes/${classId}/game/round`, {
+      method: "POST",
+      body: JSON.stringify({ round: next }),
+    });
+    lastStamp = "";
+    render(state);
+  } catch (err) {
+    showError("#error", err);
+  }
+});
+
 document.getElementById("quit-game").addEventListener("click", async () => {
   hideError("#error");
   try {
@@ -322,4 +415,5 @@ async function tick() {
 
 tick();
 setInterval(tick, 400);
+setInterval(paintClock, 200);
 window.addEventListener("resize", layoutTeams);

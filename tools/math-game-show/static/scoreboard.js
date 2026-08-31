@@ -1,4 +1,4 @@
-import { formatPoints } from "./common.js";
+import { formatCountdown, formatPoints, lockRoundDeadline, remainingUntilMs } from "./common.js";
 
 if (new URLSearchParams(location.search).get("overlay") === "1") {
   document.body.classList.add("overlay");
@@ -7,14 +7,20 @@ let lastSeq = 0;
 let lastGameId = null;
 let phase = "idle";
 let tickBusy = false;
-let rosterTimer = 0;
+let roundEndsAtMs = 0;
 
 const stage = document.querySelector(".board-stage");
 const bar = document.getElementById("bar");
 const idle = document.getElementById("idle");
 const finalBoard = document.getElementById("final");
-const finalHeader = document.getElementById("final-header");
 const finalList = document.getElementById("final-list");
+const boardTicker = document.getElementById("board-ticker");
+const boardTickerKicker = document.getElementById("board-ticker-kicker");
+const boardTickerTrack = document.getElementById("board-ticker-track");
+const roundBanner = document.getElementById("round-banner");
+let lastTickerStamp = "";
+const roundTitleEl = document.getElementById("round-title");
+const roundClockEl = document.getElementById("round-clock");
 
 /**
  * True when the ESPN bar's team nodes no longer match the payload.
@@ -75,7 +81,7 @@ function winningTeams(teams) {
 }
 
 /**
- * Ranked Final Score. After 10s, winner names cover the other teams.
+ * Ranked Final Score plus a looping winners ticker at the bottom.
  * @param {any} data
  */
 function showFinal(data) {
@@ -85,8 +91,6 @@ function showFinal(data) {
   finalBoard.classList.remove("hidden");
   document.body.classList.add("is-final");
   if (stage) stage.classList.add("is-final");
-  window.clearTimeout(rosterTimer);
-  finalHeader.textContent = data.header || "";
   const ranked = [...(data.teams || [])].sort((a, b) => {
     const diff = Number(b.score) - Number(a.score);
     if (diff !== 0) return diff;
@@ -111,53 +115,129 @@ function showFinal(data) {
       .filter(Boolean)
       .map((first) => ({ first, team: team.name, color: team.color }))
   );
-  rosterTimer = window.setTimeout(() => {
-    revealRosterOverRunners(names, winners);
-  }, 10000);
+  startWinnerTicker(names, winners);
 }
 
 /**
- * Cover non-winning team cards with the winning roster.
+ * Crawl items across the bottom ticker (leaders while live, winners at Final).
+ * @param {string} kicker
+ * @param {string} itemHtml
+ * @param {string} stamp
+ */
+function startBoardTicker(kicker, itemHtml, stamp) {
+  if (!boardTicker || !boardTickerTrack) return;
+  if (stamp === lastTickerStamp && boardTickerTrack.classList.contains("is-moving")) {
+    boardTicker.hidden = false;
+    boardTicker.removeAttribute("hidden");
+    boardTicker.classList.remove("hidden");
+    return;
+  }
+  lastTickerStamp = stamp;
+  if (boardTickerKicker) boardTickerKicker.textContent = kicker;
+  boardTickerTrack.classList.remove("is-moving");
+  boardTickerTrack.style.removeProperty("--ticker-s");
+  const unit = `<div class="ticker-unit">${itemHtml}</div>`;
+  boardTickerTrack.innerHTML = `${unit}${unit}`;
+  boardTicker.hidden = false;
+  boardTicker.removeAttribute("hidden");
+  boardTicker.classList.remove("hidden");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const scroller = boardTickerTrack.parentElement;
+      const units = boardTickerTrack.querySelectorAll(".ticker-unit");
+      const first = units[0];
+      const second = units[1];
+      if (!scroller || !first) return;
+      const gap = `<span class="final-ticker-dot" aria-hidden="true">●</span>`;
+      let guard = 0;
+      while (first.scrollWidth < scroller.clientWidth && guard < 8) {
+        first.insertAdjacentHTML("beforeend", `${gap}${itemHtml}`);
+        guard += 1;
+      }
+      if (second) second.innerHTML = first.innerHTML;
+      const seconds = Math.max(18, Math.round(first.scrollWidth / 70));
+      boardTickerTrack.style.setProperty("--ticker-s", `${seconds}s`);
+      boardTickerTrack.classList.add("is-moving");
+    });
+  });
+}
+
+/**
+ * Loop winning first names across the bottom like a news ticker.
  * @param {Array<{first: string, team: string, color: string}>} names
  * @param {Array<{name: string}>} winners
  */
-function revealRosterOverRunners(names, winners) {
-  if (!finalList || !names.length) return;
-  const runners = [...finalList.querySelectorAll("li.runner")];
-  if (!runners.length) return;
-  finalList.querySelector(".final-roster-overlay")?.remove();
-  const overlay = document.createElement("div");
-  overlay.className = "final-roster-overlay";
-  const title = winners.length
-    ? `Winning team${winners.length > 1 ? "s" : ""} · ${winners.map((team) => team.name).join(" · ")}`
-    : "Winning team";
-  overlay.innerHTML = `<p class="final-roster-kicker">${escapeText(title)}</p>
-    <ul class="final-roster-names">${names
-      .map(
-        (row) => `<li style="--team:${escapeText(row.color)}">
-          <span class="final-player">${escapeText(row.first)}</span>
-          ${winners.length > 1 ? `<span class="final-player-team">${escapeText(row.team)}</span>` : ""}
-        </li>`
-      )
-      .join("")}</ul>`;
-  finalList.appendChild(overlay);
-  const listBox = finalList.getBoundingClientRect();
-  const first = runners[0].getBoundingClientRect();
-  const last = runners[runners.length - 1].getBoundingClientRect();
-  overlay.style.left = `${Math.max(0, first.left - listBox.left)}px`;
-  overlay.style.width = `${Math.max(80, last.right - first.left)}px`;
+function startWinnerTicker(names, winners) {
+  const kicker =
+    winners.length === 1 ? String(winners[0].name || "Winners") : "Winners";
+  const itemHtml = names.length
+    ? names
+        .map(
+          (row) => `<span class="final-ticker-item" style="--team:${escapeText(row.color)}">
+            ${escapeText(row.first)}${
+              winners.length > 1 ? ` <span class="final-ticker-team">${escapeText(row.team)}</span>` : ""
+            }
+          </span>`
+        )
+        .join('<span class="final-ticker-dot" aria-hidden="true">●</span>')
+    : `<span class="final-ticker-item">No players listed</span>`;
+  startBoardTicker(kicker, itemHtml, `winners:${kicker}:${names.map((n) => n.first).join(",")}`);
+}
+
+/**
+ * Ticker kicker for live Leaders, including the selected stats period.
+ * @param {any} data
+ * @returns {string}
+ */
+function leadersKicker(data) {
+  const fromServer = String(data?.stat_window_label || "").trim();
+  if (fromServer) return `Leaders · ${fromServer}`;
+  const labels = { last_class: "last class", last_week: "last week", year: "this year" };
+  const window = String(data?.stat_window || "last_class");
+  return `Leaders · ${labels[window] || "last class"}`;
+}
+
+/**
+ * Loop Open Question / Team Challenge / Formative leaders until Final Score.
+ * @param {any} data
+ */
+function paintLeadersTicker(data) {
+  const items = Array.isArray(data.leaders)
+    ? data.leaders.map((row) => String(row || "").trim()).filter(Boolean)
+    : [];
+  const shown = items.length ? items : ["Leaders appear when students score"];
+  const kicker = leadersKicker(data);
+  const itemHtml = shown
+    .map((text) => `<span class="final-ticker-item">${escapeText(text)}</span>`)
+    .join('<span class="final-ticker-dot" aria-hidden="true">●</span>');
+  startBoardTicker(kicker, itemHtml, `leaders:${kicker}:${shown.join("|")}`);
+}
+
+/**
+ * Hide the bottom ticker (idle board, or empty leaders).
+ */
+function hideTicker() {
+  lastTickerStamp = "";
+  if (boardTickerTrack) {
+    boardTickerTrack.classList.remove("is-moving");
+    boardTickerTrack.innerHTML = "";
+  }
+  if (boardTicker) {
+    boardTicker.hidden = true;
+    boardTicker.classList.add("hidden");
+  }
 }
 
 /**
  * Hide the Final Score overlay for a new live game or idle board.
  */
 function hideFinal() {
-  window.clearTimeout(rosterTimer);
   finalBoard.hidden = true;
   finalBoard.classList.add("hidden");
   document.body.classList.remove("is-final");
   if (stage) stage.classList.remove("is-final");
   finalList.innerHTML = "";
+  hideTicker();
 }
 
 /**
@@ -177,23 +257,82 @@ function render(data) {
     if (phase !== "live") {
       hideFinal();
       phase = "live";
+      document.body.classList.remove("is-idle");
+      document.body.classList.add("is-live");
+      if (stage) {
+        stage.classList.remove("is-idle");
+        stage.classList.add("is-live");
+      }
     }
     paintBar(data);
+    paintRoundBanner(data);
+    paintLeadersTicker(data);
     return;
   }
   if (isFinal) {
     idle.hidden = true;
-    paintBar(data);
     if (phase !== "final") {
+      document.body.classList.remove("is-live", "is-idle");
+      if (stage) stage.classList.remove("is-live", "is-idle");
+      hideRoundBanner();
+      paintBar(data);
       phase = "final";
       showFinal(data);
     }
     return;
   }
-  phase = "idle";
-  hideFinal();
+  if (phase !== "idle") {
+    hideFinal();
+    phase = "idle";
+    document.body.classList.remove("is-live");
+    if (stage) stage.classList.remove("is-live");
+    hideRoundBanner();
+    bar.innerHTML = "";
+  }
   idle.hidden = false;
-  bar.innerHTML = "";
+  document.body.classList.add("is-idle");
+  if (stage) stage.classList.add("is-idle");
+  paintLeadersTicker(data);
+}
+
+/**
+ * Seconds left until the locked round deadline.
+ * @returns {number}
+ */
+function displayedRemaining() {
+  return remainingUntilMs(roundEndsAtMs);
+}
+
+/**
+ * Show ROUND N · title and countdown above the ESPN bar.
+ * @param {any} data
+ */
+function paintRoundBanner(data) {
+  if (!roundBanner) return;
+  const n = Number(data.round) || 1;
+  const title = String(data.round_title || "");
+  if (roundTitleEl) roundTitleEl.textContent = `ROUND ${n} · ${title}`;
+  roundEndsAtMs = lockRoundDeadline(roundEndsAtMs, data.round_ends_at_ms);
+  paintRoundClock();
+  roundBanner.hidden = false;
+  roundBanner.classList.remove("hidden");
+}
+
+/**
+ * Write the interpolated countdown on the scoreboard banner.
+ */
+function paintRoundClock() {
+  if (roundClockEl) roundClockEl.textContent = formatCountdown(displayedRemaining());
+}
+
+/**
+ * Hide the live round banner (idle or Final Score).
+ */
+function hideRoundBanner() {
+  if (!roundBanner) return;
+  roundEndsAtMs = 0;
+  roundBanner.hidden = true;
+  roundBanner.classList.add("hidden");
 }
 
 /**
@@ -363,3 +502,4 @@ tick().catch(() => {});
 setInterval(() => {
   tick().catch(() => {});
 }, 400);
+setInterval(paintRoundClock, 200);

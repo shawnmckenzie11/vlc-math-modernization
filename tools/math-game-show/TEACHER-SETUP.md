@@ -97,8 +97,8 @@ On the class spreadsheet page:
 
 That opens:
 
-- **Teacher Game Dashboard** — you award points here (keep this on your machine; do not share it on Zoom).
-- **Scoreboard** — a dark ESPN-style bar. **This is the window you share on Zoom.**
+- **Teacher Game Dashboard** — you award points here (keep this on your machine; do not share it on Zoom). **ROUND 1 · Open Question Round** starts a 20:00 countdown when you Create Teams.
+- **Scoreboard** — a dark ESPN-style bar with the same round title and countdown. **This is the window you share on Zoom.**
 
 If you leave setup without **Cancel**, click **Begin a New Game** again — it starts fresh at attendance.
 
@@ -129,6 +129,7 @@ If you want **students** to see the overlay, share **that** overlay window on Zo
 
 | Control | What it does |
 | --- | --- |
+| **Start Round 2** / **Start Round 3** | Starts the next round’s clock (10:00). Only the next round; 0:00 does not auto-advance. Early start is fine. |
 | **+1 / +5 / +10** on a team | Then choose **Each member**, **Split**, or **Small Team Bonus** |
 | **−5** on a team | Team penalty only; student spreadsheet cells do not change |
 | **+1 / +5 / +10 / −1** on a student | That student’s score (and the team bar) |
@@ -150,7 +151,9 @@ If you want **students** to see the overlay, share **that** overlay window on Zo
 2. **Start Existing Class**.
 3. **Begin a New Game** again.
 
-A second game on the same day/time is labeled `_2`, `_3`, … A **SUBTOTAL** column (Log TOTAL as Subtotal) freezes a snapshot; new games still go to the right.
+A second game on the same day/time is labeled `_2`, `_3`, … Next to Sort, **Total · Open Question · Team Challenge · Formative · All** shows one slice per lesson or stacked rounds (older scores sit in Open Question). **SUBTOTAL** and **TOTAL SCORE** follow the selected slice. A frozen **SUBTOTAL** column (Log TOTAL as Subtotal) is still an overall snapshot; new games still go to the right.
+
+Next to that slice group, **Last class · Last week · This year** chooses which scored classes the Zoom scoreboard **Leaders** ticker uses. Last week means the last two scored classes. This year is every scored class on this spreadsheet. The sheet cells stay the same.
 
 ---
 

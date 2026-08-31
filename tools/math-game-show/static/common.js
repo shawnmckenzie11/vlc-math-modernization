@@ -129,3 +129,39 @@ export function formatPoints(value) {
   const rounded = Math.round(n * 10) / 10;
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
 }
+
+/**
+ * Format remaining seconds as ``m:ss`` (e.g. ``20:00``, ``0:00``).
+ * @param {unknown} seconds
+ * @returns {string}
+ */
+export function formatCountdown(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds) || 0));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/**
+ * Seconds left until an epoch-ms deadline. Never below 0.
+ * @param {unknown} endsAtMs
+ * @returns {number}
+ */
+export function remainingUntilMs(endsAtMs) {
+  const end = Number(endsAtMs);
+  if (!Number.isFinite(end) || end <= 0) return 0;
+  return Math.max(0, (end - Date.now()) / 1000);
+}
+
+/**
+ * Keep a stable deadline unless the server started a new round.
+ * @param {number} currentMs
+ * @param {unknown} nextMs
+ * @returns {number}
+ */
+export function lockRoundDeadline(currentMs, nextMs) {
+  const next = Number(nextMs);
+  if (!Number.isFinite(next) || next <= 0) return currentMs || 0;
+  if (!currentMs || Math.abs(next - currentMs) > 750) return next;
+  return currentMs;
+}

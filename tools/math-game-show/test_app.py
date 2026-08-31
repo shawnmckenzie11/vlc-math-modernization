@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import sys
 import tempfile
 import threading
 import unittest
-from datetime import date
+from datetime import date, datetime, timedelta
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError
@@ -27,7 +28,19 @@ from schedule import (  # noqa: E402
     unique_header_label,
     wizard_defaults,
 )
-from db import GameShowDB, split_amount  # noqa: E402
+from db import (  # noqa: E402
+    DEFAULT_STAT_WINDOW,
+    GameShowDB,
+    as_points,
+    leader_periods,
+    member_round_points,
+    normalize_stat_window,
+    points_label,
+    round_ends_at_ms,
+    round_remaining_sec,
+    split_amount,
+    stat_window_label,
+)
 from teams import assign_balanced, assign_manual  # noqa: E402
 import server as game_server  # noqa: E402
 
@@ -239,6 +252,9 @@ class GamePersistTests(unittest.TestCase):
             cell = dash["cells"][f"{dash['sessions'][0]['id']}:{student['id']}"]
             self.assertFalse(cell["present"])
             self.assertEqual(cell["points"], 0)
+            self.assertEqual(cell["points_r1"], 0)
+            self.assertEqual(cell["points_r2"], 0)
+            self.assertEqual(cell["points_r3"], 0)
             self.assertEqual(dash["totals"][str(student["id"])], 0)
             self.assertEqual(dash["live_subtotals"][str(student["id"])], 0)
         self.assertEqual(dash["columns"][0]["kind"], "session")
@@ -703,6 +719,507 @@ class GamePersistTests(unittest.TestCase):
         shown = next(t for t in board["teams"] if t["id"] == trio["id"])
         self.assertEqual(shown["score"], 10)
 
+    def _go_live(self, n_present: int = 4) -> dict:
+        """Mark attendance, assign teams, and Create Teams.
+
+        Args:
+            n_present: How many roster students to mark present.
+
+        Returns:
+            Live ``game_state`` payload.
+        """
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:n_present]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        return self.db.rename_teams(
+            class_id, [{"id": t["id"], "name": t["name"]} for t in teams]
+        )
+
+    def test_live_game_starts_round_1_timer(self) -> None:
+        """Create Teams starts Round 1 with a 20:00 clock."""
+        state = self._go_live()
+        game = state["game"]
+        self.assertEqual(game["status"], "live")
+        self.assertEqual(game["round"], 1)
+        self.assertEqual(game["round_title"], "Open Question Round")
+        self.assertGreaterEqual(game["round_remaining_sec"], 1190)
+        self.assertLessEqual(game["round_remaining_sec"], 1200)
+        self.assertTrue(game["round_ends_at"])
+        self.assertIsInstance(game["round_ends_at_ms"], int)
+        member = state["teams"][0]["members"][0]
+        self.assertEqual(member["session_points"], 0)
+        self.assertEqual(member["points_r1"], 0)
+        self.assertEqual(member["points_r2"], 0)
+        self.assertEqual(member["points_r3"], 0)
+        board = self.db.scoreboard()
+        self.assertEqual(board["round"], 1)
+        self.assertEqual(board["round_title"], "Open Question Round")
+        self.assertGreaterEqual(board["round_remaining_sec"], 1190)
+
+    def test_cannot_skip_to_round_3(self) -> None:
+        """Only the next round can be started."""
+        self._go_live()
+        class_id = self.cls["id"]
+        with self.assertRaises(ValueError):
+            self.db.start_round(class_id, 3)
+        with self.assertRaises(ValueError):
+            self.db.start_round(class_id, 1)
+        state = self.db.start_round(class_id, 2)
+        self.assertEqual(state["game"]["round"], 2)
+        self.assertEqual(state["game"]["round_title"], "Team Challenge Question")
+        self.assertGreaterEqual(state["game"]["round_remaining_sec"], 590)
+        self.assertLessEqual(state["game"]["round_remaining_sec"], 600)
+        third = self.db.start_round(class_id, 3)
+        self.assertEqual(third["game"]["round"], 3)
+        self.assertEqual(third["game"]["round_title"], "Consolidation Round")
+        with self.assertRaises(ValueError):
+            self.db.start_round(class_id, 2)
+
+    def test_r2_awards_do_not_change_r1(self) -> None:
+        """New awards tag the current round; the lesson total is the sum."""
+        state = self._go_live()
+        class_id = self.cls["id"]
+        member = state["teams"][0]["members"][0]
+        self.db.award_points(class_id, kind="student", target_id=member["id"], amount=5)
+        self.db.start_round(class_id, 2)
+        self.db.award_points(class_id, kind="student", target_id=member["id"], amount=3)
+        live = self.db.game_state(class_id)
+        member_live = next(
+            m for t in live["teams"] for m in t["members"] if m["id"] == member["id"]
+        )
+        self.assertEqual(member_live["session_points"], 8)
+        self.assertEqual(member_live["points_r1"], 5)
+        self.assertEqual(member_live["points_r2"], 3)
+        self.assertEqual(member_live["points_r3"], 0)
+        dash = self.db.dashboard(class_id)
+        session_id = state["session"]["id"]
+        cell = dash["cells"][f"{session_id}:{member['id']}"]
+        self.assertEqual(cell["points_r1"], 5)
+        self.assertEqual(cell["points_r2"], 3)
+        self.assertEqual(cell["points_r3"], 0)
+        self.assertEqual(cell["points"], 8)
+        self.assertEqual(dash["totals"][str(member["id"])], 8)
+        self.assertEqual(dash["live_subtotals"][str(member["id"])], 8)
+        event_round = self.db.conn.execute(
+            'SELECT "round" AS rnd FROM point_events ORDER BY seq DESC LIMIT 1'
+        ).fetchone()
+        self.assertEqual(int(event_round["rnd"]), 2)
+
+    def test_timer_zero_does_not_advance_round(self) -> None:
+        """An expired clock stays on that round; Start Round 2 still works."""
+        self._go_live()
+        class_id = self.cls["id"]
+        with self.db._lock:
+            self.db.conn.execute(
+                "UPDATE games SET round_started_at = ? WHERE class_id = ? AND status = 'live'",
+                ("2000-01-01T00:00:00", class_id),
+            )
+            self.db.conn.commit()
+        stale = self.db.game_state(class_id)
+        self.assertEqual(stale["game"]["round"], 1)
+        self.assertEqual(stale["game"]["round_remaining_sec"], 0)
+        moved = self.db.start_round(class_id, 2)
+        self.assertEqual(moved["game"]["round"], 2)
+        self.assertGreater(moved["game"]["round_remaining_sec"], 0)
+
+    def test_team_only_stays_one_espn_total(self) -> None:
+        """Team-only buckets are one running ESPN total, not round columns."""
+        state = self._go_live()
+        class_id = self.cls["id"]
+        team = state["teams"][0]
+        member = team["members"][0]
+        self.db.award_points(
+            class_id, kind="team", target_id=team["id"], amount=10, team_rule="team_only"
+        )
+        self.db.start_round(class_id, 2)
+        self.db.award_points(
+            class_id, kind="team", target_id=team["id"], amount=7, team_rule="team_only"
+        )
+        live = self.db.game_state(class_id)
+        scored = next(t for t in live["teams"] if t["id"] == team["id"])
+        self.assertEqual(scored["score"], 17)
+        scored_member = next(m for m in scored["members"] if m["id"] == member["id"])
+        self.assertEqual(scored_member["session_points"], 0)
+        self.assertEqual(scored_member["points_r1"], 0)
+        self.assertEqual(scored_member["points_r2"], 0)
+        self.assertEqual(scored_member["points_r3"], 0)
+        dash = self.db.dashboard(class_id)
+        cell = dash["cells"][f"{state['session']['id']}:{member['id']}"]
+        self.assertEqual(cell["points"], 0)
+        self.assertEqual(cell["points_r1"], 0)
+        self.assertEqual(cell["points_r2"], 0)
+
+    def test_scoreboard_leaders_and_most_improved(self) -> None:
+        """Live ticker names Open Question leaders; next lesson adds Most Improved."""
+        state = self._go_live()
+        class_id = self.cls["id"]
+        member = state["teams"][0]["members"][0]
+        first = member["first_name"]
+        self.db.award_points(class_id, kind="student", target_id=member["id"], amount=5)
+        board = self.db.scoreboard()
+        self.assertTrue(board["live"])
+        self.assertTrue(
+            any("Open Question Leaders" in row and first in row for row in board["leaders"])
+        )
+        self.assertFalse(any("Most Improved" in row for row in board["leaders"]))
+        self.db.end_game(class_id)
+        final = self.db.scoreboard()
+        self.assertTrue(
+            any("Open Question Leaders" in row and first in row for row in final["leaders"]),
+            "ended/idle boards still use scored class columns",
+        )
+        self.db.begin_game(class_id, today=date(2026, 9, 2))
+        present = [s["id"] for s in self.db.game_state(class_id)["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        waiting = self.db.scoreboard()
+        self.assertTrue(
+            any("Open Question Leaders" in row and first in row for row in waiting["leaders"]),
+            "empty live column must still use the last scored class column",
+        )
+        self.assertFalse(any("Most Improved" in row for row in waiting["leaders"]))
+        live = self.db.game_state(class_id)
+        again = next(m for t in live["teams"] for m in t["members"] if m["id"] == member["id"])
+        self.db.award_points(class_id, kind="student", target_id=again["id"], amount=10)
+        climbed = self.db.scoreboard()
+        self.assertTrue(
+            any(
+                "Open Question Most Improved" in row and first in row and "+5" in row
+                for row in climbed["leaders"]
+            )
+        )
+        self.assertEqual(climbed["stat_window"], "last_class")
+        self.assertEqual(climbed["stat_window_label"], "last class")
+
+    def _roster_pair(self) -> tuple[dict, dict, list[int]]:
+        """Two named students and a four-person present list from this class.
+
+        Returns:
+            ``(student_a, student_b, present_ids)``.
+        """
+        dash = self.db.dashboard(self.cls["id"])
+        students = dash["students"]
+        return students[0], students[1], [int(s["id"]) for s in students[:4]]
+
+    def _live_game(self, present_ids: list[int], *, today: date) -> dict:
+        """Attendance → teams → Create Teams for this roster.
+
+        Args:
+            present_ids: Student ids marked present.
+            today: Reference date for the meeting slot.
+        """
+        class_id = self.cls["id"]
+        self.db.begin_game(class_id, today=today)
+        self.db.save_attendance(class_id, present_ids)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        return self.db.rename_teams(
+            class_id, [{"id": t["id"], "name": t["name"]} for t in teams]
+        )
+
+    def _score_and_end(self, amounts: dict[int, int]) -> None:
+        """Award Open Question points on the live game and End Game.
+
+        Args:
+            amounts: student_id → points (zero amounts are skipped).
+        """
+        class_id = self.cls["id"]
+        for sid, amount in amounts.items():
+            if amount:
+                self.db.award_points(
+                    class_id, kind="student", target_id=int(sid), amount=int(amount)
+                )
+        self.db.end_game(class_id)
+
+    def _open_question_row(self, board: dict, kind: str, first: str) -> str | None:
+        """Return the ticker line for one student, if present.
+
+        Args:
+            board: Scoreboard payload.
+            kind: ``Leaders`` or ``Most Improved``.
+            first: Student first name.
+        """
+        needle = f"Open Question {kind}"
+        for row in board.get("leaders") or []:
+            if needle in row and first in row:
+                return row
+        return None
+
+    def test_stat_window_defaults_to_last_class(self) -> None:
+        """Dashboard and live ticker start on last class (current behavior)."""
+        dash = self.db.dashboard(self.cls["id"])
+        self.assertEqual(dash["stat_window"], DEFAULT_STAT_WINDOW)
+        self.assertEqual(dash["stat_window"], "last_class")
+        a, _b, present = self._roster_pair()
+        self._live_game(present, today=date(2026, 8, 31))
+        self.db.award_points(
+            self.cls["id"], kind="student", target_id=a["id"], amount=5
+        )
+        board = self.db.scoreboard()
+        self.assertEqual(board["stat_window"], "last_class")
+        self.assertEqual(board["stat_window_label"], "last class")
+        self.assertIsNotNone(self._open_question_row(board, "Leaders", a["first_name"]))
+        self.assertFalse(any("Most Improved" in row for row in board["leaders"]))
+
+    def test_stat_window_last_class_skips_empty_live(self) -> None:
+        """After two scored games and an empty live game, last class is the latest scored."""
+        a, b, present = self._roster_pair()
+        self._live_game(present, today=date(2026, 8, 31))
+        self._score_and_end({a["id"]: 5, b["id"]: 10})
+        self._live_game(present, today=date(2026, 9, 2))
+        self._score_and_end({a["id"]: 12, b["id"]: 3})
+        self._live_game(present, today=date(2026, 9, 9))
+        board = self.db.scoreboard()
+        self.assertEqual(board["stat_window"], "last_class")
+        self.assertTrue(board["live"])
+        a_row = self._open_question_row(board, "Leaders", a["first_name"])
+        self.assertIsNotNone(a_row)
+        self.assertIn("12", a_row or "")
+        self.assertIsNone(self._open_question_row(board, "Leaders", b["first_name"]))
+        mi = self._open_question_row(board, "Most Improved", a["first_name"])
+        self.assertIsNotNone(mi)
+        self.assertIn("+7", mi or "")
+
+    def test_stat_window_last_week_averages_and_most_improved(self) -> None:
+        """Last week is the mean of two classes; Most Improved only after four scored."""
+        a, b, present = self._roster_pair()
+        class_id = self.cls["id"]
+        live = self._live_game(present, today=date(2026, 8, 31))
+        first_session = int(live["session"]["id"])
+        self.db.award_points(class_id, kind="student", target_id=a["id"], amount=5)
+        self.db.set_stat_window(class_id, "last_week")
+        one = self.db.scoreboard()
+        self.assertEqual(one["stat_window"], "last_week")
+        self.assertEqual(one["stat_window_label"], stat_window_label("last_week"))
+        self.assertIsNotNone(self._open_question_row(one, "Leaders", a["first_name"]))
+        self.assertIn("5", self._open_question_row(one, "Leaders", a["first_name"]) or "")
+        self.assertFalse(any("Most Improved" in row for row in one["leaders"]))
+        self.db.end_game(class_id)
+        self.db.delete_session_column(class_id, first_session)
+
+        self._live_game(present, today=date(2026, 9, 2))
+        self._score_and_end({a["id"]: 2, b["id"]: 10})
+        self._live_game(present, today=date(2026, 9, 9))
+        self._score_and_end({a["id"]: 2, b["id"]: 10})
+        self._live_game(present, today=date(2026, 9, 10))
+        two = self.db.scoreboard()
+        self.assertEqual(two["stat_window"], "last_week")
+        b_row = self._open_question_row(two, "Leaders", b["first_name"])
+        self.assertIsNotNone(b_row)
+        self.assertIn("10", b_row or "")
+        self.assertIsNone(self._open_question_row(two, "Leaders", a["first_name"]))
+        self.assertFalse(any("Most Improved" in row for row in two["leaders"]))
+        self.db.cancel_setup(class_id)
+
+        self._live_game(present, today=date(2026, 9, 11))
+        self._score_and_end({a["id"]: 10, b["id"]: 6})
+        self._live_game(present, today=date(2026, 9, 14))
+        self._score_and_end({a["id"]: 10, b["id"]: 6})
+        self._live_game(present, today=date(2026, 9, 16))
+        four = self.db.scoreboard()
+        a_week = self._open_question_row(four, "Leaders", a["first_name"])
+        self.assertIsNotNone(a_week)
+        self.assertIn("10", a_week or "")
+        self.assertIsNone(self._open_question_row(four, "Leaders", b["first_name"]))
+        mi = self._open_question_row(four, "Most Improved", a["first_name"])
+        self.assertIsNotNone(mi)
+        self.assertIn("+8", mi or "")
+
+    def test_stat_window_year_averages_all_and_omits_most_improved(self) -> None:
+        """This year averages every scored column and has no Most Improved."""
+        a, b, present = self._roster_pair()
+        class_id = self.cls["id"]
+        self._live_game(present, today=date(2026, 8, 31))
+        self._score_and_end({a["id"]: 2, b["id"]: 10})
+        self._live_game(present, today=date(2026, 9, 2))
+        self._score_and_end({a["id"]: 2, b["id"]: 10})
+        self._live_game(present, today=date(2026, 9, 9))
+        self._score_and_end({a["id"]: 20, b["id"]: 10})
+        self._live_game(present, today=date(2026, 9, 10))
+        self.db.set_stat_window(class_id, "year")
+        board = self.db.scoreboard()
+        self.assertEqual(board["stat_window"], "year")
+        self.assertEqual(board["stat_window_label"], "this year")
+        b_row = self._open_question_row(board, "Leaders", b["first_name"])
+        self.assertIsNotNone(b_row)
+        self.assertIn("10", b_row or "")
+        self.assertIsNone(self._open_question_row(board, "Leaders", a["first_name"]))
+        self.assertFalse(any("Most Improved" in row for row in board["leaders"]))
+        with self.assertRaises(ValueError):
+            self.db.set_stat_window(class_id, "semester")
+
+
+class StatWindowUnitTests(unittest.TestCase):
+    """Period picker keys and Leader/Most Improved window shapes."""
+
+    def test_normalize_and_labels(self) -> None:
+        """Known windows pass through; anything else is rejected."""
+        self.assertEqual(normalize_stat_window("last_week"), "last_week")
+        self.assertEqual(stat_window_label("year"), "this year")
+        with self.assertRaises(ValueError):
+            normalize_stat_window("semester")
+
+    def test_leader_period_shapes(self) -> None:
+        """Last week needs two columns; Most Improved needs four; year has no prior."""
+        ids = [1, 2, 3, 4]
+        self.assertEqual(leader_periods(ids, "last_class"), ([4], [3]))
+        self.assertEqual(leader_periods(ids, "last_week"), ([3, 4], [1, 2]))
+        self.assertEqual(leader_periods(ids, "year"), ([1, 2, 3, 4], None))
+        self.assertEqual(leader_periods([1], "last_week"), ([1], None))
+        self.assertEqual(leader_periods([1, 2], "last_week"), ([1, 2], None))
+        self.assertEqual(leader_periods([1, 2, 3], "last_week"), ([2, 3], None))
+        self.assertEqual(leader_periods([], "year"), ([], None))
+
+
+class MemberRoundPointsTests(unittest.TestCase):
+    """Teacher-game member payload keeps the lesson sum and round buckets."""
+
+    def test_points_label_drops_trailing_zero(self) -> None:
+        """Ticker text matches the sheet: 5 not 5.0, 3.3 stays 3.3."""
+        self.assertEqual(points_label(5), "5")
+        self.assertEqual(points_label(3.3), "3.3")
+
+    def test_empty_row_is_zeros(self) -> None:
+        """Missing scores are 0, not None."""
+        self.assertEqual(
+            member_round_points(None),
+            {"session_points": 0.0, "points_r1": 0.0, "points_r2": 0.0, "points_r3": 0.0},
+        )
+
+    def test_session_points_stay_the_sum(self) -> None:
+        """The helper does not re-add buckets; it reports stored totals."""
+        row = member_round_points(
+            {"points": 8, "points_r1": 5, "points_r2": 3, "points_r3": 0}
+        )
+        self.assertEqual(row["session_points"], 8)
+        self.assertEqual(row["points_r1"], 5)
+        self.assertEqual(row["points_r2"], 3)
+        self.assertEqual(row["points_r3"], 0)
+
+
+class RoundClockTests(unittest.TestCase):
+    """Server-side remaining seconds never go below 0."""
+
+    def test_full_second_before_drop_and_clamp(self) -> None:
+        """A just-started 20:00 clock still reads 1200 until a full second elapses."""
+        started = datetime(2026, 9, 8, 14, 0, 0)
+        almost = datetime(2026, 9, 8, 14, 0, 0, 400000)
+        self.assertEqual(round_remaining_sec(started.isoformat(), 1200, now=almost), 1200)
+        later = datetime(2026, 9, 8, 14, 0, 1)
+        self.assertEqual(round_remaining_sec(started.isoformat(), 1200, now=later), 1199)
+        expired = datetime(2026, 9, 8, 14, 30, 0)
+        self.assertEqual(round_remaining_sec(started.isoformat(), 1200, now=expired), 0)
+        self.assertEqual(round_remaining_sec(None, 1200, now=started), 0)
+        end_ms = round_ends_at_ms(started.isoformat(), 1200)
+        expected = int((started + timedelta(seconds=1200)).timestamp() * 1000)
+        self.assertEqual(end_ms, expected)
+        self.assertIsNone(round_ends_at_ms(None, 1200))
+
+
+class RoundSchemaTests(unittest.TestCase):
+    """Existing session_scores.points become Round 1 on migrate."""
+
+    def test_legacy_points_become_r1(self) -> None:
+        """Old rows copy ``points`` into ``points_r1``; R2/R3 stay 0."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        data_dir = Path(tmp.name)
+        db_path = data_dir / "app.sqlite"
+        conn = sqlite3.connect(str(db_path))
+        conn.executescript(
+            """
+            CREATE TABLE classes (
+                id INTEGER PRIMARY KEY,
+                year TEXT NOT NULL,
+                semester TEXT NOT NULL,
+                course_code TEXT NOT NULL,
+                days TEXT NOT NULL,
+                time TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE students (
+                id INTEGER PRIMARY KEY,
+                class_id INTEGER NOT NULL,
+                canvas_id TEXT NOT NULL,
+                last_display TEXT NOT NULL,
+                first_name TEXT NOT NULL
+            );
+            CREATE TABLE sessions (
+                id INTEGER PRIMARY KEY,
+                class_id INTEGER NOT NULL,
+                starts_at TEXT NOT NULL,
+                header_label TEXT NOT NULL,
+                status TEXT NOT NULL,
+                log_path TEXT,
+                source TEXT NOT NULL DEFAULT 'game'
+            );
+            CREATE TABLE session_scores (
+                session_id INTEGER NOT NULL,
+                student_id INTEGER NOT NULL,
+                present INTEGER NOT NULL DEFAULT 0,
+                points REAL NOT NULL DEFAULT 0,
+                PRIMARY KEY (session_id, student_id)
+            );
+            CREATE TABLE games (
+                id INTEGER PRIMARY KEY,
+                class_id INTEGER NOT NULL,
+                session_id INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                event_seq INTEGER NOT NULL DEFAULT 0,
+                last_event_json TEXT,
+                owns_session INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE point_events (
+                id INTEGER PRIMARY KEY,
+                session_id INTEGER NOT NULL,
+                game_id INTEGER NOT NULL,
+                seq INTEGER NOT NULL,
+                ts TEXT NOT NULL,
+                from_kind TEXT NOT NULL,
+                from_id INTEGER,
+                to_kind TEXT NOT NULL,
+                to_id INTEGER NOT NULL,
+                amount INTEGER NOT NULL,
+                team_rule TEXT
+            );
+            INSERT INTO classes VALUES (
+                1, '2026/27', 'Semester 1', 'MCF3M', 'Tue/Thu/Fri', '2:00pm',
+                '2026-08-31T12:00:00'
+            );
+            INSERT INTO students VALUES (1, 1, '1', 'Doe', 'Ada');
+            INSERT INTO sessions VALUES (
+                1, 1, '2026-09-08T14:00:00', 'Tue 9/8 2:00pm', 'ended', NULL, 'game'
+            );
+            INSERT INTO session_scores VALUES (1, 1, 1, 12);
+            """
+        )
+        conn.commit()
+        conn.close()
+        db = GameShowDB(db_path, data_dir)
+        self.addCleanup(db.close)
+        row = db.conn.execute(
+            """
+            SELECT points, points_r1, points_r2, points_r3
+            FROM session_scores WHERE student_id = 1
+            """
+        ).fetchone()
+        self.assertEqual(as_points(row["points"]), 12)
+        self.assertEqual(as_points(row["points_r1"]), 12)
+        self.assertEqual(as_points(row["points_r2"]), 0)
+        self.assertEqual(as_points(row["points_r3"]), 0)
+        game_cols = {r["name"] for r in db.conn.execute("PRAGMA table_info(games)")}
+        self.assertIn("current_round", game_cols)
+        self.assertIn("round_started_at", game_cols)
+        self.assertIn("round_duration_sec", game_cols)
+        event_cols = {r["name"] for r in db.conn.execute("PRAGMA table_info(point_events)")}
+        self.assertIn("round", event_cols)
+
 
 def _http_json(base: str, path: str, payload: dict | None = None) -> dict:
     """GET or POST JSON against the test server.
@@ -844,6 +1361,131 @@ class HttpApiTests(unittest.TestCase):
         with urlopen(self.base + f"/api/sessions/{dash2['sessions'][0]['id']}/log", timeout=5) as resp:
             log_body = resp.read().decode("utf-8")
         self.assertIn('"from": "teacher"', log_body)
+
+    def test_round_api_and_scoreboard(self) -> None:
+        """POST next round only; game_state and scoreboard expose the clock."""
+        created = _http_json(
+            self.base,
+            "/api/classes",
+            {
+                "year": "2026/27",
+                "semester": "Semester 1",
+                "course_code": "MCF3M",
+                "days": "T/Th/F",
+                "time": "2:00pm",
+                "csv_text": FIXTURE_CSV.read_text(encoding="utf-8"),
+            },
+        )
+        class_id = created["class"]["id"]
+        begin = _http_json(self.base, f"/api/classes/{class_id}/begin", {})
+        present = [s["id"] for s in begin["students"][:4]]
+        _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/attendance",
+            {"present_ids": present},
+        )
+        assigned = _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/assign",
+            {"n_teams": 2, "mode": "random"},
+        )
+        _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/rename",
+            {"teams": [{"id": t["id"], "name": t["name"]} for t in assigned["teams"]]},
+        )
+        live = _http_json(self.base, f"/api/classes/{class_id}/game")
+        self.assertEqual(live["game"]["round"], 1)
+        self.assertEqual(live["game"]["round_title"], "Open Question Round")
+        self.assertGreaterEqual(live["game"]["round_remaining_sec"], 1190)
+        skip = Request(
+            self.base + f"/api/classes/{class_id}/game/round",
+            data=json.dumps({"round": 3}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urlopen(skip, timeout=5)
+            self.fail("expected 400 when skipping to round 3")
+        except HTTPError as exc:
+            body = exc.read().decode("utf-8")
+            exc.close()
+            self.assertEqual(exc.code, 400)
+            self.assertIn("Cannot skip", body)
+        moved = _http_json(
+            self.base, f"/api/classes/{class_id}/game/round", {"round": 2}
+        )
+        self.assertEqual(moved["game"]["round"], 2)
+        self.assertEqual(moved["game"]["round_title"], "Team Challenge Question")
+        board = _http_json(self.base, "/api/scoreboard")
+        self.assertTrue(board["live"])
+        self.assertEqual(board["round"], 2)
+        self.assertEqual(board["round_title"], "Team Challenge Question")
+        self.assertGreaterEqual(board["round_remaining_sec"], 590)
+        member = assigned["teams"][0]["members"][0]
+        _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/score",
+            {"kind": "student", "id": member["id"], "amount": 5},
+        )
+        dash = _http_json(self.base, f"/api/classes/{class_id}/dashboard")
+        session_id = moved["session"]["id"]
+        cell = dash["cells"][f"{session_id}:{member['id']}"]
+        self.assertEqual(cell["points_r1"], 0)
+        self.assertEqual(cell["points_r2"], 5)
+        self.assertEqual(cell["points"], 5)
+        live_scored = _http_json(self.base, f"/api/classes/{class_id}/game")
+        found = next(
+            m
+            for t in live_scored["teams"]
+            for m in t["members"]
+            if m["id"] == member["id"]
+        )
+        self.assertEqual(found["session_points"], 5)
+        self.assertEqual(found["points_r1"], 0)
+        self.assertEqual(found["points_r2"], 5)
+        self.assertEqual(found["points_r3"], 0)
+        board_after = _http_json(self.base, "/api/scoreboard")
+        self.assertTrue(
+            any("Team Challenge Leaders" in row for row in board_after.get("leaders") or [])
+        )
+        for team in board_after["teams"]:
+            self.assertNotIn("members", team)
+            self.assertNotIn("points_r1", team)
+            for player in team.get("players") or []:
+                self.assertEqual(set(player.keys()), {"first_name"})
+
+    def test_stat_window_post_persists_on_dashboard(self) -> None:
+        """POST /stat-window stores the period for this class and paints the dashboard."""
+        created = _http_json(
+            self.base,
+            "/api/classes",
+            {
+                "year": "2026/27",
+                "semester": "Semester 1",
+                "course_code": "MCF3M",
+                "days": "T/Th/F",
+                "time": "2:00pm",
+                "csv_text": FIXTURE_CSV.read_text(encoding="utf-8"),
+            },
+        )
+        class_id = created["class"]["id"]
+        dash = _http_json(self.base, f"/api/classes/{class_id}/dashboard")
+        self.assertEqual(dash["stat_window"], "last_class")
+        with urlopen(self.base + f"/class/{class_id}", timeout=5) as resp:
+            html = resp.read().decode("utf-8")
+        self.assertIn("Last class", html)
+        self.assertIn("Last week", html)
+        self.assertIn("This year", html)
+        self.assertIn('data-stat-window="last_week"', html)
+        saved = _http_json(
+            self.base,
+            f"/api/classes/{class_id}/stat-window",
+            {"window": "year"},
+        )
+        self.assertEqual(saved["stat_window"], "year")
+        again = _http_json(self.base, f"/api/classes/{class_id}/dashboard")
+        self.assertEqual(again["stat_window"], "year")
 
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ function createWindow() {
   const port = arg("port", "8766");
   const url = `http://${host}:${port}/scoreboard?overlay=1`;
   const display = screen.getPrimaryDisplay().workArea;
-  const height = Math.min(300, Math.max(200, Math.round(display.height * 0.26)));
+  const height = Math.min(380, Math.max(300, Math.round(display.height * 0.32)));
   const win = new BrowserWindow({
     width: display.width,
     height,
