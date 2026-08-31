@@ -226,15 +226,6 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .icon-btn:hover { color: var(--danger); }
 
-input.sub-name {
-  width: 8.5rem;
-  border: 1px solid var(--line);
-  background: #fff;
-  font: inherit;
-  font-weight: 600;
-  padding: 2px 6px;
-}
-
 td.cell.frozen { background: #efe8d6; text-align: right; }
 th.subtotal-col, th.live-sub, td.live-sub {
   background: #efe8d6;
@@ -342,7 +333,73 @@ td.total { text-align: right; }
   background: #fff;
   border: 1px solid var(--line);
 }
-.manual-row select { min-width: 110px; }
+.stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  max-width: 240px;
+}
+.stepper button {
+  min-width: 56px;
+  min-height: 56px;
+  font-size: 1.75rem;
+  line-height: 1;
+  padding: 0;
+}
+.stepper input {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.stepper input[type="number"] { appearance: textfield; }
+
+.team-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.team-step button {
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0;
+}
+.team-step .team-n {
+  min-width: 4.6rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.team-preview {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.preview-roster {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.preview-roster li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.preview-roster .prior {
+  min-width: 3.25rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
 
 .team-grid {
   display: grid;
@@ -393,12 +450,23 @@ table.roster td.now {
   font-weight: 700;
 }
 
-table.roster tr.team-line td.who {
-  font-size: 1.15rem;
-  font-weight: 700;
+table.roster tr.team-line td {
+  background: color-mix(in srgb, var(--team) 28%, #fff);
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-bottom: 3px solid var(--team);
+  font-weight: 800;
 }
 
-table.roster tr.team-line td.now { font-size: 1.35rem; }
+table.roster tr.team-line td.who {
+  font-size: 1.55rem;
+  letter-spacing: -0.02em;
+}
+
+table.roster tr.team-line td.prior,
+table.roster tr.team-line td.now {
+  font-size: 1.6rem;
+}
 
 table.roster tr.player-line td {
   border-top: 1px solid var(--line);

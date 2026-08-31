@@ -4,6 +4,7 @@ import {
   dashboardSort,
   displayName,
   escapeHtml,
+  formatPoints,
   hideError,
   showError,
   sortStudents,
@@ -12,6 +13,7 @@ import {
 const classId = classIdFromPath();
 const nameSort = dashboardSort(classId);
 let state = null;
+let lastAssignMode = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -26,8 +28,10 @@ async function load() {
   $("back-dash").href = `/class/${classId}`;
   fillTimeOptions(state);
   const dateEl = $("meeting-date");
+  constrainMeetingDate();
   if (dateEl && state.session.meeting_date) {
     dateEl.value = state.session.meeting_date;
+    constrainMeetingDate();
   }
   const timeEl = $("meeting-time");
   if (timeEl && state.session.time) {
@@ -45,9 +49,53 @@ async function load() {
   if (status === "teams") {
     const present = (state.present_ids || []).length;
     $("n-teams").max = String(Math.max(2, present));
-    $("n-teams").value = String(Math.min(2, present) || 2);
+    const current = Number($("n-teams").value) || 2;
+    setNTeams(current);
   }
   if (status === "names") renderNames();
+}
+
+/**
+ * Local calendar day as YYYY-MM-DD.
+ * @returns {string}
+ */
+function todayISO() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+/**
+ * Block past days on the setup date picker.
+ */
+function constrainMeetingDate() {
+  const el = $("meeting-date");
+  if (!el) return;
+  const min = todayISO();
+  el.min = min;
+  if (el.value && el.value < min) el.value = min;
+}
+
+/**
+ * Allowed team-count range from present students.
+ * @returns {{min:number, max:number}}
+ */
+function nTeamsBounds() {
+  const present = (state?.present_ids || []).length;
+  return { min: 2, max: Math.max(2, present) };
+}
+
+/**
+ * Clamp and store the team count, then refresh manual pickers if open.
+ * @param {number} value
+ */
+function setNTeams(value) {
+  const { min, max } = nTeamsBounds();
+  const n = Math.min(max, Math.max(min, Number(value) || min));
+  $("n-teams").value = String(n);
+  $("n-teams").max = String(max);
+  if (!$("manual-assign").classList.contains("hidden")) renderManualAssign();
 }
 
 /**
@@ -101,16 +149,29 @@ function selectedPresent() {
 }
 
 /**
- * Team rename inputs, defaulting to Team 1, Team 2, …
+ * Team rename inputs plus a score preview for inspection.
  */
 function renderNames() {
+  const hint = $("names-hint");
+  if (hint && lastAssignMode === "balanced") {
+    hint.textContent =
+      "Balanced preview — inspect career scores, then rename if you want. Create Teams opens the teacher view and Zoom scoreboard.";
+  }
   const box = $("name-list");
   box.innerHTML = "";
   for (const team of state.teams) {
-    const wrap = document.createElement("label");
-    wrap.className = "field";
-    wrap.style.marginTop = "12px";
-    wrap.innerHTML = `Team ${team.sort_order + 1} (${team.members.length} students)<input type="text" data-team-id="${team.id}" value="${escapeHtml(team.name)}">`;
+    const members = sortStudents(team.members || [], nameSort);
+    const strength = members.reduce((sum, row) => sum + (Number(row.career_total) || 0), 0);
+    const wrap = document.createElement("div");
+    wrap.className = "team-preview";
+    wrap.innerHTML = `<label class="field">Team ${team.sort_order + 1}<input type="text" data-team-id="${team.id}" value="${escapeHtml(team.name)}"></label>
+      <p class="hint">Strength ${escapeHtml(formatPoints(strength))} · ${members.length} students</p>
+      <ul class="preview-roster">${members
+        .map(
+          (row) =>
+            `<li><span class="prior">${escapeHtml(formatPoints(row.career_total))}</span> ${escapeHtml(displayName(row, nameSort))}</li>`
+        )
+        .join("")}</ul>`;
     box.appendChild(wrap);
   }
 }
@@ -124,26 +185,32 @@ function hideManualAssign() {
 }
 
 /**
- * Draw a team dropdown for each present student.
+ * Draw a large +/- team stepper for each present student.
  */
 function renderManualAssign() {
   const nTeams = Number($("n-teams").value);
   const list = $("manual-list");
-  const options = Array.from({ length: Math.max(0, nTeams) }, (_, index) => {
-    return `<option value="${index}">Team ${index + 1}</option>`;
-  }).join("");
+  const previous = new Map(
+    [...document.querySelectorAll("#manual-list [data-student-id]")].map((el) => [
+      Number(el.dataset.studentId),
+      Number(el.dataset.teamIndex),
+    ])
+  );
   list.innerHTML = presentStudents()
-    .map((student) => {
-      return `<label class="manual-row">
+    .map((student, index) => {
+      const fallback = index % Math.max(1, nTeams);
+      const stored = previous.get(student.id);
+      const teamIndex = Math.min(nTeams - 1, stored >= 0 ? stored : fallback);
+      return `<div class="manual-row">
         <span>${escapeHtml(displayName(student, nameSort))}</span>
-        <select data-student-id="${student.id}">${options}</select>
-      </label>`;
+        <div class="team-step" data-student-id="${student.id}" data-team-index="${teamIndex}">
+          <button type="button" data-step="-1" aria-label="Previous team">−</button>
+          <span class="team-n">Team ${teamIndex + 1}</span>
+          <button type="button" data-step="1" aria-label="Next team">+</button>
+        </div>
+      </div>`;
     })
     .join("");
-  list.querySelectorAll("select").forEach((select, index) => {
-    const n = Math.max(1, nTeams);
-    select.value = String(index % n);
-  });
   $("manual-assign").classList.remove("hidden");
 }
 
@@ -152,9 +219,9 @@ function renderManualAssign() {
  * @returns {{student_id:number, team_index:number}[]}
  */
 function manualAssignments() {
-  return [...document.querySelectorAll("#manual-list select")].map((el) => ({
+  return [...document.querySelectorAll("#manual-list .team-step")].map((el) => ({
     student_id: Number(el.dataset.studentId),
-    team_index: Number(el.value),
+    team_index: Number(el.dataset.teamIndex),
   }));
 }
 
@@ -202,6 +269,7 @@ $("teams-back").addEventListener("click", async () => {
  */
 async function assign(mode) {
   hideError("#error");
+  lastAssignMode = mode;
   const payload = { n_teams: Number($("n-teams").value), mode };
   if (mode === "manual") payload.assignments = manualAssignments();
   try {
@@ -224,8 +292,17 @@ $("assign-manual").addEventListener("click", () => {
 });
 $("manual-cancel").addEventListener("click", hideManualAssign);
 $("manual-confirm").addEventListener("click", () => assign("manual"));
-$("n-teams").addEventListener("change", () => {
-  if (!$("manual-assign").classList.contains("hidden")) renderManualAssign();
+$("n-teams-down").addEventListener("click", () => setNTeams(Number($("n-teams").value) - 1));
+$("n-teams-up").addEventListener("click", () => setNTeams(Number($("n-teams").value) + 1));
+$("n-teams").addEventListener("change", () => setNTeams($("n-teams").value));
+$("manual-list").addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-step]");
+  if (!btn) return;
+  const row = btn.closest(".team-step");
+  const nTeams = Math.max(2, Number($("n-teams").value) || 2);
+  const next = Math.min(nTeams - 1, Math.max(0, Number(row.dataset.teamIndex) + Number(btn.dataset.step)));
+  row.dataset.teamIndex = String(next);
+  row.querySelector(".team-n").textContent = `Team ${next + 1}`;
 });
 
 $("names-back").addEventListener("click", async () => {
@@ -311,6 +388,10 @@ $("apply-meeting").addEventListener("click", async () => {
   const time = $("meeting-time").value;
   if (!meetingDate) {
     showError("#error", new Error("Choose a date"));
+    return;
+  }
+  if (meetingDate < todayISO()) {
+    showError("#error", new Error("Choose today or a future date"));
     return;
   }
   try {

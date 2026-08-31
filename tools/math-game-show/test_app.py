@@ -278,9 +278,40 @@ class GamePersistTests(unittest.TestCase):
             dash["cells"][f"sub:{frozen_cols[0]['id']}:{scorer}"]["points"], 10
         )
         kinds = [c["kind"] for c in dash["columns"]]
-        self.assertEqual(kinds.count("subtotal"), 1)
-        freeze_at = kinds.index("subtotal")
-        self.assertEqual(kinds[freeze_at - 1], "session")
+        self.assertEqual(kinds, ["session", "subtotal", "session"])
+
+    def test_new_game_after_freeze_stays_right_of_subtotal(self) -> None:
+        """A new game column sits after a freeze even if its calendar date is earlier."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        scorer = present[0]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        self.db.award_points(class_id, kind="student", target_id=scorer, amount=10)
+        self.db.end_game(class_id)
+        later = self.db.add_session_column(class_id, date(2026, 9, 22), "2:00pm")
+        later_id = next(s["id"] for s in later["sessions"] if "9/22" in s["header_label"])
+        dash = self.db.freeze_subtotal(class_id, name="Term 1")
+        frozen = next(c for c in dash["columns"] if c["kind"] == "subtotal")
+        self.db.begin_game(class_id, today=date(2026, 8, 31))
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        self.db.award_points(class_id, kind="student", target_id=scorer, amount=5)
+        self.db.end_game(class_id)
+        dash = self.db.dashboard(class_id)
+        kinds = [c["kind"] for c in dash["columns"]]
+        self.assertEqual(kinds[-2:], ["subtotal", "session"])
+        self.assertEqual(dash["cells"][f"sub:{frozen['id']}:{scorer}"]["points"], 10)
+        self.assertEqual(dash["live_subtotals"][str(scorer)], 5)
+        self.assertEqual(dash["totals"][str(scorer)], 15)
+        new_session = dash["columns"][-1]
+        self.assertEqual(new_session["kind"], "session")
+        self.assertNotEqual(new_session["id"], later_id)
 
     def test_game_scoring_end_log_and_colors(self) -> None:
         """4 present, 2 random teams, individual+team awards, End Game persist."""
@@ -298,6 +329,7 @@ class GamePersistTests(unittest.TestCase):
         member = state["teams"][0]["members"][0]
         team = state["teams"][0]
         state = self.db.award_points(class_id, kind="student", target_id=member["id"], amount=5)
+        self.assertTrue(state["game"]["last_event"]["celebrate"])
         state = self.db.award_points(
             class_id,
             kind="team",
@@ -385,12 +417,20 @@ class GamePersistTests(unittest.TestCase):
         """Teacher can point the setup session at another calendar day."""
         class_id = self.cls["id"]
         self.db.begin_game(class_id, today=date(2026, 8, 31))
-        state = self.db.set_meeting_date(class_id, date(2026, 9, 10))
+        state = self.db.set_meeting_date(
+            class_id, date(2026, 9, 10), today=date(2026, 8, 31)
+        )
         self.assertEqual(state["session"]["header_label"], "Thu 9/10 2:00pm")
         self.assertEqual(state["session"]["meeting_date"], "2026-09-10")
-        state = self.db.set_meeting_date(class_id, date(2026, 9, 10), time_label="3:15pm")
+        state = self.db.set_meeting_date(
+            class_id, date(2026, 9, 10), time_label="3:15pm", today=date(2026, 8, 31)
+        )
         self.assertEqual(state["session"]["header_label"], "Thu 9/10 3:15pm")
         self.assertEqual(state["session"]["time"], "3:15pm")
+        with self.assertRaises(ValueError):
+            self.db.set_meeting_date(
+                class_id, date(2026, 8, 1), today=date(2026, 8, 31)
+            )
 
     def test_team_credit_rules(self) -> None:
         """each_member, split_members, and team_only credit individuals differently."""

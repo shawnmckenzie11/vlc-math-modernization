@@ -43,9 +43,7 @@ function renderSheet(data) {
   let html = "<thead><tr><th class='name'>Student</th>";
   for (const column of columns) {
     if (column.kind === "subtotal") {
-      html += `<th class="subtotal-col">
-        <input class="sub-name" data-sub-id="${column.id}" value="${escapeHtml(column.name || column.header_label)}">
-      </th>`;
+      html += `<th class="subtotal-col">${escapeHtml(column.name || column.header_label)}</th>`;
       continue;
     }
     html += `<th>${escapeHtml(column.header_label)}`;
@@ -172,15 +170,6 @@ document.getElementById("sheet").addEventListener("click", (event) => {
       showError("#error", err)
     );
   }
-});
-
-document.getElementById("sheet").addEventListener("change", (event) => {
-  const input = event.target.closest(".sub-name");
-  if (!input) return;
-  mutate(`/api/classes/${classId}/subtotals/rename`, {
-    id: Number(input.dataset.subId),
-    name: input.value,
-  }).catch((err) => showError("#error", err));
 });
 
 refresh().catch((err) => showError("#error", err));

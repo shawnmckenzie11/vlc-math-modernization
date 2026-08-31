@@ -564,6 +564,9 @@ class GameShowDB:
     ) -> set[int]:
         """Session ids that count toward the live SUBTOTAL column.
 
+        After a freeze, only sessions created afterward (higher ids than
+        ``through_session_id``) are live. Frozen snapshots stay unchanged.
+
         Args:
             sessions: Class sessions in display order.
             subtotals: Frozen snapshots oldest-first.
@@ -571,65 +574,48 @@ class GameShowDB:
         if not subtotals:
             return {int(s["id"]) for s in sessions}
         last = subtotals[-1]
+        through_id = last.get("through_session_id")
+        if through_id is not None:
+            cutoff = int(through_id)
+            return {int(s["id"]) for s in sessions if int(s["id"]) > cutoff}
         through_at = str(last["through_starts_at"])
-        through_id = int(last["through_session_id"] or 0)
-        live: set[int] = set()
-        for session in sessions:
-            key = (str(session["starts_at"]), int(session["id"]))
-            if key > (through_at, through_id):
-                live.add(int(session["id"]))
-        return live
+        return {
+            int(s["id"])
+            for s in sessions
+            if str(s["starts_at"]) > through_at
+        }
 
     def _sheet_columns(
         self,
         sessions: list[dict[str, Any]],
         subtotals: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """Interleave session columns with frozen SUBTOTAL snapshots.
+        """Place frozen SUBTOTAL columns, then any newer game columns to the right.
 
-        Each freeze sits immediately to the right of the last live-class
-        column it included.
+        A freeze includes every session that existed at snapshot time (ids up
+        to ``through_session_id``). Later games — even with an earlier calendar
+        date — stay to the right and count toward live SUBTOTAL and TOTAL,
+        not the frozen snapshot.
 
         Args:
             sessions: Sessions in ``starts_at``, id order.
             subtotals: Frozen rows oldest-first.
         """
-        after: dict[int | None, list[dict[str, Any]]] = {}
-        for sub in subtotals:
-            after.setdefault(self._subtotal_after_id(sessions, sub), []).append(sub)
+        remaining = list(sessions)
         columns: list[dict[str, Any]] = []
-        for sub in after.get(None, []):
+        cutoff = 0
+        for sub in subtotals:
+            through_id = sub.get("through_session_id")
+            if through_id is not None:
+                cutoff = max(cutoff, int(through_id))
+            chunk = [s for s in remaining if int(s["id"]) <= cutoff]
+            remaining = [s for s in remaining if int(s["id"]) > cutoff]
+            for session in chunk:
+                columns.append(self._session_column(session))
             columns.append(self._subtotal_column(sub))
-        for session in sessions:
+        for session in remaining:
             columns.append(self._session_column(session))
-            for sub in after.get(int(session["id"]), []):
-                columns.append(self._subtotal_column(sub))
         return columns
-
-    def _subtotal_after_id(
-        self,
-        sessions: list[dict[str, Any]],
-        sub: dict[str, Any],
-    ) -> int | None:
-        """Session id that this freeze should follow, or None if leading.
-
-        Args:
-            sessions: Sessions in display order.
-            sub: One frozen subtotal row.
-        """
-        through_id = sub.get("through_session_id")
-        if through_id is not None:
-            wanted = int(through_id)
-            if any(int(s["id"]) == wanted for s in sessions):
-                return wanted
-        through_at = str(sub["through_starts_at"])
-        last_id: int | None = None
-        for session in sessions:
-            if str(session["starts_at"]) <= through_at:
-                last_id = int(session["id"])
-            else:
-                break
-        return last_id
 
     def _session_column(self, session: dict[str, Any]) -> dict[str, Any]:
         """JSON column descriptor for a live-class session.
@@ -1174,6 +1160,7 @@ class GameShowDB:
         class_id: int,
         meeting_date: date,
         time_label: str | None = None,
+        today: date | None = None,
     ) -> dict[str, Any]:
         """Move the open setup session to a teacher-chosen date and time.
 
@@ -1182,13 +1169,16 @@ class GameShowDB:
 
         Args:
             class_id: Classes primary key.
-            meeting_date: Chosen calendar date.
+            meeting_date: Chosen calendar date (today or later).
             time_label: One of the wizard times; defaults to the class time.
+            today: Reference date for the past-date check (tests inject this).
 
         Returns:
             Updated game state.
         """
         cls = self.get_class(class_id)
+        if meeting_date < (today or date.today()):
+            raise ValueError("Choose today or a future date")
         label = (time_label or cls["time"]).strip()
         if label not in TIME_OPTIONS:
             raise ValueError(f"Time must be one of: {', '.join(TIME_OPTIONS)}")
@@ -1734,7 +1724,7 @@ class GameShowDB:
                     "team_name": team["name"],
                     "amount": amount,
                     "team_rule": None,
-                    "celebrate": False,
+                    "celebrate": amount > 0,
                     "label": f"{team['name']} {amount:+d}",
                 }
                 self._insert_event(

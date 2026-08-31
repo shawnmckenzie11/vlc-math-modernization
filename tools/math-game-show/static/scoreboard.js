@@ -2,6 +2,7 @@ import { classIdFromPath, formatPoints } from "./common.js";
 
 const classId = classIdFromPath();
 let lastSeq = 0;
+let lastPaint = "";
 
 const bar = document.getElementById("bar");
 const toast = document.getElementById("toast");
@@ -15,9 +16,15 @@ function render(data) {
   const live = data.live && data.teams && data.teams.length;
   idle.hidden = Boolean(live);
   if (!live) {
+    lastPaint = "";
     bar.innerHTML = "";
     return;
   }
+  const stamp = JSON.stringify(
+    data.teams.map((team) => [team.id, team.name, team.color, team.score])
+  );
+  if (stamp === lastPaint) return;
+  lastPaint = stamp;
   bar.innerHTML = data.teams
     .map((team) => {
       return `<div class="espn-team" data-team-id="${team.id}">
@@ -43,7 +50,7 @@ function escapeText(value) {
 }
 
 /**
- * Pulse a team score and float +N for positive team-bucket awards.
+ * Pulse a team when it or one of its players earns points.
  * Deductions update the number with no celebration.
  * @param {any} event
  */
