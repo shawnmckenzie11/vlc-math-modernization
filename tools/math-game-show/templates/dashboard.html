@@ -36,6 +36,16 @@
       </form>
     </div>
   </div>
+  <dialog id="confirm-dialog" class="confirm-dialog">
+    <form method="dialog">
+      <p class="confirm-title">Confirm delete</p>
+      <p id="confirm-message" class="confirm-message"></p>
+      <div class="row-actions">
+        <button type="submit" value="cancel" class="secondary">Cancel</button>
+        <button type="submit" value="ok" class="danger">Delete</button>
+      </div>
+    </form>
+  </dialog>
   <script type="module" src="/static/dashboard.js"></script>
 </body>
 </html>

@@ -155,7 +155,7 @@ function renderNames() {
   const hint = $("names-hint");
   if (hint && lastAssignMode === "balanced") {
     hint.textContent =
-      "Balanced preview — inspect career scores, then rename if you want. Create Teams opens the teacher view and Zoom scoreboard.";
+      "Balanced preview — even rosters (sizes equal or off by one), inspect career scores side by side, then rename if you want. Create Teams opens the teacher view and Zoom scoreboard.";
   }
   const box = $("name-list");
   box.innerHTML = "";
@@ -335,13 +335,14 @@ $("start-game").addEventListener("click", async () => {
 });
 
 /**
- * Abort setup and return to the class spreadsheet.
+ * Abort setup and leave the Begin a New Game flow.
+ * @param {string} href
  */
-async function cancelSetup() {
+async function cancelSetup(href) {
   hideError("#error");
   try {
     await api(`/api/classes/${classId}/game/cancel`, { method: "POST", body: "{}" });
-    location.href = `/class/${classId}`;
+    location.href = href;
   } catch (err) {
     showError("#error", err);
   }
@@ -349,7 +350,17 @@ async function cancelSetup() {
 
 ["cancel-setup-att", "cancel-setup-teams", "cancel-setup-names"].forEach((id) => {
   const el = $(id);
-  if (el) el.addEventListener("click", cancelSetup);
+  if (el) el.addEventListener("click", () => cancelSetup(`/class/${classId}`));
+});
+
+$("back-dash").addEventListener("click", (event) => {
+  event.preventDefault();
+  cancelSetup(`/class/${classId}`);
+});
+
+$("home-link").addEventListener("click", (event) => {
+  event.preventDefault();
+  cancelSetup("/");
 });
 
 /**

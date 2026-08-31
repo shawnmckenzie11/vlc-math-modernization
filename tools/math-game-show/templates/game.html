@@ -6,22 +6,28 @@
   <title>Teacher Game</title>
   <link rel="stylesheet" href="/static/app.css">
 </head>
-<body>
+<body class="game-dash">
   <div class="wrap">
     <div class="toolbar">
       <div>
         <p class="kicker"><a href="/">Teacher Dashboard</a> · <a id="dash-link" href="#">Class dashboard</a></p>
-        <h1 id="title">Teacher Game</h1>
+        <div class="title-row">
+          <h1 id="title">Teacher Game</h1>
+          <button type="button" class="secondary" id="student-view">Student View</button>
+        </div>
         <p class="sub" id="meta"></p>
       </div>
       <div class="row-actions">
-        <a class="btn secondary" id="scoreboard-link" href="#" target="mgs-scoreboard" rel="noopener">Open scoreboard</a>
+        <button type="button" class="secondary" id="quit-game">Quit Game</button>
         <button type="button" class="danger" id="end-game">End Game</button>
       </div>
     </div>
     <div id="error" class="error" hidden></div>
     <!-- Future TODO: students awarding points to one another. Teacher-only +/- for now. -->
-    <div id="teams" class="team-grid"></div>
+    <div class="team-board">
+      <div id="team-tabs" class="team-tabs hidden" role="tablist"></div>
+      <div id="teams" class="team-row"></div>
+    </div>
     <p class="later">Later: students awarding points to one another. Scoring is teacher-only for now.</p>
   </div>
   <script type="module" src="/static/game.js"></script>

@@ -133,7 +133,7 @@ class ScheduleTests(unittest.TestCase):
 
 
 class BalancedAssignTests(unittest.TestCase):
-    """Snake draft sends high TOTALs to different teams."""
+    """Balanced assignment keeps high TOTALs apart and tightens team sums."""
 
     def test_high_totals_split(self) -> None:
         """Top two career scores are not on the same team of two."""
@@ -148,6 +148,34 @@ class BalancedAssignTests(unittest.TestCase):
         team_of_1 = 0 if 1 in teams[0] else 1
         team_of_2 = 0 if 2 in teams[0] else 1
         self.assertNotEqual(team_of_1, team_of_2)
+
+    def test_snake_turnaround_is_rebalanced(self) -> None:
+        """Greedy + swaps beat a snake draft that stacks mid scores."""
+        ids = [1, 2, 3, 4, 5, 6]
+        totals = [100, 50, 50, 50, 40, 10]
+        teams = assign_balanced(ids, 2, totals)
+        self.assertEqual([len(team) for team in teams], [3, 3])
+        sums = []
+        for team in teams:
+            sums.append(sum(totals[ids.index(sid)] for sid in team))
+        self.assertLessEqual(max(sums) - min(sums), 10)
+
+    def test_even_sizes_when_sums_already_tie(self) -> None:
+        """A 2-vs-4 deal with equal sums is rejected in favor of 3 vs 3."""
+        ids = [1, 2, 3, 4, 5, 6]
+        totals = [100, 50, 50, 50, 40, 10]
+        teams = assign_balanced(ids, 2, totals)
+        sizes = sorted(len(team) for team in teams)
+        self.assertEqual(sizes, [3, 3])
+
+    def test_seven_on_three_sizes_off_by_one(self) -> None:
+        """Seven students on three teams are 3-2-2, never 4-2-1."""
+        ids = [1, 2, 3, 4, 5, 6, 7]
+        totals = [90, 80, 40, 30, 20, 15, 10]
+        teams = assign_balanced(ids, 3, totals)
+        sizes = sorted(len(team) for team in teams)
+        self.assertEqual(sizes, [2, 2, 3])
+        self.assertEqual(set(sizes), {2, 3})
 
 
 class ManualAssignTests(unittest.TestCase):
@@ -330,6 +358,7 @@ class GamePersistTests(unittest.TestCase):
         team = state["teams"][0]
         state = self.db.award_points(class_id, kind="student", target_id=member["id"], amount=5)
         self.assertTrue(state["game"]["last_event"]["celebrate"])
+        self.assertEqual(state["game"]["last_event"]["first_name"], member["first_name"])
         state = self.db.award_points(
             class_id,
             kind="team",
@@ -342,6 +371,7 @@ class GamePersistTests(unittest.TestCase):
         scored = next(t for t in board["teams"] if t["id"] == team["id"])
         self.assertEqual(scored["score"], 15)
         self.assertTrue(board["last_event"]["celebrate"])
+        self.assertEqual(board["last_event"]["caption"], "Small Team Bonus +10")
         ended = self.db.end_game(class_id)
         self.assertTrue(Path(ended["log_path"]).is_file())
         log_lines = Path(ended["log_path"]).read_text(encoding="utf-8").strip().splitlines()
@@ -360,6 +390,31 @@ class GamePersistTests(unittest.TestCase):
         self.assertFalse(absent_cell["present"])
         self.assertEqual(absent_cell["points"], 0)
         self.assertEqual(dash["totals"][str(member["id"])], 5)
+        final = self.db.scoreboard(class_id)
+        self.assertFalse(final["live"])
+        self.assertTrue(final["final"])
+        self.assertEqual(final["status"], "ended")
+        self.assertEqual(len(final["teams"]), 2)
+        self.assertEqual(sum(t["score"] for t in final["teams"]), 15)
+
+    def test_final_scoreboard_survives_next_begin(self) -> None:
+        """Ended standings stay on the scoreboard until the next live game."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        member = self.db.game_state(class_id)["teams"][0]["members"][0]
+        self.db.award_points(class_id, kind="student", target_id=member["id"], amount=5)
+        self.db.end_game(class_id)
+        self.db.begin_game(class_id, today=date(2026, 8, 31))
+        board = self.db.scoreboard(class_id)
+        self.assertTrue(board["final"])
+        self.assertFalse(board["live"])
+        self.assertEqual(board["status"], "ended")
+        self.assertTrue(any(t["score"] == 5 for t in board["teams"]))
 
     def test_balanced_uses_career_total(self) -> None:
         """After one ended session, balanced assignment splits high TOTALs."""
@@ -412,6 +467,67 @@ class GamePersistTests(unittest.TestCase):
         self.assertEqual(dash["sessions"][0]["status"], "template")
         self.assertEqual(dash["sessions"][0]["header_label"], "Tue 9/8 2:00pm")
         self.assertIsNone(dash["open_game"])
+
+    def test_quit_live_game_discards_scores(self) -> None:
+        """Quit Game drops a live session so nothing is written to the sheet."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        member = self.db.game_state(class_id)["teams"][0]["members"][0]
+        self.db.award_points(class_id, kind="student", target_id=member["id"], amount=5)
+        self.db.cancel_setup(class_id)
+        dash = self.db.dashboard(class_id)
+        self.assertIsNone(dash["open_game"])
+        self.assertEqual(len(dash["sessions"]), 1)
+        self.assertEqual(dash["sessions"][0]["status"], "template")
+        cell = dash["cells"][f"{dash['sessions'][0]['id']}:{member['id']}"]
+        self.assertEqual(cell["points"], 0)
+        self.assertEqual(dash["totals"][str(member["id"])], 0)
+
+    def test_begin_again_discards_unfinished_setup(self) -> None:
+        """A second Begin a New Game starts at attendance, not Create Teams."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        self.assertEqual(self.db.game_state(class_id)["game"]["status"], "names")
+        again = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        self.assertEqual(again["game"]["status"], "attendance")
+        self.assertEqual(again["session"]["header_label"], "Tue 9/8 2:00pm")
+        dash = self.db.dashboard(class_id)
+        self.assertEqual(dash["open_game"]["status"], "attendance")
+
+    def test_begin_resumes_live_and_blocks_delete(self) -> None:
+        """A live game is resumed; its column cannot be deleted."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        session_id = int(state["session"]["id"])
+        again = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        self.assertEqual(again["game"]["status"], "live")
+        with self.assertRaises(ValueError):
+            self.db.delete_session_column(class_id, session_id)
+
+    def test_delete_column_during_setup(self) -> None:
+        """Deleting the in-progress setup column discards the leftover game."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        session_id = int(state["session"]["id"])
+        dash = self.db.delete_session_column(class_id, session_id)
+        self.assertIsNone(dash["open_game"])
+        self.assertEqual(len(dash["sessions"]), 0)
 
     def test_manual_date_override(self) -> None:
         """Teacher can point the setup session at another calendar day."""
@@ -495,10 +611,16 @@ class GamePersistTests(unittest.TestCase):
             dash["cells"][f"{session_id}:{member_id}"]["points"],
             scored["members"][0]["session_points"],
         )
-        with self.assertRaises(ValueError):
-            self.db.award_points(
-                class_id, kind="team", target_id=team["id"], amount=-5, team_rule="team_only"
-            )
+        state = self.db.award_points(
+            class_id, kind="team", target_id=team["id"], amount=-5, team_rule="team_only"
+        )
+        scored = next(t for t in state["teams"] if t["id"] == team["id"])
+        self.assertEqual(scored["bucket"], leftover + 7 - 5)
+        self.assertEqual(scored["score"], 12)
+        self.assertEqual(
+            sum(m["session_points"] for m in scored["members"]),
+            round(share * n, 1),
+        )
 
 
     def test_split_three_keeps_board_score(self) -> None:
@@ -641,6 +763,10 @@ class HttpApiTests(unittest.TestCase):
             f"/api/classes/{class_id}/game/score",
             {"kind": "student", "id": member["id"], "amount": 5},
         )
+        live_board = _http_json(self.base, f"/api/classes/{class_id}/scoreboard")
+        self.assertTrue(live_board["live"])
+        self.assertEqual(live_board["last_event"]["first_name"], member["first_name"])
+        self.assertTrue(live_board["last_event"]["celebrate"])
         _http_json(
             self.base,
             f"/api/classes/{class_id}/game/score",
@@ -656,6 +782,16 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(len(board["teams"]), 2)
         ended = _http_json(self.base, f"/api/classes/{class_id}/game/end", {})
         self.assertTrue(ended["ok"])
+        final = _http_json(self.base, f"/api/classes/{class_id}/scoreboard")
+        self.assertTrue(final["final"])
+        self.assertFalse(final["live"])
+        self.assertEqual(final["status"], "ended")
+        self.assertEqual(len(final["teams"]), 2)
+        _http_json(self.base, f"/api/classes/{class_id}/begin", {})
+        still_final = _http_json(self.base, f"/api/classes/{class_id}/scoreboard")
+        self.assertTrue(still_final["final"])
+        self.assertFalse(still_final["live"])
+        self.assertEqual(len(still_final["teams"]), 2)
         dash2 = _http_json(self.base, f"/api/classes/{class_id}/dashboard")
         self.assertEqual(dash2["sessions"][0]["status"], "ended")
         with urlopen(self.base + f"/api/sessions/{dash2['sessions'][0]['id']}/log", timeout=5) as resp:

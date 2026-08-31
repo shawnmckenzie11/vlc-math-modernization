@@ -12,17 +12,20 @@ import {
 
 const classId = classIdFromPath();
 const nameSort = dashboardSort(classId);
-const STUDENT_AMOUNTS = [1, 5, 10, -1, -5, -10];
+const STUDENT_AMOUNTS = [1, 5, 10, -1];
 const TEAM_AMOUNTS = [1, 5, 10];
+const VIEW_KEY = `mgs-student-view-${classId}`;
+let studentView = localStorage.getItem(VIEW_KEY) === "1";
 const RULES = [
   { id: "each_member", label: "Each member" },
   { id: "split_members", label: "Split" },
-  { id: "team_only", label: "Team only" },
+  { id: "team_only", label: "Small Team Bonus" },
 ];
 
 let lastStamp = "";
 let latestState = null;
 let pendingTeam = null;
+let activeTeamId = null;
 
 /**
  * +/- buttons for an individual student (negatives allowed).
@@ -56,7 +59,7 @@ function teamControls(teamId) {
   return `<div class="pm">${TEAM_AMOUNTS.map(
     (n) =>
       `<button type="button" class="team-amt" data-team-amt="1" data-id="${teamId}" data-amount="${n}">+${n}</button>`
-  ).join("")}</div>`;
+  ).join("")}<button type="button" data-kind="team" data-id="${teamId}" data-amount="-5" data-rule="team_only">−5</button></div>`;
 }
 
 /**
@@ -81,6 +84,32 @@ function teamPriorPoints(members) {
 }
 
 /**
+ * Name + prior/now scores on one row (buttons live on the next row).
+ * @param {"team"|"player"} kind
+ * @param {string} prior
+ * @param {string} name
+ * @param {string} now
+ */
+function scoreRow(kind, prior, name, now) {
+  return `<tr class="${kind}-line">
+    <td class="prior">${prior}</td>
+    <td class="who">${name}</td>
+    <td class="now">${now}</td>
+  </tr>`;
+}
+
+/**
+ * Scoring controls in a row under the name/scores line.
+ * @param {"team"|"player"} kind
+ * @param {string} controls
+ */
+function controlsRow(kind, controls) {
+  return `<tr class="${kind}-ctrls">
+    <td class="btns" colspan="3">${controls}</td>
+  </tr>`;
+}
+
+/**
  * Paint present students grouped by team with live credited scores.
  * @param {any} state
  */
@@ -98,39 +127,88 @@ function render(state) {
   if (stamp === lastStamp) return;
   lastStamp = stamp;
   document.getElementById("dash-link").href = `/class/${classId}`;
-  document.getElementById("scoreboard-link").href = `/scoreboard/${classId}`;
   document.getElementById("title").textContent = "Teacher Game Dashboard";
   document.getElementById("meta").textContent =
     `${state.class.course_code} · ${state.session.header_label}`;
+  applyStudentView();
   const root = document.getElementById("teams");
   root.innerHTML = (state.teams || [])
     .map((team) => {
       const members = sortStudents(team.members, nameSort);
-      const playerRows = members
+      const playerBlocks = members
         .map(
-          (s) => `<tr class="player-line">
-            <td class="prior">${escapeHtml(priorPoints(s))}</td>
-            <td class="who">${escapeHtml(displayName(s, nameSort))}</td>
-            <td class="btns"><div class="pm">${studentButtons(s.id)}</div></td>
-            <td class="now">${escapeHtml(formatPoints(s.session_points))}</td>
-          </tr>`
+          (s) => `<tbody class="player-block">
+            ${scoreRow(
+              "player",
+              escapeHtml(priorPoints(s)),
+              escapeHtml(displayName(s, nameSort)),
+              escapeHtml(formatPoints(s.session_points))
+            )}
+            ${controlsRow("player", `<div class="pm">${studentButtons(s.id)}</div>`)}
+          </tbody>`
         )
         .join("");
-      return `<section class="team-card" style="--team:${escapeHtml(team.color)}">
+      return `<section class="team-card" data-team-id="${team.id}" style="--team:${escapeHtml(team.color)}">
         <table class="roster">
-          <tbody>
-            <tr class="team-line">
-              <td class="prior">${escapeHtml(teamPriorPoints(members))}</td>
-              <td class="who">${escapeHtml(team.name)}</td>
-              <td class="btns">${teamControls(team.id)}</td>
-              <td class="now">${escapeHtml(formatPoints(team.score))}</td>
-            </tr>
-            ${playerRows}
+          <tbody class="team-head">
+            ${scoreRow(
+              "team",
+              escapeHtml(teamPriorPoints(members)),
+              escapeHtml(team.name),
+              escapeHtml(formatPoints(team.score))
+            )}
+            ${controlsRow("team", teamControls(team.id))}
           </tbody>
+          ${playerBlocks}
         </table>
       </section>`;
     })
     .join("");
+  if (pendingTeam) activeTeamId = pendingTeam.id;
+  requestAnimationFrame(layoutTeams);
+}
+
+/**
+ * Show teams side by side, or as tabs when they do not fit the window.
+ */
+function layoutTeams() {
+  const row = document.getElementById("teams");
+  const tabs = document.getElementById("team-tabs");
+  if (!row || !tabs) return;
+  const cards = [...row.querySelectorAll(".team-card")];
+  tabs.replaceChildren();
+  tabs.classList.add("hidden");
+  row.classList.remove("tabbed");
+  cards.forEach((card) => {
+    card.hidden = false;
+  });
+  if (!cards.length) return;
+  const overflow = row.scrollWidth > row.clientWidth + 4;
+  if (!overflow) {
+    activeTeamId = null;
+    return;
+  }
+  const ids = cards.map((card) => Number(card.dataset.teamId));
+  if (!ids.includes(activeTeamId)) activeTeamId = ids[0];
+  row.classList.add("tabbed");
+  tabs.classList.remove("hidden");
+  for (const card of cards) {
+    const id = Number(card.dataset.teamId);
+    const team = (latestState?.teams || []).find((t) => t.id === id);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "team-tab" + (id === activeTeamId ? " on" : "");
+    btn.setAttribute("role", "tab");
+    btn.setAttribute("aria-selected", id === activeTeamId ? "true" : "false");
+    btn.textContent = team?.name || `Team`;
+    btn.style.setProperty("--team", team?.color || "#1c1914");
+    btn.addEventListener("click", () => {
+      activeTeamId = id;
+      layoutTeams();
+    });
+    tabs.appendChild(btn);
+    card.hidden = id !== activeTeamId;
+  }
 }
 
 /**
@@ -177,6 +255,31 @@ document.getElementById("teams").addEventListener("click", (event) => {
   );
 });
 
+/**
+ * Hide or show prior-strength columns for a student-facing layout.
+ */
+function applyStudentView() {
+  document.body.classList.toggle("student-view", studentView);
+  const btn = document.getElementById("student-view");
+  if (btn) btn.textContent = studentView ? "Show strength" : "Student View";
+}
+
+document.getElementById("student-view").addEventListener("click", () => {
+  studentView = !studentView;
+  localStorage.setItem(VIEW_KEY, studentView ? "1" : "0");
+  applyStudentView();
+});
+
+document.getElementById("quit-game").addEventListener("click", async () => {
+  hideError("#error");
+  try {
+    await api(`/api/classes/${classId}/game/cancel`, { method: "POST", body: "{}" });
+    location.href = `/class/${classId}`;
+  } catch (err) {
+    showError("#error", err);
+  }
+});
+
 document.getElementById("end-game").addEventListener("click", async () => {
   hideError("#error");
   try {
@@ -219,3 +322,4 @@ async function tick() {
 
 tick();
 setInterval(tick, 400);
+window.addEventListener("resize", layoutTeams);

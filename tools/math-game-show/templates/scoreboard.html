@@ -9,7 +9,11 @@
 <body class="scoreboard">
   <div class="board-stage">
     <div id="idle" class="board-idle">WAITING FOR KICKOFF</div>
-    <div id="toast" class="toast" hidden></div>
+    <div id="final" class="final-board hidden" hidden>
+      <p class="final-kicker">FINAL SCORE</p>
+      <p class="final-header" id="final-header"></p>
+      <ol class="final-list" id="final-list"></ol>
+    </div>
     <div id="bar" class="espn-bar"></div>
   </div>
   <script type="module" src="/static/scoreboard.js"></script>

@@ -823,13 +823,21 @@ class GameShowDB:
                 raise KeyError(f"session {session_id}")
             open_game = self.conn.execute(
                 """
-                SELECT id FROM games
+                SELECT * FROM games
                 WHERE class_id = ? AND session_id = ? AND status != 'ended'
                 """,
                 (class_id, session_id),
             ).fetchone()
             if open_game:
-                raise ValueError("Cannot delete the column used by the open game")
+                if open_game["status"] == "live":
+                    raise ValueError("Cannot delete the column used by the open game")
+                self._discard_setup_unlocked(open_game)
+                leftover = self.conn.execute(
+                    "SELECT id FROM sessions WHERE id = ?", (session_id,)
+                ).fetchone()
+                if leftover is None:
+                    self.conn.commit()
+                    return self.dashboard(class_id, sort)
             self.conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
             self.conn.commit()
         return self.dashboard(class_id, sort)
@@ -1086,11 +1094,13 @@ class GameShowDB:
         today: date | None = None,
         meeting_date: date | None = None,
     ) -> dict[str, Any]:
-        """Start or resume the single open game for a class.
+        """Start a new game, or resume only if one is already live.
 
-        Default slot is the next calendar class time from ``today``, even if
-        a column already exists for that meeting. Extra plays use ``_2``,
-        ``_3``, … rather than bumping to the following class day.
+        An unfinished Begin a New Game (attendance / teams / names) is
+        discarded so the teacher always lands on Mark Attendance. A live
+        game still resumes. Default slot is the next calendar class time
+        from ``today``, even if a column already exists for that meeting.
+        Extra plays use ``_2``, ``_3``, … rather than bumping the day.
 
         Args:
             class_id: Classes primary key.
@@ -1110,8 +1120,10 @@ class GameShowDB:
                 (class_id,),
             ).fetchone()
             if existing:
-                self.conn.commit()
-                return self.game_state(class_id, game_id=int(existing["id"]))
+                if existing["status"] == "live":
+                    self.conn.commit()
+                    return self.game_state(class_id, game_id=int(existing["id"]))
+                self._discard_setup_unlocked(existing)
 
             meeting = self._meeting_datetime(cls, today=today, meeting_date=meeting_date)
             unused = self._unused_template_session(class_id)
@@ -1206,10 +1218,11 @@ class GameShowDB:
         return self.game_state(class_id)
 
     def cancel_setup(self, class_id: int) -> dict[str, Any]:
-        """Abort Begin a New Game before Create Teams.
+        """Abort setup or Quit a live game without keeping scores.
 
         Drops the in-progress game. A session this begin created is removed;
-        a retargeted empty template column is restored.
+        a retargeted empty template column is restored. Live scores are not
+        written as an ended class column.
 
         Args:
             class_id: Classes primary key.
@@ -1219,40 +1232,48 @@ class GameShowDB:
         """
         with self._lock:
             game = self._game_row(class_id)
-            if game["status"] not in {"attendance", "teams", "names"}:
-                raise ValueError("Cancel is only available before Create Teams")
-            game_id = int(game["id"])
-            session_id = int(game["session_id"])
-            owns = int(game["owns_session"] or 0)
-            self.conn.execute("DELETE FROM point_events WHERE game_id = ?", (game_id,))
-            self.conn.execute("DELETE FROM game_memberships WHERE game_id = ?", (game_id,))
-            self.conn.execute("DELETE FROM team_buckets WHERE game_id = ?", (game_id,))
-            self.conn.execute("DELETE FROM game_teams WHERE game_id = ?", (game_id,))
-            self.conn.execute("DELETE FROM games WHERE id = ?", (game_id,))
-            if owns:
-                self.conn.execute(
-                    "DELETE FROM session_scores WHERE session_id = ?", (session_id,)
-                )
-                self.conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
-            else:
-                self.conn.execute(
-                    """
-                    UPDATE session_scores
-                    SET present = 0, points = 0
-                    WHERE session_id = ?
-                    """,
-                    (session_id,),
-                )
-                self.conn.execute(
-                    """
-                    UPDATE sessions
-                    SET status = 'template', log_path = NULL
-                    WHERE id = ?
-                    """,
-                    (session_id,),
-                )
+            if game["status"] not in {"attendance", "teams", "names", "live"}:
+                raise ValueError("Quit is only available during an open game")
+            self._discard_setup_unlocked(game)
             self.conn.commit()
         return {"ok": True, "class_id": class_id}
+
+    def _discard_setup_unlocked(self, game: sqlite3.Row) -> None:
+        """Drop an unfinished setup game. Caller holds the lock and commits.
+
+        Args:
+            game: Open games row whose status is attendance, teams, or names.
+        """
+        game_id = int(game["id"])
+        session_id = int(game["session_id"])
+        owns = int(game["owns_session"] or 0)
+        self.conn.execute("DELETE FROM point_events WHERE game_id = ?", (game_id,))
+        self.conn.execute("DELETE FROM game_memberships WHERE game_id = ?", (game_id,))
+        self.conn.execute("DELETE FROM team_buckets WHERE game_id = ?", (game_id,))
+        self.conn.execute("DELETE FROM game_teams WHERE game_id = ?", (game_id,))
+        self.conn.execute("DELETE FROM games WHERE id = ?", (game_id,))
+        if owns:
+            self.conn.execute(
+                "DELETE FROM session_scores WHERE session_id = ?", (session_id,)
+            )
+            self.conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+        else:
+            self.conn.execute(
+                """
+                UPDATE session_scores
+                SET present = 0, points = 0
+                WHERE session_id = ?
+                """,
+                (session_id,),
+            )
+            self.conn.execute(
+                """
+                UPDATE sessions
+                SET status = 'template', log_path = NULL
+                WHERE id = ?
+                """,
+                (session_id,),
+            )
 
     def _game_row(self, class_id: int, game_id: int | None = None) -> sqlite3.Row:
         """Load the open game, or a specific game id.
@@ -1664,15 +1685,17 @@ class GameShowDB:
           leftover tenths go on the team bucket so the ESPN total stays
           the full award
         * ``team_only`` — team bucket only; individuals unchanged
+          (also used for a −5 team penalty)
 
-        Team awards must be positive. Individual awards may be negative.
+        Positive team awards need a rule. A negative team award must use
+        ``team_only``. Individual awards may be negative.
         Future TODO: students awarding points to one another.
 
         Args:
             class_id: Classes primary key.
             kind: ``student`` or ``team``.
             target_id: Student id or team id.
-            amount: Signed integer (team awards must be > 0).
+            amount: Signed integer (negative team awards require ``team_only``).
             team_rule: Required for team awards.
 
         Returns:
@@ -1683,13 +1706,13 @@ class GameShowDB:
         if kind not in {"student", "team"}:
             raise ValueError("kind must be student or team")
         if kind == "team":
-            if amount < 1:
-                raise ValueError("Team awards must be positive")
             rule = (team_rule or "").strip()
             if rule not in TEAM_RULES:
                 raise ValueError(
                     "Team awards need a rule: each_member, split_members, or team_only"
                 )
+            if amount < 0 and rule != "team_only":
+                raise ValueError("Team penalties must use the team-only bucket")
         else:
             rule = None
         with self._lock:
@@ -1717,15 +1740,22 @@ class GameShowDB:
                         (member["team_id"],),
                     ).fetchone()
                 )
+                student = self.conn.execute(
+                    "SELECT first_name FROM students WHERE id = ?",
+                    (target_id,),
+                ).fetchone()
+                first_name = str(student["first_name"] if student else "").strip()
+                signed = f"+{amount}" if amount > 0 else str(amount)
                 last_event = {
                     "kind": "student",
                     "student_id": target_id,
+                    "first_name": first_name,
                     "team_id": int(team["id"]),
                     "team_name": team["name"],
                     "amount": amount,
                     "team_rule": None,
                     "celebrate": amount > 0,
-                    "label": f"{team['name']} {amount:+d}",
+                    "label": f"{first_name} {signed}".strip() or f"{team['name']} {signed}",
                 }
                 self._insert_event(
                     session_id=session_id,
@@ -1757,14 +1787,20 @@ class GameShowDB:
                         self._bump_team_bucket(game_id, target_id, remainder)
                 else:
                     self._bump_team_bucket(game_id, target_id, amount)
+                signed = f"+{amount}" if amount > 0 else str(amount)
+                if rule == "team_only" and amount > 0:
+                    caption = f"Small Team Bonus {signed}"
+                else:
+                    caption = f"{team_row['name']} {signed}"
                 last_event = {
                     "kind": "team",
                     "team_id": target_id,
                     "team_name": team_row["name"],
                     "amount": amount,
                     "team_rule": rule,
-                    "celebrate": True,
-                    "label": f"{team_row['name']} +{amount}",
+                    "celebrate": amount > 0,
+                    "caption": caption,
+                    "label": caption,
                 }
                 self._insert_event(
                     session_id=session_id,
@@ -1956,43 +1992,65 @@ class GameShowDB:
     def scoreboard(self, class_id: int) -> dict[str, Any]:
         """Public ESPN-bar payload: team names, colors, scores, last event.
 
-        No roster and no Canvas IDs.
+        A live game wins. Otherwise the latest ended game is returned so the
+        scoreboard can keep a Final Score screen up. No roster and no Canvas IDs.
 
         Args:
             class_id: Classes primary key.
         """
-        try:
-            state = self.game_state(class_id)
-        except KeyError:
-            return {
-                "ok": True,
-                "live": False,
-                "teams": [],
-                "last_event": None,
-                "event_seq": 0,
-                "header": None,
-            }
-        if state["game"]["status"] != "live":
-            return {
-                "ok": True,
-                "live": False,
-                "teams": [
-                    {
-                        "id": t["id"],
-                        "name": t["name"],
-                        "color": t["color"],
-                        "score": t["score"],
-                    }
-                    for t in state["teams"]
-                ],
-                "last_event": state["game"]["last_event"],
-                "event_seq": state["game"]["event_seq"],
-                "header": state["session"]["header_label"],
-                "status": state["game"]["status"],
-            }
+        live_id = self._game_id_with_status(class_id, "live")
+        if live_id is not None:
+            return self._scoreboard_payload(
+                self.game_state(class_id, game_id=live_id), live=True
+            )
+        ended_id = self._game_id_with_status(class_id, "ended")
+        if ended_id is not None:
+            return self._scoreboard_payload(
+                self.game_state(class_id, game_id=ended_id), live=False
+            )
         return {
             "ok": True,
-            "live": True,
+            "live": False,
+            "final": False,
+            "teams": [],
+            "last_event": None,
+            "event_seq": 0,
+            "header": None,
+            "status": None,
+            "game_id": None,
+        }
+
+    def _game_id_with_status(self, class_id: int, status: str) -> int | None:
+        """Return the newest game id for a class with the given status.
+
+        Args:
+            class_id: Classes primary key.
+            status: ``live`` or ``ended``.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                """
+                SELECT id FROM games
+                WHERE class_id = ? AND status = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (class_id, status),
+            ).fetchone()
+        return int(row["id"]) if row else None
+
+    def _scoreboard_payload(self, state: dict[str, Any], live: bool) -> dict[str, Any]:
+        """Build the public scoreboard JSON from a game-state payload.
+
+        Args:
+            state: Output of :meth:`game_state`.
+            live: True when this game is in progress.
+        """
+        return {
+            "ok": True,
+            "live": live,
+            "final": not live,
+            "game_id": state["game"]["id"],
             "teams": [
                 {
                     "id": t["id"],
@@ -2005,7 +2063,7 @@ class GameShowDB:
             "last_event": state["game"]["last_event"],
             "event_seq": state["game"]["event_seq"],
             "header": state["session"]["header_label"],
-            "status": "live",
+            "status": "live" if live else "ended",
         }
 
     def session_log_path(self, session_id: int) -> Path:

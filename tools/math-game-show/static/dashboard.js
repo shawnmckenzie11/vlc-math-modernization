@@ -138,37 +138,68 @@ document.getElementById("freeze-sub").addEventListener("submit", (event) => {
   );
 });
 
+/**
+ * Ask the teacher to confirm a destructive delete.
+ * @param {string} message
+ * @returns {Promise<boolean>}
+ */
+function askToDelete(message) {
+  const dialog = document.getElementById("confirm-dialog");
+  const text = document.getElementById("confirm-message");
+  if (!dialog || typeof dialog.showModal !== "function") {
+    return Promise.resolve(window.confirm(message));
+  }
+  text.textContent = message;
+  dialog.returnValue = "cancel";
+  dialog.showModal();
+  return new Promise((resolve) => {
+    const finish = () => {
+      dialog.removeEventListener("close", finish);
+      resolve(dialog.returnValue === "ok");
+    };
+    dialog.addEventListener("close", finish);
+  });
+}
+
+document.getElementById("confirm-dialog")?.addEventListener("click", (event) => {
+  if (event.target === event.currentTarget) {
+    event.currentTarget.close("cancel");
+  }
+});
+
 document.getElementById("sheet").addEventListener("click", (event) => {
-  const delStudent = event.target.closest("[data-del-student]");
+  const target = event.target instanceof Element ? event.target : event.target.parentElement;
+  if (!target) return;
+  const delStudent = target.closest("[data-del-student]");
   if (delStudent) {
     event.preventDefault();
     const id = Number(delStudent.dataset.delStudent);
     const student = (latest?.students || []).find((s) => s.id === id);
     const label = student ? displayName(student, sort) : "this student";
-    if (!window.confirm(`Delete student “${label}” from this class?\n\nThis cannot be undone.`)) {
-      return;
-    }
-    mutate(`/api/classes/${classId}/students/delete`, { student_id: id }).catch((err) =>
-      showError("#error", err)
+    askToDelete(`Delete student “${label}” from this class?\n\nThis cannot be undone.`).then(
+      (ok) => {
+        if (!ok) return;
+        mutate(`/api/classes/${classId}/students/delete`, { student_id: id }).catch((err) =>
+          showError("#error", err)
+        );
+      }
     );
     return;
   }
-  const delSession = event.target.closest("[data-del-session]");
+  const delSession = target.closest("[data-del-session]");
   if (delSession) {
     event.preventDefault();
     const id = Number(delSession.dataset.delSession);
     const column = (latest?.columns || latest?.sessions || []).find((c) => Number(c.id) === id);
     const header = column?.header_label || "this class column";
-    if (
-      !window.confirm(
-        `Delete class column “${header}” and all scores in it?\n\nThis cannot be undone.`
-      )
-    ) {
-      return;
-    }
-    mutate(`/api/classes/${classId}/sessions/delete`, { session_id: id }).catch((err) =>
-      showError("#error", err)
-    );
+    askToDelete(
+      `Delete class column “${header}” and all scores in it?\n\nThis cannot be undone.`
+    ).then((ok) => {
+      if (!ok) return;
+      mutate(`/api/classes/${classId}/sessions/delete`, { session_id: id }).catch((err) =>
+        showError("#error", err)
+      );
+    });
   }
 });
 
