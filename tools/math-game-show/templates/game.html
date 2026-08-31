@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teacher Game</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <div>
+        <p class="kicker"><a id="dash-link" href="#">Class dashboard</a></p>
+        <h1 id="title">Teacher Game</h1>
+        <p class="sub" id="meta"></p>
+      </div>
+      <div class="row-actions">
+        <a class="btn secondary" id="scoreboard-link" href="#" target="mgs-scoreboard" rel="noopener">Open scoreboard</a>
+        <button type="button" class="danger" id="end-game">End Game</button>
+      </div>
+    </div>
+    <div id="error" class="error" hidden></div>
+    <!-- Future TODO: students awarding points to one another. Teacher-only +/- for now. -->
+    <div id="teams" class="team-grid"></div>
+    <p class="later">Later: students awarding points to one another. Scoring is teacher-only for now.</p>
+  </div>
+  <script type="module" src="/static/game.js"></script>
+</body>
+</html>

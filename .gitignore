@@ -33,3 +33,6 @@ courses/*/live-lessons/archives/*.zip
 # Temporary
 *.tmp
 _preserve/
+
+# Math Game Show local DB, uploads, and session logs
+tools/math-game-show/data/

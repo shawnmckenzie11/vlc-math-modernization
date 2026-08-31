@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Class dashboard</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <p class="kicker"><a href="/">Math Game Show</a></p>
+        <h1 id="title">Class</h1>
+        <p class="sub" id="meta"></p>
+      </div>
+      <div class="row-actions">
+        <button type="button" class="secondary" id="sort-toggle">Sort: Last, First</button>
+        <button type="button" id="begin">Begin a New Game</button>
+      </div>
+    </div>
+    <div id="error" class="error" hidden></div>
+    <div class="sheet-wrap">
+      <!-- Future TODO: add/remove student rows; add/delete session columns by hand. -->
+      <table class="sheet" id="sheet"></table>
+    </div>
+    <p class="later">Later: add or remove students by row, and add or delete live-class session columns. Later: freeze TOTAL as a subtotal and start a fresh count.</p>
+  </div>
+  <script type="module" src="/static/dashboard.js"></script>
+</body>
+</html>

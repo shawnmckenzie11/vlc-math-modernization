@@ -1,0 +1,1174 @@
+#!/usr/bin/env python3
+"""SQLite schema and queries for the Math Game Show local app."""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+import threading
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any
+
+from csv_import import parse_canvas_grades_csv
+from schedule import (
+    TIME_OPTIONS,
+    format_header_label,
+    next_meeting_datetime,
+    store_days,
+)
+from teams import (
+    assign_balanced,
+    assign_random,
+    color_for_team,
+    default_team_name,
+    validate_team_count,
+)
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS classes (
+    id INTEGER PRIMARY KEY,
+    year TEXT NOT NULL,
+    semester TEXT NOT NULL,
+    course_code TEXT NOT NULL,
+    days TEXT NOT NULL,
+    time TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS students (
+    id INTEGER PRIMARY KEY,
+    class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    canvas_id TEXT NOT NULL,
+    last_display TEXT NOT NULL,
+    first_name TEXT NOT NULL,
+    UNIQUE(class_id, canvas_id)
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id INTEGER PRIMARY KEY,
+    class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    starts_at TEXT NOT NULL,
+    header_label TEXT NOT NULL,
+    status TEXT NOT NULL,
+    log_path TEXT
+);
+
+CREATE TABLE IF NOT EXISTS session_scores (
+    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    present INTEGER NOT NULL DEFAULT 0,
+    points INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (session_id, student_id)
+);
+
+CREATE TABLE IF NOT EXISTS games (
+    id INTEGER PRIMARY KEY,
+    class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    event_seq INTEGER NOT NULL DEFAULT 0,
+    last_event_json TEXT
+);
+
+CREATE TABLE IF NOT EXISTS game_teams (
+    id INTEGER PRIMARY KEY,
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL,
+    sort_order INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS game_memberships (
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    team_id INTEGER NOT NULL REFERENCES game_teams(id) ON DELETE CASCADE,
+    student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    PRIMARY KEY (game_id, student_id)
+);
+
+CREATE TABLE IF NOT EXISTS team_buckets (
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    team_id INTEGER NOT NULL REFERENCES game_teams(id) ON DELETE CASCADE,
+    points INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (game_id, team_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_students_class ON students(class_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_class ON sessions(class_id);
+CREATE INDEX IF NOT EXISTS idx_games_class ON games(class_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_open_game
+    ON games(class_id) WHERE status != 'ended';
+"""
+
+# Future TODO (Teacher Class Dashboard): allow students to be added or removed
+# by row, and live class sessions to be added or deleted by column. Schema is
+# already row/column oriented; do not invent a second store when that lands.
+
+# Future TODO (TOTAL SCORE): allow TOTAL to be frozen as a subtotal up to the
+# current point, starting a fresh count afterward. A freeze marker on classes
+# or sessions would be the natural place.
+
+# Future TODO (Teacher Game Dashboard): allow students to award points to one
+# another. Scoring is teacher-only until then; keep the log `from` field.
+
+
+class GameShowDB:
+    """Thread-safe SQLite access for classes, sessions, and live games."""
+
+    def __init__(self, db_path: Path, data_dir: Path) -> None:
+        """Open (or create) the app database.
+
+        Args:
+            db_path: Path to ``app.sqlite``.
+            data_dir: Root for uploads and JSONL logs.
+        """
+        self.db_path = db_path
+        self.data_dir = data_dir
+        self.logs_dir = data_dir / "logs"
+        self.uploads_dir = data_dir / "uploads"
+        self._lock = threading.Lock()
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.logs_dir.mkdir(parents=True, exist_ok=True)
+        self.uploads_dir.mkdir(parents=True, exist_ok=True)
+        self.conn = sqlite3.connect(str(db_path), check_same_thread=False)
+        self.conn.row_factory = sqlite3.Row
+        self.conn.execute("PRAGMA foreign_keys = ON")
+        self.conn.execute("PRAGMA journal_mode = WAL")
+        self.conn.executescript(SCHEMA)
+        self.conn.commit()
+
+    def close(self) -> None:
+        """Close the SQLite connection."""
+        with self._lock:
+            self.conn.close()
+
+    def _now(self) -> str:
+        """Return an ISO-8601 local timestamp."""
+        return datetime.now().replace(microsecond=0).isoformat()
+
+    def create_class(
+        self,
+        *,
+        year: str,
+        semester: str,
+        course_code: str,
+        days_preset: str,
+        time_label: str,
+        csv_text: str,
+        today: date | None = None,
+    ) -> dict[str, Any]:
+        """Insert a class, roster, and the first template session column.
+
+        Args:
+            year: Display year such as ``2026/27``.
+            semester: ``Semester 1`` or ``Semester 2``.
+            course_code: e.g. ``MCF3M``.
+            days_preset: ``M/W/F`` or ``T/Th/F``.
+            time_label: One of the wizard times.
+            csv_text: Canvas gradebook CSV contents.
+            today: Optional reference date for the first meeting.
+
+        Returns:
+            Class dict including ``id`` and imported student count.
+        """
+        if not year.strip() or not semester.strip() or not course_code.strip():
+            raise ValueError("Year, semester, and course code are required")
+        if time_label not in TIME_OPTIONS:
+            raise ValueError(f"Time must be one of: {', '.join(TIME_OPTIONS)}")
+        roster = parse_canvas_grades_csv(csv_text)
+        days = store_days(days_preset)
+        meeting = next_meeting_datetime(days, time_label, today=today)
+        header = format_header_label(meeting, time_label)
+        created = self._now()
+        with self._lock:
+            cur = self.conn.execute(
+                """
+                INSERT INTO classes (year, semester, course_code, days, time, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (year.strip(), semester.strip(), course_code.strip(), days, time_label, created),
+            )
+            class_id = int(cur.lastrowid)
+            for student in roster:
+                self.conn.execute(
+                    """
+                    INSERT INTO students (class_id, canvas_id, last_display, first_name)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        class_id,
+                        student["canvas_id"],
+                        student["last_display"],
+                        student["first_name"],
+                    ),
+                )
+            self.conn.execute(
+                """
+                INSERT INTO sessions (class_id, starts_at, header_label, status, log_path)
+                VALUES (?, ?, ?, 'template', NULL)
+                """,
+                (class_id, meeting.isoformat(), header),
+            )
+            session_id = int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+            student_ids = [
+                int(row["id"])
+                for row in self.conn.execute(
+                    "SELECT id FROM students WHERE class_id = ?", (class_id,)
+                )
+            ]
+            for sid in student_ids:
+                self.conn.execute(
+                    """
+                    INSERT INTO session_scores (session_id, student_id, present, points)
+                    VALUES (?, ?, 0, 0)
+                    """,
+                    (session_id, sid),
+                )
+            upload_path = self.uploads_dir / f"class-{class_id}.csv"
+            upload_path.write_text(csv_text, encoding="utf-8")
+            self.conn.commit()
+        return self.get_class(class_id)
+
+    def list_classes(self, year: str, semester: str) -> list[dict[str, Any]]:
+        """Return classes whose year/semester match the picker filter.
+
+        Args:
+            year: Display year such as ``2026/27``.
+            semester: ``Semester 1`` or ``Semester 2``.
+        """
+        with self._lock:
+            rows = self.conn.execute(
+                """
+                SELECT * FROM classes
+                WHERE year = ? AND semester = ?
+                ORDER BY created_at DESC, id DESC
+                """,
+                (year, semester),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def get_class(self, class_id: int) -> dict[str, Any]:
+        """Return one class or raise KeyError.
+
+        Args:
+            class_id: Classes primary key.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT * FROM classes WHERE id = ?", (class_id,)
+            ).fetchone()
+        if row is None:
+            raise KeyError(f"class {class_id}")
+        payload = dict(row)
+        payload["student_count"] = self._student_count(class_id)
+        return payload
+
+    def _student_count(self, class_id: int) -> int:
+        """Count roster rows for a class.
+
+        Args:
+            class_id: Classes primary key.
+        """
+        row = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM students WHERE class_id = ?", (class_id,)
+        ).fetchone()
+        return int(row["n"])
+
+    def career_totals(self, class_id: int) -> dict[int, int]:
+        """Sum individual session points per student (all columns).
+
+        TOTAL is individual-only; team-bucket awards are never included.
+        Future TODO: freeze TOTAL as a subtotal and start a fresh count.
+
+        Args:
+            class_id: Classes primary key.
+
+        Returns:
+            Map of student_id → summed points.
+        """
+        with self._lock:
+            rows = self.conn.execute(
+                """
+                SELECT ss.student_id AS student_id, COALESCE(SUM(ss.points), 0) AS total
+                FROM students s
+                LEFT JOIN session_scores ss ON ss.student_id = s.id
+                WHERE s.class_id = ?
+                GROUP BY s.id
+                """,
+                (class_id,),
+            ).fetchall()
+        return {int(row["student_id"]): int(row["total"]) for row in rows}
+
+    def dashboard(self, class_id: int, sort: str = "last") -> dict[str, Any]:
+        """Spreadsheet payload: students, session columns, cells, totals.
+
+        Args:
+            class_id: Classes primary key.
+            sort: ``first`` for First Last, ``last`` for Last, First.
+        """
+        cls = self.get_class(class_id)
+        with self._lock:
+            students = [
+                dict(row)
+                for row in self.conn.execute(
+                    "SELECT * FROM students WHERE class_id = ?", (class_id,)
+                )
+            ]
+            sessions = [
+                dict(row)
+                for row in self.conn.execute(
+                    """
+                    SELECT * FROM sessions
+                    WHERE class_id = ?
+                    ORDER BY starts_at ASC, id ASC
+                    """,
+                    (class_id,),
+                )
+            ]
+            score_rows = self.conn.execute(
+                """
+                SELECT ss.session_id, ss.student_id, ss.present, ss.points
+                FROM session_scores ss
+                JOIN sessions se ON se.id = ss.session_id
+                WHERE se.class_id = ?
+                """,
+                (class_id,),
+            ).fetchall()
+            open_game = self.conn.execute(
+                """
+                SELECT id, session_id, status FROM games
+                WHERE class_id = ? AND status != 'ended'
+                """,
+                (class_id,),
+            ).fetchone()
+        cells: dict[str, dict[str, Any]] = {}
+        totals: dict[int, int] = {int(s["id"]): 0 for s in students}
+        for row in score_rows:
+            sid = int(row["student_id"])
+            totals[sid] = totals.get(sid, 0) + int(row["points"])
+            key = f"{row['session_id']}:{sid}"
+            cells[key] = {
+                "present": bool(row["present"]),
+                "points": int(row["points"]),
+            }
+        if sort == "first":
+            students.sort(
+                key=lambda s: (
+                    str(s["first_name"]).lower(),
+                    str(s["last_display"]).lower(),
+                )
+            )
+        else:
+            students.sort(
+                key=lambda s: (
+                    str(s["last_display"]).lower(),
+                    str(s["first_name"]).lower(),
+                )
+            )
+        return {
+            "class": cls,
+            "sort": "first" if sort == "first" else "last",
+            "students": students,
+            "sessions": sessions,
+            "cells": cells,
+            "totals": {str(k): v for k, v in totals.items()},
+            "open_game": dict(open_game) if open_game else None,
+        }
+
+    def _unfinished_session(self, class_id: int) -> dict[str, Any] | None:
+        """Latest template/active session for a class, if any.
+
+        Args:
+            class_id: Classes primary key.
+        """
+        row = self.conn.execute(
+            """
+            SELECT * FROM sessions
+            WHERE class_id = ? AND status IN ('template', 'active')
+            ORDER BY starts_at DESC, id DESC
+            LIMIT 1
+            """,
+            (class_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def _latest_session(self, class_id: int) -> dict[str, Any] | None:
+        """Most recently created session for a class.
+
+        Args:
+            class_id: Classes primary key.
+        """
+        row = self.conn.execute(
+            """
+            SELECT * FROM sessions
+            WHERE class_id = ?
+            ORDER BY starts_at DESC, id DESC
+            LIMIT 1
+            """,
+            (class_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def _ensure_session_scores(self, session_id: int, class_id: int) -> None:
+        """Insert missing zero/absent cells for every student in a session.
+
+        Args:
+            session_id: Sessions primary key.
+            class_id: Classes primary key.
+        """
+        self.conn.execute(
+            """
+            INSERT OR IGNORE INTO session_scores (session_id, student_id, present, points)
+            SELECT ?, id, 0, 0 FROM students WHERE class_id = ?
+            """,
+            (session_id, class_id),
+        )
+
+    def _append_session(
+        self,
+        class_id: int,
+        cls: dict[str, Any],
+        after_date: date | None,
+        today: date | None,
+    ) -> dict[str, Any]:
+        """Create a new session column for the next meeting.
+
+        Args:
+            class_id: Classes primary key.
+            cls: Class row dict.
+            after_date: Last session calendar date, if appending.
+            today: Reference date.
+        """
+        meeting = next_meeting_datetime(
+            cls["days"],
+            cls["time"],
+            today=today,
+            after_date=after_date,
+        )
+        header = format_header_label(meeting, cls["time"])
+        self.conn.execute(
+            """
+            INSERT INTO sessions (class_id, starts_at, header_label, status, log_path)
+            VALUES (?, ?, ?, 'template', NULL)
+            """,
+            (class_id, meeting.isoformat(), header),
+        )
+        session_id = int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+        self._ensure_session_scores(session_id, class_id)
+        row = self.conn.execute(
+            "SELECT * FROM sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+        return dict(row)
+
+    def begin_game(self, class_id: int, today: date | None = None) -> dict[str, Any]:
+        """Start or resume the single open game for a class.
+
+        Reuses an unfinished session column. After End Game, the next Begin
+        on a later calendar meeting appends a new column.
+
+        Args:
+            class_id: Classes primary key.
+            today: Optional reference date.
+
+        Returns:
+            Full game-state payload.
+
+        Raises:
+            ValueError: If this meeting was already ended and it is not a
+                later calendar day yet.
+        """
+        cls = self.get_class(class_id)
+        with self._lock:
+            existing = self.conn.execute(
+                """
+                SELECT * FROM games
+                WHERE class_id = ? AND status != 'ended'
+                """,
+                (class_id,),
+            ).fetchone()
+            if existing:
+                session = dict(
+                    self.conn.execute(
+                        "SELECT * FROM sessions WHERE id = ?",
+                        (existing["session_id"],),
+                    ).fetchone()
+                )
+                self.conn.commit()
+                game_id = int(existing["id"])
+            else:
+                unfinished = self._unfinished_session(class_id)
+                if unfinished:
+                    session = unfinished
+                else:
+                    latest = self._latest_session(class_id)
+                    after = None
+                    if latest:
+                        after = date.fromisoformat(str(latest["starts_at"])[:10])
+                    meeting = next_meeting_datetime(
+                        cls["days"],
+                        cls["time"],
+                        today=today,
+                        after_date=after,
+                    )
+                    header = format_header_label(meeting, cls["time"])
+                    if latest and header == latest["header_label"]:
+                        raise ValueError(
+                            "This meeting already has an ended game. "
+                            "Begin again on the next class day."
+                        )
+                    session = self._append_session(class_id, cls, after, today)
+                self.conn.execute(
+                    "UPDATE sessions SET status = 'active' WHERE id = ?",
+                    (session["id"],),
+                )
+                cur = self.conn.execute(
+                    """
+                    INSERT INTO games (class_id, session_id, status, created_at)
+                    VALUES (?, ?, 'attendance', ?)
+                    """,
+                    (class_id, session["id"], self._now()),
+                )
+                game_id = int(cur.lastrowid)
+                self._ensure_session_scores(int(session["id"]), class_id)
+                self.conn.commit()
+        return self.game_state(class_id, game_id=game_id)
+
+    def _game_row(self, class_id: int, game_id: int | None = None) -> sqlite3.Row:
+        """Load the open game, or a specific game id.
+
+        Args:
+            class_id: Classes primary key.
+            game_id: Optional games primary key.
+
+        Raises:
+            KeyError: If no matching game exists.
+        """
+        if game_id is not None:
+            row = self.conn.execute(
+                "SELECT * FROM games WHERE id = ? AND class_id = ?",
+                (game_id, class_id),
+            ).fetchone()
+        else:
+            row = self.conn.execute(
+                """
+                SELECT * FROM games
+                WHERE class_id = ? AND status != 'ended'
+                """,
+                (class_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError("no open game")
+        return row
+
+    def previous_present_ids(self, class_id: int, session_id: int) -> list[int]:
+        """Present student ids from the previous session column.
+
+        First session defaults to all absent (empty list).
+
+        Args:
+            class_id: Classes primary key.
+            session_id: Current session id.
+        """
+        with self._lock:
+            current = self.conn.execute(
+                "SELECT starts_at FROM sessions WHERE id = ? AND class_id = ?",
+                (session_id, class_id),
+            ).fetchone()
+            if current is None:
+                return []
+            prev = self.conn.execute(
+                """
+                SELECT id FROM sessions
+                WHERE class_id = ? AND id != ?
+                  AND starts_at <= ?
+                ORDER BY starts_at DESC, id DESC
+                LIMIT 1
+                """,
+                (class_id, session_id, current["starts_at"]),
+            ).fetchone()
+            if prev is None:
+                return []
+            rows = self.conn.execute(
+                """
+                SELECT student_id FROM session_scores
+                WHERE session_id = ? AND present = 1
+                """,
+                (prev["id"],),
+            ).fetchall()
+        return [int(r["student_id"]) for r in rows]
+
+    def save_attendance(self, class_id: int, present_ids: list[int]) -> dict[str, Any]:
+        """Mark present/absent on the open game's session and advance to teams.
+
+        Args:
+            class_id: Classes primary key.
+            present_ids: Student ids who are present.
+
+        Returns:
+            Updated game state.
+        """
+        present_set = {int(x) for x in present_ids}
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] not in {"attendance", "teams", "names"}:
+                raise ValueError("Attendance can only be edited during setup")
+            if not present_set:
+                raise ValueError("Mark at least one student present")
+            session_id = int(game["session_id"])
+            students = self.conn.execute(
+                "SELECT id FROM students WHERE class_id = ?", (class_id,)
+            ).fetchall()
+            for row in students:
+                sid = int(row["id"])
+                self.conn.execute(
+                    """
+                    UPDATE session_scores
+                    SET present = ?, points = CASE WHEN ? = 0 THEN 0 ELSE points END
+                    WHERE session_id = ? AND student_id = ?
+                    """,
+                    (1 if sid in present_set else 0, 1 if sid in present_set else 0, session_id, sid),
+                )
+            # Drop any teams from a previous pass through this setup.
+            self.conn.execute(
+                "DELETE FROM game_memberships WHERE game_id = ?", (game["id"],)
+            )
+            self.conn.execute(
+                "DELETE FROM team_buckets WHERE game_id = ?", (game["id"],)
+            )
+            self.conn.execute(
+                "DELETE FROM game_teams WHERE game_id = ?", (game["id"],)
+            )
+            self.conn.execute(
+                "UPDATE games SET status = 'teams' WHERE id = ?", (game["id"],)
+            )
+            self.conn.commit()
+        return self.game_state(class_id)
+
+    def set_setup_step(self, class_id: int, status: str) -> dict[str, Any]:
+        """Move the open game between attendance / teams / names.
+
+        Args:
+            class_id: Classes primary key.
+            status: ``attendance``, ``teams``, or ``names``.
+
+        Returns:
+            Updated game state.
+        """
+        if status not in {"attendance", "teams", "names"}:
+            raise ValueError("Setup step must be attendance, teams, or names")
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] not in {"attendance", "teams", "names", "live"}:
+                raise ValueError("Cannot change setup step after End Game")
+            if game["status"] == "live":
+                raise ValueError("Cannot return to setup during a live game")
+            if status == "names":
+                n_teams = self.conn.execute(
+                    "SELECT COUNT(*) AS n FROM game_teams WHERE game_id = ?",
+                    (game["id"],),
+                ).fetchone()
+                if int(n_teams["n"]) < 1:
+                    raise ValueError("Assign teams before renaming them")
+            self.conn.execute(
+                "UPDATE games SET status = ? WHERE id = ?", (status, game["id"])
+            )
+            self.conn.commit()
+        return self.game_state(class_id)
+
+    def assign_teams(
+        self,
+        class_id: int,
+        n_teams: int,
+        mode: str,
+        rng: Any | None = None,
+    ) -> dict[str, Any]:
+        """Build teams from present students (random or balanced snake-draft).
+
+        Args:
+            class_id: Classes primary key.
+            n_teams: Number of teams.
+            mode: ``random`` or ``balanced``.
+            rng: Optional random.Random for tests.
+
+        Returns:
+            Updated game state including team names for the rename step.
+        """
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] not in {"teams", "names"}:
+                raise ValueError("Assign teams during the setup wizard")
+            session_id = int(game["session_id"])
+            present_rows = self.conn.execute(
+                """
+                SELECT s.id AS id, s.last_display AS last_display, s.first_name AS first_name
+                FROM session_scores ss
+                JOIN students s ON s.id = ss.student_id
+                WHERE ss.session_id = ? AND ss.present = 1
+                """,
+                (session_id,),
+            ).fetchall()
+            present_ids = [int(r["id"]) for r in present_rows]
+            validate_team_count(int(n_teams), len(present_ids))
+            totals_map = {}
+            for sid in present_ids:
+                row = self.conn.execute(
+                    """
+                    SELECT COALESCE(SUM(points), 0) AS total
+                    FROM session_scores WHERE student_id = ?
+                    """,
+                    (sid,),
+                ).fetchone()
+                totals_map[sid] = int(row["total"])
+            if mode == "balanced":
+                buckets = assign_balanced(
+                    present_ids, int(n_teams), [totals_map[sid] for sid in present_ids]
+                )
+            elif mode == "random":
+                buckets = assign_random(present_ids, int(n_teams), rng=rng)
+            else:
+                raise ValueError("mode must be random or balanced")
+            game_id = int(game["id"])
+            self.conn.execute("DELETE FROM game_memberships WHERE game_id = ?", (game_id,))
+            self.conn.execute("DELETE FROM team_buckets WHERE game_id = ?", (game_id,))
+            self.conn.execute("DELETE FROM game_teams WHERE game_id = ?", (game_id,))
+            for order, members in enumerate(buckets):
+                cur = self.conn.execute(
+                    """
+                    INSERT INTO game_teams (game_id, name, color, sort_order)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (game_id, default_team_name(order), color_for_team(order), order),
+                )
+                team_id = int(cur.lastrowid)
+                self.conn.execute(
+                    """
+                    INSERT INTO team_buckets (game_id, team_id, points)
+                    VALUES (?, ?, 0)
+                    """,
+                    (game_id, team_id),
+                )
+                for sid in members:
+                    self.conn.execute(
+                        """
+                        INSERT INTO game_memberships (game_id, team_id, student_id)
+                        VALUES (?, ?, ?)
+                        """,
+                        (game_id, team_id, sid),
+                    )
+            self.conn.execute(
+                "UPDATE games SET status = 'names' WHERE id = ?", (game_id,)
+            )
+            self.conn.commit()
+        return self.game_state(class_id)
+
+    def rename_teams(self, class_id: int, names: list[dict[str, Any]]) -> dict[str, Any]:
+        """Apply teacher team names, then move the game to live scoring.
+
+        Args:
+            class_id: Classes primary key.
+            names: List of ``{id, name}`` for each team.
+
+        Returns:
+            Updated game state (status ``live``).
+        """
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] not in {"names", "live"}:
+                raise ValueError("Rename teams after they have been assigned")
+            game_id = int(game["id"])
+            for item in names:
+                team_id = int(item["id"])
+                name = str(item.get("name") or "").strip()
+                if not name:
+                    raise ValueError("Team name cannot be empty")
+                cur = self.conn.execute(
+                    """
+                    UPDATE game_teams SET name = ?
+                    WHERE id = ? AND game_id = ?
+                    """,
+                    (name, team_id, game_id),
+                )
+                if cur.rowcount != 1:
+                    raise KeyError(f"team {team_id}")
+            self.conn.execute(
+                "UPDATE games SET status = 'live' WHERE id = ?", (game_id,)
+            )
+            self.conn.commit()
+        return self.game_state(class_id)
+
+    def _append_log(self, session_id: int, record: dict[str, Any]) -> Path:
+        """Append one JSONL scoring action under ``data/logs/``.
+
+        Args:
+            session_id: Sessions primary key.
+            record: JSON-serializable log object.
+
+        Returns:
+            Path to the log file.
+        """
+        path = self.logs_dir / f"session-{session_id}.jsonl"
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        return path
+
+    def award_points(
+        self,
+        class_id: int,
+        *,
+        kind: str,
+        target_id: int,
+        amount: int,
+    ) -> dict[str, Any]:
+        """Apply a teacher +/- award to a student or a team bucket.
+
+        Individual awards change that student's session cell. Team awards
+        change the live team bucket only (fair across uneven sizes).
+        Future TODO: students awarding points to one another.
+
+        Args:
+            class_id: Classes primary key.
+            kind: ``student`` or ``team``.
+            target_id: Student id or team id.
+            amount: Signed integer (typically ±1/5/10).
+
+        Returns:
+            Updated game state (includes last_event for the scoreboard).
+        """
+        if amount == 0:
+            raise ValueError("Amount cannot be 0")
+        if kind not in {"student", "team"}:
+            raise ValueError("kind must be student or team")
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] != "live":
+                raise ValueError("Scoring starts after teams are created")
+            game_id = int(game["id"])
+            session_id = int(game["session_id"])
+            ts = self._now()
+            last_event: dict[str, Any]
+            if kind == "student":
+                member = self.conn.execute(
+                    """
+                    SELECT team_id FROM game_memberships
+                    WHERE game_id = ? AND student_id = ?
+                    """,
+                    (game_id, target_id),
+                ).fetchone()
+                if member is None:
+                    raise KeyError(f"student {target_id} is not on a live team")
+                self.conn.execute(
+                    """
+                    UPDATE session_scores
+                    SET points = points + ?
+                    WHERE session_id = ? AND student_id = ? AND present = 1
+                    """,
+                    (amount, session_id, target_id),
+                )
+                team = dict(
+                    self.conn.execute(
+                        "SELECT * FROM game_teams WHERE id = ?",
+                        (member["team_id"],),
+                    ).fetchone()
+                )
+                last_event = {
+                    "kind": "student",
+                    "student_id": target_id,
+                    "team_id": int(team["id"]),
+                    "team_name": team["name"],
+                    "amount": amount,
+                    "celebrate": False,
+                    "label": f"{team['name']} {amount:+d}",
+                }
+                to_field: str | int = target_id
+            else:
+                team_row = self.conn.execute(
+                    "SELECT * FROM game_teams WHERE id = ? AND game_id = ?",
+                    (target_id, game_id),
+                ).fetchone()
+                if team_row is None:
+                    raise KeyError(f"team {target_id}")
+                self.conn.execute(
+                    """
+                    UPDATE team_buckets
+                    SET points = points + ?
+                    WHERE game_id = ? AND team_id = ?
+                    """,
+                    (amount, game_id, target_id),
+                )
+                last_event = {
+                    "kind": "team",
+                    "team_id": target_id,
+                    "team_name": team_row["name"],
+                    "amount": amount,
+                    "celebrate": amount > 0,
+                    "label": f"{team_row['name']} {amount:+d}",
+                }
+                to_field = f"team:{target_id}"
+            log_record = {
+                "ts": ts,
+                "from": "teacher",
+                "to": to_field,
+                "amount": amount,
+            }
+            log_path = self._append_log(session_id, log_record)
+            seq = int(game["event_seq"]) + 1
+            self.conn.execute(
+                """
+                UPDATE games
+                SET event_seq = ?, last_event_json = ?
+                WHERE id = ?
+                """,
+                (seq, json.dumps(last_event), game_id),
+            )
+            self.conn.execute(
+                "UPDATE sessions SET log_path = ? WHERE id = ?",
+                (str(log_path), session_id),
+            )
+            self.conn.commit()
+        return self.game_state(class_id)
+
+    def end_game(self, class_id: int) -> dict[str, Any]:
+        """Persist the session column, keep the log link, and close the game.
+
+        Present/absent and individual points are already on ``session_scores``.
+        Team buckets are live-only and are discarded with the game rows.
+
+        Args:
+            class_id: Classes primary key.
+
+        Returns:
+            ``{ok, class_id, session_id, log_path}``.
+        """
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] != "live":
+                raise ValueError("End Game is only available during a live game")
+            session_id = int(game["session_id"])
+            game_id = int(game["id"])
+            log_path = self.logs_dir / f"session-{session_id}.jsonl"
+            log_path.touch(exist_ok=True)
+            self.conn.execute(
+                """
+                UPDATE sessions
+                SET status = 'ended', log_path = ?
+                WHERE id = ?
+                """,
+                (str(log_path), session_id),
+            )
+            self.conn.execute(
+                "UPDATE games SET status = 'ended' WHERE id = ?", (game_id,)
+            )
+            self.conn.execute(
+                "DELETE FROM game_memberships WHERE game_id = ?", (game_id,)
+            )
+            self.conn.execute(
+                "DELETE FROM team_buckets WHERE game_id = ?", (game_id,)
+            )
+            self.conn.execute(
+                "DELETE FROM game_teams WHERE game_id = ?", (game_id,)
+            )
+            self.conn.commit()
+        return {
+            "ok": True,
+            "class_id": class_id,
+            "session_id": session_id,
+            "log_path": str(log_path),
+        }
+
+    def game_state(self, class_id: int, game_id: int | None = None) -> dict[str, Any]:
+        """Full teacher-game payload (setup or live).
+
+        Args:
+            class_id: Classes primary key.
+            game_id: Optional specific game (including just-ended).
+        """
+        cls = self.get_class(class_id)
+        with self._lock:
+            game = dict(self._game_row(class_id, game_id=game_id))
+            session = dict(
+                self.conn.execute(
+                    "SELECT * FROM sessions WHERE id = ?", (game["session_id"],)
+                ).fetchone()
+            )
+            students = [
+                dict(r)
+                for r in self.conn.execute(
+                    "SELECT * FROM students WHERE class_id = ? ORDER BY last_display, first_name",
+                    (class_id,),
+                )
+            ]
+            scores = {
+                int(r["student_id"]): {
+                    "present": bool(r["present"]),
+                    "points": int(r["points"]),
+                }
+                for r in self.conn.execute(
+                    "SELECT student_id, present, points FROM session_scores WHERE session_id = ?",
+                    (session["id"],),
+                )
+            }
+            teams = [
+                dict(r)
+                for r in self.conn.execute(
+                    """
+                    SELECT t.*, COALESCE(b.points, 0) AS bucket
+                    FROM game_teams t
+                    LEFT JOIN team_buckets b
+                      ON b.team_id = t.id AND b.game_id = t.game_id
+                    WHERE t.game_id = ?
+                    ORDER BY t.sort_order
+                    """,
+                    (game["id"],),
+                )
+            ]
+            memberships = [
+                dict(r)
+                for r in self.conn.execute(
+                    """
+                    SELECT student_id, team_id FROM game_memberships
+                    WHERE game_id = ?
+                    """,
+                    (game["id"],),
+                )
+            ]
+        totals = self.career_totals(class_id)
+        team_of = {int(m["student_id"]): int(m["team_id"]) for m in memberships}
+        present_ids = [int(s["id"]) for s in students if scores.get(int(s["id"]), {}).get("present")]
+        default_present = self.previous_present_ids(class_id, int(session["id"]))
+        last_event = None
+        if game.get("last_event_json"):
+            try:
+                last_event = json.loads(str(game["last_event_json"]))
+            except json.JSONDecodeError:
+                last_event = None
+        teams_out: list[dict[str, Any]] = []
+        for team in teams:
+            members = []
+            individual_sum = 0
+            for student in students:
+                sid = int(student["id"])
+                if team_of.get(sid) != int(team["id"]):
+                    continue
+                pts = int(scores.get(sid, {}).get("points") or 0)
+                individual_sum += pts
+                members.append(
+                    {
+                        **student,
+                        "session_points": pts,
+                        "career_total": totals.get(sid, 0),
+                    }
+                )
+            bucket = int(team["bucket"])
+            teams_out.append(
+                {
+                    "id": int(team["id"]),
+                    "name": team["name"],
+                    "color": team["color"],
+                    "sort_order": int(team["sort_order"]),
+                    "bucket": bucket,
+                    "individual_sum": individual_sum,
+                    "score": individual_sum + bucket,
+                    "members": members,
+                }
+            )
+        return {
+            "class": cls,
+            "game": {
+                "id": int(game["id"]),
+                "status": game["status"],
+                "session_id": int(game["session_id"]),
+                "event_seq": int(game["event_seq"] or 0),
+                "last_event": last_event,
+            },
+            "session": session,
+            "students": [
+                {
+                    **s,
+                    "present": scores.get(int(s["id"]), {}).get("present", False),
+                    "session_points": scores.get(int(s["id"]), {}).get("points", 0),
+                    "career_total": totals.get(int(s["id"]), 0),
+                }
+                for s in students
+            ],
+            "present_ids": present_ids,
+            "default_present_ids": default_present,
+            "teams": teams_out,
+        }
+
+    def scoreboard(self, class_id: int) -> dict[str, Any]:
+        """Public ESPN-bar payload: team names, colors, scores, last event.
+
+        No roster and no Canvas IDs.
+
+        Args:
+            class_id: Classes primary key.
+        """
+        try:
+            state = self.game_state(class_id)
+        except KeyError:
+            return {
+                "ok": True,
+                "live": False,
+                "teams": [],
+                "last_event": None,
+                "event_seq": 0,
+                "header": None,
+            }
+        if state["game"]["status"] != "live":
+            return {
+                "ok": True,
+                "live": False,
+                "teams": [
+                    {
+                        "id": t["id"],
+                        "name": t["name"],
+                        "color": t["color"],
+                        "score": t["score"],
+                    }
+                    for t in state["teams"]
+                ],
+                "last_event": state["game"]["last_event"],
+                "event_seq": state["game"]["event_seq"],
+                "header": state["session"]["header_label"],
+                "status": state["game"]["status"],
+            }
+        return {
+            "ok": True,
+            "live": True,
+            "teams": [
+                {
+                    "id": t["id"],
+                    "name": t["name"],
+                    "color": t["color"],
+                    "score": t["score"],
+                }
+                for t in state["teams"]
+            ],
+            "last_event": state["game"]["last_event"],
+            "event_seq": state["game"]["event_seq"],
+            "header": state["session"]["header_label"],
+            "status": "live",
+        }
+
+    def session_log_path(self, session_id: int) -> Path:
+        """Return the JSONL log path for a session if it exists.
+
+        Args:
+            session_id: Sessions primary key.
+
+        Raises:
+            KeyError: If the session is unknown.
+            FileNotFoundError: If no log has been written yet.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT log_path FROM sessions WHERE id = ?", (session_id,)
+            ).fetchone()
+        if row is None:
+            raise KeyError(f"session {session_id}")
+        fallback = self.logs_dir / f"session-{session_id}.jsonl"
+        path = Path(row["log_path"]) if row["log_path"] else fallback
+        if not path.is_file():
+            raise FileNotFoundError(str(path))
+        return path

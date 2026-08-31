@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Begin a New Game</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker"><a href="#" id="back-dash">Class dashboard</a></p>
+    <h1>Begin a New Game</h1>
+    <p class="sub" id="meta"></p>
+    <div id="error" class="error" hidden></div>
+
+    <section id="step-attendance" class="card hidden">
+      <h2>1 · Mark Attendance</h2>
+      <p class="hint">Defaults from the previous session (all absent on the first game). Only present students go to teams.</p>
+      <div class="row-actions">
+        <button type="button" class="secondary" id="att-all">All present</button>
+        <button type="button" class="secondary" id="att-none">All absent</button>
+      </div>
+      <div id="att-list" class="check-list" style="margin-top:12px"></div>
+      <div class="row-actions">
+        <button type="button" id="att-next">Continue to teams</button>
+      </div>
+    </section>
+
+    <section id="step-teams" class="card hidden">
+      <h2>2 · Assign Students to Teams</h2>
+      <label class="field" for="n-teams">Number of teams</label>
+      <input id="n-teams" type="number" min="2" value="2">
+      <div class="row-actions">
+        <button type="button" class="secondary" id="teams-back">Back</button>
+        <button type="button" id="assign-random">Assign Randomly</button>
+        <button type="button" id="assign-balanced">Assign Balanced</button>
+      </div>
+      <p class="hint">Balanced snake-drafts by career TOTAL so high scores land on different teams.</p>
+    </section>
+
+    <section id="step-names" class="card hidden">
+      <h2>3 · Create Teams</h2>
+      <p class="hint">Rename if you want. Then this window becomes the teacher game view and a scoreboard window opens for Zoom.</p>
+      <div id="name-list"></div>
+      <div class="row-actions">
+        <button type="button" class="secondary" id="names-back">Back</button>
+        <button type="button" id="start-game">Create Teams</button>
+      </div>
+    </section>
+  </div>
+  <script type="module" src="/static/setup.js"></script>
+</body>
+</html>
