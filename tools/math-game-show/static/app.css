@@ -623,6 +623,21 @@ table.roster tbody.player-block tr.player-line td {
 
 .hidden { display: none !important; }
 
+body.scoreboard.overlay .board-stage {
+  min-height: 100vh;
+  justify-content: flex-end;
+}
+
+body.scoreboard.overlay .espn-bar,
+body.scoreboard.overlay .final-board {
+  -webkit-app-region: drag;
+}
+
+body.scoreboard.overlay .board-idle {
+  -webkit-app-region: drag;
+  margin: 12px auto;
+}
+
 /* Scoreboard (full-viewport; no roster) */
 body.scoreboard {
   background: #07080a;

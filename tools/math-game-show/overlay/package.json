@@ -1,0 +1,13 @@
+{
+  "name": "mgs-scoreboard-overlay",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Always-on-top Math Game Show scoreboard strip for live class.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^37.3.1"
+  }
+}

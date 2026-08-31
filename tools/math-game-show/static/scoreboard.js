@@ -1,6 +1,9 @@
 import { classIdFromPath, formatPoints } from "./common.js";
 
 const classId = classIdFromPath();
+if (new URLSearchParams(location.search).get("overlay") === "1") {
+  document.body.classList.add("overlay");
+}
 let lastSeq = 0;
 let lastGameId = null;
 let phase = "idle";

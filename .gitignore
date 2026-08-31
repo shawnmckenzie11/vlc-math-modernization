@@ -36,3 +36,6 @@ _preserve/
 
 # Math Game Show local DB, uploads, and session logs
 tools/math-game-show/data/
+
+# Optional Electron scoreboard overlay
+tools/math-game-show/overlay/node_modules/

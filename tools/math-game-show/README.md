@@ -15,7 +15,12 @@ Opens [http://127.0.0.1:8766/](http://127.0.0.1:8766/). Use `--no-browser` if yo
 1. **Create New Class** (year / semester / course / Canvas CSV / days / time) or **Start Existing Class**.
 2. On the class dashboard, **Begin a New Game**: confirm or change the date, then attendance → teams → names. Cancel returns to the class dashboard. A second game on the same slot is labeled `_2`, `_3`, … rather than jumping to the next class day.
 3. Keep the **teacher game** window on your machine. Share the **scoreboard** window on Zoom (`/scoreboard/<class_id>`).
-4. **End Game** writes credited individual scores into that date column and attaches a log of immutable events.
+4. Optional **always-on-top overlay** (stays above Notebook/slides on your Mac; share that window on Zoom if students should see it):
+   ```bash
+   python3 tools/math-game-show/overlay.py --class 1
+   ```
+   First run installs Electron under `overlay/`. The Game Show server must already be running.
+5. **End Game** writes credited individual scores into that date column and attaches a log of immutable events.
 
 Python 3 stdlib only (sqlite3 + `ThreadingHTTPServer`). No pip install. Data lives in `tools/math-game-show/data/` (gitignored): `app.sqlite`, uploaded CSVs, JSONL logs.
 
