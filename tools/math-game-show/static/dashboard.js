@@ -3,6 +3,7 @@ import { api, classIdFromPath, displayName, escapeHtml, formatPoints, hideError,
 const classId = classIdFromPath();
 const sortKey = `mgs-sort-${classId}`;
 let sort = localStorage.getItem(sortKey) === "first" ? "first" : "last";
+let latest = null;
 
 /**
  * Load and paint the class spreadsheet.
@@ -10,6 +11,15 @@ let sort = localStorage.getItem(sortKey) === "first" ? "first" : "last";
 async function refresh() {
   hideError("#error");
   const data = await api(`/api/classes/${classId}/dashboard?sort=${sort}`);
+  paint(data);
+}
+
+/**
+ * Apply a dashboard payload to the page.
+ * @param {any} data
+ */
+function paint(data) {
+  latest = data;
   const cls = data.class;
   document.getElementById("title").textContent = `${cls.course_code} · ${cls.year}`;
   document.getElementById("meta").textContent =
@@ -20,38 +30,67 @@ async function refresh() {
 }
 
 /**
- * Build the Excel-like table: names, date columns, frozen TOTAL.
- * Session cells are that student's credited score for the game (not a
- * blend of hidden team math). Team-only awards stay off this grid.
- * Future TODO: add/remove student rows; add/delete session columns by hand.
- * Future TODO: freeze TOTAL as a subtotal and start a fresh count afterward.
+ * Build the spreadsheet: class columns, frozen subtotals, live SUBTOTAL, TOTAL.
  * @param {any} data
  */
 function renderSheet(data) {
   const table = document.getElementById("sheet");
-  const sessions = data.sessions || [];
+  const columns = data.columns || (data.sessions || []).map((session) => ({
+    kind: "session",
+    ...session,
+  }));
   const students = data.students || [];
   let html = "<thead><tr><th class='name'>Student</th>";
-  for (const session of sessions) {
-    html += `<th>${escapeHtml(session.header_label)}`;
-    if (session.status === "ended" && session.log_path) {
-      html += `<a class="log-link" href="/api/sessions/${session.id}/log" target="_blank" rel="noopener">log</a>`;
+  for (const column of columns) {
+    if (column.kind === "subtotal") {
+      html += `<th class="subtotal-col">
+        <input class="sub-name" data-sub-id="${column.id}" value="${escapeHtml(column.name || column.header_label)}">
+      </th>`;
+      continue;
     }
+    html += `<th>${escapeHtml(column.header_label)}`;
+    if (column.status === "ended" && column.log_path) {
+      html += `<a class="log-link" href="/api/sessions/${column.id}/log" target="_blank" rel="noopener">log</a>`;
+    }
+    html += `<button type="button" class="icon-btn" data-del-session="${column.id}" title="Delete column">×</button>`;
     html += "</th>";
   }
-  html += "<th class='total'>TOTAL SCORE</th></tr></thead><tbody>";
+  html += "<th class='live-sub'>SUBTOTAL</th><th class='total'>TOTAL SCORE</th></tr></thead><tbody>";
   for (const student of students) {
-    html += `<tr><td class="name">${escapeHtml(displayName(student, sort))}</td>`;
-    for (const session of sessions) {
-      const cell = data.cells[`${session.id}:${student.id}`] || { present: false, points: 0 };
+    html += `<tr><td class="name">${escapeHtml(displayName(student, sort))}
+      <button type="button" class="icon-btn" data-del-student="${student.id}" title="Remove student">×</button>
+    </td>`;
+    for (const column of columns) {
+      if (column.kind === "subtotal") {
+        const frozen = data.cells[`sub:${column.id}:${student.id}`] || { points: 0 };
+        html += `<td class="cell frozen">${escapeHtml(formatPoints(frozen.points))}</td>`;
+        continue;
+      }
+      const cell = data.cells[`${column.id}:${student.id}`] || { present: false, points: 0 };
       const kind = cell.present ? "present" : "absent";
       html += `<td class="cell ${kind}">${escapeHtml(formatPoints(cell.points))}</td>`;
     }
+    const live = data.live_subtotals?.[String(student.id)] ?? 0;
     const total = data.totals[String(student.id)] ?? 0;
+    html += `<td class="live-sub">${escapeHtml(formatPoints(live))}</td>`;
     html += `<td class="total">${escapeHtml(formatPoints(total))}</td></tr>`;
   }
   html += "</tbody>";
   table.innerHTML = html;
+}
+
+/**
+ * POST a dashboard mutation and repaint.
+ * @param {string} url
+ * @param {object} extra
+ */
+async function mutate(url, extra) {
+  hideError("#error");
+  const data = await api(url, {
+    method: "POST",
+    body: JSON.stringify({ sort, ...extra }),
+  });
+  paint(data);
 }
 
 document.getElementById("sort-toggle").addEventListener("click", () => {
@@ -76,6 +115,72 @@ document.getElementById("begin").addEventListener("click", async () => {
   } catch (err) {
     showError("#error", err);
   }
+});
+
+document.getElementById("add-student").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const last = document.getElementById("new-last").value;
+  const first = document.getElementById("new-first").value;
+  mutate(`/api/classes/${classId}/students`, {
+    first_name: first,
+    last_display: last,
+  })
+    .then(() => {
+      document.getElementById("new-last").value = "";
+      document.getElementById("new-first").value = "";
+    })
+    .catch((err) => showError("#error", err));
+});
+
+document.getElementById("freeze-sub").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = document.getElementById("sub-name").value;
+  mutate(`/api/classes/${classId}/subtotals`, { name }).catch((err) =>
+    showError("#error", err)
+  );
+});
+
+document.getElementById("sheet").addEventListener("click", (event) => {
+  const delStudent = event.target.closest("[data-del-student]");
+  if (delStudent) {
+    event.preventDefault();
+    const id = Number(delStudent.dataset.delStudent);
+    const student = (latest?.students || []).find((s) => s.id === id);
+    const label = student ? displayName(student, sort) : "this student";
+    if (!window.confirm(`Delete student “${label}” from this class?\n\nThis cannot be undone.`)) {
+      return;
+    }
+    mutate(`/api/classes/${classId}/students/delete`, { student_id: id }).catch((err) =>
+      showError("#error", err)
+    );
+    return;
+  }
+  const delSession = event.target.closest("[data-del-session]");
+  if (delSession) {
+    event.preventDefault();
+    const id = Number(delSession.dataset.delSession);
+    const column = (latest?.columns || latest?.sessions || []).find((c) => Number(c.id) === id);
+    const header = column?.header_label || "this class column";
+    if (
+      !window.confirm(
+        `Delete class column “${header}” and all scores in it?\n\nThis cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    mutate(`/api/classes/${classId}/sessions/delete`, { session_id: id }).catch((err) =>
+      showError("#error", err)
+    );
+  }
+});
+
+document.getElementById("sheet").addEventListener("change", (event) => {
+  const input = event.target.closest(".sub-name");
+  if (!input) return;
+  mutate(`/api/classes/${classId}/subtotals/rename`, {
+    id: Number(input.dataset.subId),
+    name: input.value,
+  }).catch((err) => showError("#error", err));
 });
 
 refresh().catch((err) => showError("#error", err));

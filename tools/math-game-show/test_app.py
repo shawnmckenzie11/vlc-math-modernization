@@ -212,8 +212,75 @@ class GamePersistTests(unittest.TestCase):
             self.assertFalse(cell["present"])
             self.assertEqual(cell["points"], 0)
             self.assertEqual(dash["totals"][str(student["id"])], 0)
+            self.assertEqual(dash["live_subtotals"][str(student["id"])], 0)
+        self.assertEqual(dash["columns"][0]["kind"], "session")
         listed = self.db.list_classes("2026/27", "Semester 1")
         self.assertTrue(any(c["id"] == self.cls["id"] for c in listed))
+
+    def test_add_remove_student_and_column(self) -> None:
+        """Teachers can append a roster row and a dated class column."""
+        class_id = self.cls["id"]
+        dash = self.db.add_student(class_id, "Ada", "Lovelace")
+        self.assertEqual(len(dash["students"]), 18)
+        ada = next(s for s in dash["students"] if s["first_name"] == "Ada")
+        self.assertEqual(ada["last_display"], "Lovelace")
+        first_session = dash["sessions"][0]["id"]
+        self.assertFalse(dash["cells"][f"{first_session}:{ada['id']}"]["present"])
+        dash = self.db.add_session_column(class_id, date(2026, 9, 10), "3:15pm")
+        self.assertEqual(len(dash["sessions"]), 2)
+        extra = next(s for s in dash["sessions"] if s["id"] != first_session)
+        self.assertEqual(extra["header_label"], "Thu 9/10 3:15pm")
+        self.assertEqual(extra["source"], "manual")
+        dash = self.db.delete_session_column(class_id, extra["id"])
+        self.assertEqual(len(dash["sessions"]), 1)
+        dash = self.db.delete_student(class_id, ada["id"])
+        self.assertEqual(len(dash["students"]), 17)
+        with self.assertRaises(ValueError):
+            self.db.add_student(class_id, "", "NoFirst")
+
+    def test_freeze_subtotal_then_new_games_split_windows(self) -> None:
+        """Frozen column keeps the old total; live SUBTOTAL only counts new games."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        scorer = present[0]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        self.db.award_points(class_id, kind="student", target_id=scorer, amount=10)
+        self.db.end_game(class_id)
+        dash = self.db.freeze_subtotal(class_id, name="Term 1")
+        frozen_cols = [c for c in dash["columns"] if c["kind"] == "subtotal"]
+        self.assertEqual(len(frozen_cols), 1)
+        self.assertEqual(frozen_cols[0]["name"], "Term 1")
+        self.assertEqual(dash["totals"][str(scorer)], 10)
+        self.assertEqual(dash["live_subtotals"][str(scorer)], 0)
+        self.assertEqual(
+            dash["cells"][f"sub:{frozen_cols[0]['id']}:{scorer}"]["points"], 10
+        )
+        dash = self.db.rename_subtotal(class_id, frozen_cols[0]["id"], "Q1 freeze")
+        self.assertEqual(
+            next(c for c in dash["columns"] if c["kind"] == "subtotal")["name"],
+            "Q1 freeze",
+        )
+        self.db.begin_game(class_id, today=date(2026, 8, 31))
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        self.db.award_points(class_id, kind="student", target_id=scorer, amount=5)
+        self.db.end_game(class_id)
+        dash = self.db.dashboard(class_id)
+        self.assertEqual(dash["totals"][str(scorer)], 15)
+        self.assertEqual(dash["live_subtotals"][str(scorer)], 5)
+        self.assertEqual(
+            dash["cells"][f"sub:{frozen_cols[0]['id']}:{scorer}"]["points"], 10
+        )
+        kinds = [c["kind"] for c in dash["columns"]]
+        self.assertEqual(kinds.count("subtotal"), 1)
+        freeze_at = kinds.index("subtotal")
+        self.assertEqual(kinds[freeze_at - 1], "session")
 
     def test_game_scoring_end_log_and_colors(self) -> None:
         """4 present, 2 random teams, individual+team awards, End Game persist."""

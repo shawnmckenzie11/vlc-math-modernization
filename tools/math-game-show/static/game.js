@@ -53,10 +53,31 @@ function teamControls(teamId) {
       <button type="button" class="secondary" data-cancel-rule="1">Cancel</button>
     </div>`;
   }
-  return TEAM_AMOUNTS.map(
+  return `<div class="pm">${TEAM_AMOUNTS.map(
     (n) =>
       `<button type="button" class="team-amt" data-team-amt="1" data-id="${teamId}" data-amount="${n}">+${n}</button>`
-  ).join("");
+  ).join("")}</div>`;
+}
+
+/**
+ * Career total minus this game's credited points (prior strength).
+ * @param {{career_total?: number, session_points?: number}} row
+ */
+function priorPoints(row) {
+  return formatPoints((Number(row.career_total) || 0) - (Number(row.session_points) || 0));
+}
+
+/**
+ * Sum of members' prior strength for the team header row.
+ * @param {Array<{career_total?: number, session_points?: number}>} members
+ */
+function teamPriorPoints(members) {
+  const sum = (members || []).reduce(
+    (total, row) =>
+      total + (Number(row.career_total) || 0) - (Number(row.session_points) || 0),
+    0
+  );
+  return formatPoints(sum);
 }
 
 /**
@@ -71,7 +92,7 @@ function render(state) {
       t.id,
       t.score,
       t.bucket,
-      t.members.map((m) => [m.id, m.session_points]),
+      t.members.map((m) => [m.id, m.session_points, m.career_total]),
     ]),
   });
   if (stamp === lastStamp) return;
@@ -84,27 +105,29 @@ function render(state) {
   const root = document.getElementById("teams");
   root.innerHTML = (state.teams || [])
     .map((team) => {
-      const members = sortStudents(team.members, nameSort)
+      const members = sortStudents(team.members, nameSort);
+      const playerRows = members
         .map(
-          (s) => `<div class="student-row">
-            <div>
-              <strong>${escapeHtml(displayName(s, nameSort))}</strong>
-              <div class="hint">credited ${escapeHtml(formatPoints(s.session_points))}</div>
-            </div>
-            <div class="pm">${studentButtons(s.id)}</div>
-          </div>`
+          (s) => `<tr class="player-line">
+            <td class="prior">${escapeHtml(priorPoints(s))}</td>
+            <td class="who">${escapeHtml(displayName(s, nameSort))}</td>
+            <td class="btns"><div class="pm">${studentButtons(s.id)}</div></td>
+            <td class="now">${escapeHtml(formatPoints(s.session_points))}</td>
+          </tr>`
         )
         .join("");
       return `<section class="team-card" style="--team:${escapeHtml(team.color)}">
-        <div class="team-head">
-          <div>
-            <h2>${escapeHtml(team.name)}</h2>
-            <div class="hint">credited ${escapeHtml(formatPoints(team.individual_sum))} · team-only ${escapeHtml(formatPoints(team.bucket))}</div>
-          </div>
-          <div class="score-xl">${escapeHtml(formatPoints(team.score))}</div>
-        </div>
-        <div class="pm">${teamControls(team.id)}</div>
-        ${members}
+        <table class="roster">
+          <tbody>
+            <tr class="team-line">
+              <td class="prior">${escapeHtml(teamPriorPoints(members))}</td>
+              <td class="who">${escapeHtml(team.name)}</td>
+              <td class="btns">${teamControls(team.id)}</td>
+              <td class="now">${escapeHtml(formatPoints(team.score))}</td>
+            </tr>
+            ${playerRows}
+          </tbody>
+        </table>
       </section>`;
     })
     .join("");

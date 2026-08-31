@@ -183,6 +183,67 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   font-style: italic;
 }
 
+.att-count {
+  font-weight: 600;
+  font-size: 0.85em;
+  color: var(--muted);
+  margin-left: 10px;
+}
+
+.sheet-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin: 14px 0 0;
+  align-items: flex-end;
+}
+
+.tool-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.tool-form input, .tool-form select {
+  min-height: var(--tap);
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.icon-btn {
+  min-height: 24px;
+  min-width: 24px;
+  padding: 0 6px;
+  margin-left: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.icon-btn:hover { color: var(--danger); }
+
+input.sub-name {
+  width: 8.5rem;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  padding: 2px 6px;
+}
+
+td.cell.frozen { background: #efe8d6; text-align: right; }
+th.subtotal-col, th.live-sub, td.live-sub {
+  background: #efe8d6;
+  font-weight: 600;
+}
+td.live-sub { text-align: right; }
+
+.career { color: var(--muted); font-weight: 600; }
+
 .class-list { display: grid; gap: 10px; }
 .class-list button {
   background: #fff;
@@ -285,22 +346,62 @@ td.total { text-align: right; }
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 .team-card {
   border: 3px solid var(--team, var(--ink));
   background: #fff;
-  padding: 12px;
+  padding: 8px 10px;
+  overflow-x: auto;
 }
 
-.team-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+table.roster {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+table.roster td {
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+table.roster td.prior {
+  text-align: left;
+  width: 4.75rem;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+table.roster td.who {
+  text-align: left;
+  white-space: nowrap;
+  padding-right: 12px;
+}
+
+table.roster td.btns { width: 99%; }
+table.roster td.btns .pm, table.roster td.btns .rule-pick {
+  justify-content: flex-start;
+}
+
+table.roster td.now {
+  text-align: right;
+  width: 4.75rem;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+table.roster tr.team-line td.who {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+table.roster tr.team-line td.now { font-size: 1.35rem; }
+
+table.roster tr.player-line td {
+  border-top: 1px solid var(--line);
 }
 
 .score-xl { font-size: 2rem; font-variant-numeric: tabular-nums; }
@@ -332,15 +433,7 @@ td.total { text-align: right; }
 .rule-pick span {
   font-size: 12px;
   color: var(--muted);
-  width: 100%;
-}
-
-.student-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  padding: 8px 0;
-  border-top: 1px solid var(--line);
+  width: auto;
 }
 
 .hidden { display: none !important; }

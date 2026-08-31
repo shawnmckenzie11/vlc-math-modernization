@@ -10,7 +10,7 @@
   <div class="wrap">
     <div class="topbar">
       <div>
-        <p class="kicker"><a href="/">Math Game Show</a></p>
+        <p class="kicker"><a href="/">Teacher Dashboard</a></p>
         <h1 id="title">Class</h1>
         <p class="sub" id="meta"></p>
       </div>
@@ -22,10 +22,19 @@
     </div>
     <div id="error" class="error" hidden></div>
     <div class="sheet-wrap">
-      <!-- Future TODO: add/remove student rows; add/delete session columns by hand. -->
       <table class="sheet" id="sheet"></table>
     </div>
-    <p class="later">Later: add or remove students by row, and add or delete live-class session columns. Later: freeze TOTAL as a subtotal and start a fresh count.</p>
+    <div class="sheet-tools">
+      <form id="add-student" class="tool-form">
+        <input id="new-last" type="text" placeholder="Last name" autocomplete="off">
+        <input id="new-first" type="text" placeholder="First name" autocomplete="off">
+        <button type="submit">Add student</button>
+      </form>
+      <form id="freeze-sub" class="tool-form">
+        <input id="sub-name" type="text" value="SUBTOTAL" placeholder="SUBTOTAL" autocomplete="off">
+        <button type="submit">Log TOTAL as Subtotal</button>
+      </form>
+    </div>
   </div>
   <script type="module" src="/static/dashboard.js"></script>
 </body>

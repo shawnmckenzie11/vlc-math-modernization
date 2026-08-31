@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+import time
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -55,7 +56,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     starts_at TEXT NOT NULL,
     header_label TEXT NOT NULL,
     status TEXT NOT NULL,
-    log_path TEXT
+    log_path TEXT,
+    source TEXT NOT NULL DEFAULT 'game'
 );
 
 CREATE TABLE IF NOT EXISTS session_scores (
@@ -114,10 +116,27 @@ CREATE TABLE IF NOT EXISTS team_buckets (
     PRIMARY KEY (game_id, team_id)
 );
 
+CREATE TABLE IF NOT EXISTS subtotals (
+    id INTEGER PRIMARY KEY,
+    class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    through_session_id INTEGER REFERENCES sessions(id) ON DELETE SET NULL,
+    through_starts_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS subtotal_scores (
+    subtotal_id INTEGER NOT NULL REFERENCES subtotals(id) ON DELETE CASCADE,
+    student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    points REAL NOT NULL DEFAULT 0,
+    PRIMARY KEY (subtotal_id, student_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_students_class ON students(class_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_class ON sessions(class_id);
 CREATE INDEX IF NOT EXISTS idx_games_class ON games(class_id);
 CREATE INDEX IF NOT EXISTS idx_events_session ON point_events(session_id, seq);
+CREATE INDEX IF NOT EXISTS idx_subtotals_class ON subtotals(class_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_one_open_game
     ON games(class_id) WHERE status != 'ended';
 """
@@ -154,14 +173,6 @@ def as_points(value: Any) -> float:
         Value rounded to one tenth.
     """
     return round(float(value or 0), 1)
-
-# Future TODO (Teacher Class Dashboard): allow students to be added or removed
-# by row, and live class sessions to be added or deleted by column. Schema is
-# already row/column oriented; do not invent a second store when that lands.
-
-# Future TODO (TOTAL SCORE): allow TOTAL to be frozen as a subtotal up to the
-# current point, starting a fresh count afterward. A freeze marker on classes
-# or sessions would be the natural place.
 
 # Future TODO (Teacher Game Dashboard): allow students to award points to one
 # another. Scoring is teacher-only until then; keep the log `from` field.
@@ -208,6 +219,14 @@ class GameShowDB:
             )
         self._ensure_real_points("session_scores")
         self._ensure_real_points("team_buckets")
+        sess_cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(sessions)").fetchall()
+        }
+        if "source" not in sess_cols:
+            self.conn.execute(
+                "ALTER TABLE sessions ADD COLUMN source TEXT NOT NULL DEFAULT 'game'"
+            )
 
     def _ensure_real_points(self, table: str) -> None:
         """Rebuild a scores table if ``points`` still has INTEGER affinity.
@@ -398,8 +417,8 @@ class GameShowDB:
 
         Dashboard TOTAL is the sum of each session's credited score, which
         comes from individual events plus any team-rule credits. Pure
-        team-only awards never enter this total.
-        Future TODO: freeze TOTAL as a subtotal and start a fresh count.
+        team-only awards never enter this total. Frozen SUBTOTAL columns
+        are snapshots and are not added again here.
 
         Args:
             class_id: Classes primary key.
@@ -421,7 +440,11 @@ class GameShowDB:
         return {int(row["student_id"]): as_points(row["total"]) for row in rows}
 
     def dashboard(self, class_id: int, sort: str = "last") -> dict[str, Any]:
-        """Spreadsheet payload: students, session columns, cells, totals.
+        """Spreadsheet payload: students, mixed columns, cells, totals.
+
+        ``columns`` interleaves live-class sessions with frozen SUBTOTAL
+        snapshots. ``live_subtotals`` sums only sessions after the latest
+        freeze. ``totals`` still sums every live-class column.
 
         Args:
             class_id: Classes primary key.
@@ -455,6 +478,26 @@ class GameShowDB:
                 """,
                 (class_id,),
             ).fetchall()
+            subtotals = [
+                dict(row)
+                for row in self.conn.execute(
+                    """
+                    SELECT * FROM subtotals
+                    WHERE class_id = ?
+                    ORDER BY created_at ASC, id ASC
+                    """,
+                    (class_id,),
+                )
+            ]
+            sub_score_rows = self.conn.execute(
+                """
+                SELECT ss.subtotal_id, ss.student_id, ss.points
+                FROM subtotal_scores ss
+                JOIN subtotals st ON st.id = ss.subtotal_id
+                WHERE st.class_id = ?
+                """,
+                (class_id,),
+            ).fetchall()
             open_game = self.conn.execute(
                 """
                 SELECT id, session_id, status FROM games
@@ -464,15 +507,28 @@ class GameShowDB:
             ).fetchone()
         cells: dict[str, dict[str, Any]] = {}
         totals: dict[int, float] = {int(s["id"]): 0.0 for s in students}
+        per_session: dict[int, dict[int, float]] = {}
         for row in score_rows:
             sid = int(row["student_id"])
+            sess_id = int(row["session_id"])
             pts = as_points(row["points"])
             totals[sid] = as_points(totals.get(sid, 0) + pts)
-            key = f"{row['session_id']}:{sid}"
+            per_session.setdefault(sess_id, {})[sid] = pts
+            key = f"{sess_id}:{sid}"
             cells[key] = {
                 "present": bool(row["present"]),
                 "points": pts,
             }
+        for row in sub_score_rows:
+            cells[f"sub:{row['subtotal_id']}:{row['student_id']}"] = {
+                "present": False,
+                "points": as_points(row["points"]),
+            }
+        live_ids = self._live_session_ids(sessions, subtotals)
+        live_subtotals: dict[int, float] = {int(s["id"]): 0.0 for s in students}
+        for sess_id in live_ids:
+            for sid, pts in per_session.get(sess_id, {}).items():
+                live_subtotals[sid] = as_points(live_subtotals.get(sid, 0) + pts)
         if sort == "first":
             students.sort(
                 key=lambda s: (
@@ -487,14 +543,120 @@ class GameShowDB:
                     str(s["first_name"]).lower(),
                 )
             )
+        columns = self._sheet_columns(sessions, subtotals)
         return {
             "class": cls,
             "sort": "first" if sort == "first" else "last",
             "students": students,
             "sessions": sessions,
+            "columns": columns,
             "cells": cells,
+            "live_subtotals": {str(k): v for k, v in live_subtotals.items()},
             "totals": {str(k): v for k, v in totals.items()},
             "open_game": dict(open_game) if open_game else None,
+            "time_options": list(TIME_OPTIONS),
+        }
+
+    def _live_session_ids(
+        self,
+        sessions: list[dict[str, Any]],
+        subtotals: list[dict[str, Any]],
+    ) -> set[int]:
+        """Session ids that count toward the live SUBTOTAL column.
+
+        Args:
+            sessions: Class sessions in display order.
+            subtotals: Frozen snapshots oldest-first.
+        """
+        if not subtotals:
+            return {int(s["id"]) for s in sessions}
+        last = subtotals[-1]
+        through_at = str(last["through_starts_at"])
+        through_id = int(last["through_session_id"] or 0)
+        live: set[int] = set()
+        for session in sessions:
+            key = (str(session["starts_at"]), int(session["id"]))
+            if key > (through_at, through_id):
+                live.add(int(session["id"]))
+        return live
+
+    def _sheet_columns(
+        self,
+        sessions: list[dict[str, Any]],
+        subtotals: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Interleave session columns with frozen SUBTOTAL snapshots.
+
+        Each freeze sits immediately to the right of the last live-class
+        column it included.
+
+        Args:
+            sessions: Sessions in ``starts_at``, id order.
+            subtotals: Frozen rows oldest-first.
+        """
+        after: dict[int | None, list[dict[str, Any]]] = {}
+        for sub in subtotals:
+            after.setdefault(self._subtotal_after_id(sessions, sub), []).append(sub)
+        columns: list[dict[str, Any]] = []
+        for sub in after.get(None, []):
+            columns.append(self._subtotal_column(sub))
+        for session in sessions:
+            columns.append(self._session_column(session))
+            for sub in after.get(int(session["id"]), []):
+                columns.append(self._subtotal_column(sub))
+        return columns
+
+    def _subtotal_after_id(
+        self,
+        sessions: list[dict[str, Any]],
+        sub: dict[str, Any],
+    ) -> int | None:
+        """Session id that this freeze should follow, or None if leading.
+
+        Args:
+            sessions: Sessions in display order.
+            sub: One frozen subtotal row.
+        """
+        through_id = sub.get("through_session_id")
+        if through_id is not None:
+            wanted = int(through_id)
+            if any(int(s["id"]) == wanted for s in sessions):
+                return wanted
+        through_at = str(sub["through_starts_at"])
+        last_id: int | None = None
+        for session in sessions:
+            if str(session["starts_at"]) <= through_at:
+                last_id = int(session["id"])
+            else:
+                break
+        return last_id
+
+    def _session_column(self, session: dict[str, Any]) -> dict[str, Any]:
+        """JSON column descriptor for a live-class session.
+
+        Args:
+            session: Sessions row.
+        """
+        return {
+            "kind": "session",
+            "id": int(session["id"]),
+            "header_label": session["header_label"],
+            "status": session["status"],
+            "log_path": session.get("log_path"),
+            "source": session.get("source") or "game",
+        }
+
+    def _subtotal_column(self, sub: dict[str, Any]) -> dict[str, Any]:
+        """JSON column descriptor for a frozen SUBTOTAL.
+
+        Args:
+            sub: Subtotals row.
+        """
+        return {
+            "kind": "subtotal",
+            "id": int(sub["id"]),
+            "header_label": sub["name"],
+            "name": sub["name"],
         }
 
     def _ensure_session_scores(self, session_id: int, class_id: int) -> None:
@@ -511,6 +673,305 @@ class GameShowDB:
             """,
             (session_id, class_id),
         )
+
+    def _ensure_subtotal_scores(self, subtotal_id: int, class_id: int) -> None:
+        """Insert missing zero cells for every student on a freeze.
+
+        Args:
+            subtotal_id: Subtotals primary key.
+            class_id: Classes primary key.
+        """
+        self.conn.execute(
+            """
+            INSERT OR IGNORE INTO subtotal_scores (subtotal_id, student_id, points)
+            SELECT ?, id, 0 FROM students WHERE class_id = ?
+            """,
+            (subtotal_id, class_id),
+        )
+
+    def add_student(
+        self,
+        class_id: int,
+        first_name: str,
+        last_display: str,
+        sort: str = "last",
+    ) -> dict[str, Any]:
+        """Append a roster row and zero cells on every existing column.
+
+        Args:
+            class_id: Classes primary key.
+            first_name: Given name.
+            last_display: Family name as shown when sorting Last, First.
+            sort: Dashboard name order to return.
+
+        Returns:
+            Updated dashboard payload.
+        """
+        first = first_name.strip()
+        last = last_display.strip()
+        if not first or not last:
+            raise ValueError("First name and last name are required")
+        self.get_class(class_id)
+        with self._lock:
+            canvas_id = f"manual-{class_id}-{int(time.time() * 1000)}"
+            self.conn.execute(
+                """
+                INSERT INTO students (class_id, canvas_id, last_display, first_name)
+                VALUES (?, ?, ?, ?)
+                """,
+                (class_id, canvas_id, last, first),
+            )
+            student_id = int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+            session_ids = [
+                int(r["id"])
+                for r in self.conn.execute(
+                    "SELECT id FROM sessions WHERE class_id = ?", (class_id,)
+                )
+            ]
+            for session_id in session_ids:
+                self.conn.execute(
+                    """
+                    INSERT OR IGNORE INTO session_scores
+                        (session_id, student_id, present, points)
+                    VALUES (?, ?, 0, 0)
+                    """,
+                    (session_id, student_id),
+                )
+            sub_ids = [
+                int(r["id"])
+                for r in self.conn.execute(
+                    "SELECT id FROM subtotals WHERE class_id = ?", (class_id,)
+                )
+            ]
+            for sub_id in sub_ids:
+                self._ensure_subtotal_scores(sub_id, class_id)
+            self.conn.commit()
+        return self.dashboard(class_id, sort)
+
+    def delete_student(self, class_id: int, student_id: int, sort: str = "last") -> dict[str, Any]:
+        """Remove a roster row unless they are on a live game team.
+
+        Args:
+            class_id: Classes primary key.
+            student_id: Students primary key.
+            sort: Dashboard name order to return.
+
+        Returns:
+            Updated dashboard payload.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT id FROM students WHERE id = ? AND class_id = ?",
+                (student_id, class_id),
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"student {student_id}")
+            live = self.conn.execute(
+                """
+                SELECT m.student_id
+                FROM game_memberships m
+                JOIN games g ON g.id = m.game_id
+                WHERE g.class_id = ? AND g.status = 'live' AND m.student_id = ?
+                """,
+                (class_id, student_id),
+            ).fetchone()
+            if live:
+                raise ValueError("Cannot remove a student who is on a live game team")
+            self.conn.execute("DELETE FROM students WHERE id = ?", (student_id,))
+            self.conn.commit()
+        return self.dashboard(class_id, sort)
+
+    def add_session_column(
+        self,
+        class_id: int,
+        meeting_date: date,
+        time_label: str | None = None,
+        sort: str = "last",
+    ) -> dict[str, Any]:
+        """Add an empty live-class column at a chosen date and time.
+
+        Args:
+            class_id: Classes primary key.
+            meeting_date: Calendar day for the column.
+            time_label: One of the wizard times; defaults to the class time.
+            sort: Dashboard name order to return.
+
+        Returns:
+            Updated dashboard payload.
+        """
+        cls = self.get_class(class_id)
+        label = (time_label or cls["time"]).strip()
+        if label not in TIME_OPTIONS:
+            raise ValueError(f"Time must be one of: {', '.join(TIME_OPTIONS)}")
+        meeting = datetime.combine(meeting_date, parse_time_label(label))
+        with self._lock:
+            header = self._label_for_meeting(class_id, cls, meeting, time_label=label)
+            self._insert_session(
+                class_id, meeting, header, status="template", source="manual"
+            )
+            self.conn.commit()
+        return self.dashboard(class_id, sort)
+
+    def delete_session_column(
+        self,
+        class_id: int,
+        session_id: int,
+        sort: str = "last",
+    ) -> dict[str, Any]:
+        """Delete a live-class column that is not used by an open game.
+
+        Args:
+            class_id: Classes primary key.
+            session_id: Sessions primary key.
+            sort: Dashboard name order to return.
+
+        Returns:
+            Updated dashboard payload.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT id FROM sessions WHERE id = ? AND class_id = ?",
+                (session_id, class_id),
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"session {session_id}")
+            open_game = self.conn.execute(
+                """
+                SELECT id FROM games
+                WHERE class_id = ? AND session_id = ? AND status != 'ended'
+                """,
+                (class_id, session_id),
+            ).fetchone()
+            if open_game:
+                raise ValueError("Cannot delete the column used by the open game")
+            self.conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+            self.conn.commit()
+        return self.dashboard(class_id, sort)
+
+    def freeze_subtotal(
+        self,
+        class_id: int,
+        name: str | None = None,
+        sort: str = "last",
+    ) -> dict[str, Any]:
+        """Snapshot current TOTAL into a frozen column after the last class.
+
+        The live SUBTOTAL column then only sums newer live-class columns.
+        TOTAL SCORE still sums every live-class column since the course start.
+
+        Args:
+            class_id: Classes primary key.
+            name: Optional header; defaults to SUBTOTAL, SUBTOTAL 2, …
+            sort: Dashboard name order to return.
+
+        Returns:
+            Updated dashboard payload.
+        """
+        self.get_class(class_id)
+        with self._lock:
+            last = self.conn.execute(
+                """
+                SELECT * FROM sessions
+                WHERE class_id = ?
+                ORDER BY starts_at DESC, id DESC
+                LIMIT 1
+                """,
+                (class_id,),
+            ).fetchone()
+            if last is None:
+                raise ValueError("Add a live-class column before logging a subtotal")
+            label = self._unique_subtotal_name(class_id, name)
+            self.conn.execute(
+                """
+                INSERT INTO subtotals (
+                    class_id, name, through_session_id, through_starts_at, created_at
+                )
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    class_id,
+                    label,
+                    int(last["id"]),
+                    str(last["starts_at"]),
+                    self._now(),
+                ),
+            )
+            sub_id = int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+            totals = {
+                int(r["student_id"]): as_points(r["total"])
+                for r in self.conn.execute(
+                    """
+                    SELECT s.id AS student_id, COALESCE(SUM(ss.points), 0) AS total
+                    FROM students s
+                    LEFT JOIN session_scores ss ON ss.student_id = s.id
+                    WHERE s.class_id = ?
+                    GROUP BY s.id
+                    """,
+                    (class_id,),
+                )
+            }
+            for sid, pts in totals.items():
+                self.conn.execute(
+                    """
+                    INSERT INTO subtotal_scores (subtotal_id, student_id, points)
+                    VALUES (?, ?, ?)
+                    """,
+                    (sub_id, sid, pts),
+                )
+            self.conn.commit()
+        return self.dashboard(class_id, sort)
+
+    def rename_subtotal(
+        self,
+        class_id: int,
+        subtotal_id: int,
+        name: str,
+        sort: str = "last",
+    ) -> dict[str, Any]:
+        """Rename a frozen SUBTOTAL column header.
+
+        Args:
+            class_id: Classes primary key.
+            subtotal_id: Subtotals primary key.
+            name: New header text.
+            sort: Dashboard name order to return.
+
+        Returns:
+            Updated dashboard payload.
+        """
+        label = name.strip()
+        if not label:
+            raise ValueError("Subtotal name cannot be empty")
+        with self._lock:
+            cur = self.conn.execute(
+                "UPDATE subtotals SET name = ? WHERE id = ? AND class_id = ?",
+                (label, subtotal_id, class_id),
+            )
+            if cur.rowcount != 1:
+                raise KeyError(f"subtotal {subtotal_id}")
+            self.conn.commit()
+        return self.dashboard(class_id, sort)
+
+    def _unique_subtotal_name(self, class_id: int, name: str | None) -> str:
+        """Pick a non-empty freeze label that is unique in this class.
+
+        Args:
+            class_id: Classes primary key.
+            name: Teacher-supplied name, or None for SUBTOTAL.
+        """
+        raw = (name or "").strip() or "SUBTOTAL"
+        existing = {
+            str(r["name"])
+            for r in self.conn.execute(
+                "SELECT name FROM subtotals WHERE class_id = ?", (class_id,)
+            )
+        }
+        if raw not in existing:
+            return raw
+        n = 2
+        while f"{raw} {n}" in existing:
+            n += 1
+        return f"{raw} {n}"
 
     def _header_set(self, class_id: int, exclude_id: int | None = None) -> set[str]:
         """Headers already used by this class.
@@ -581,6 +1042,7 @@ class GameShowDB:
             """
             SELECT * FROM sessions
             WHERE class_id = ? AND status = 'template'
+              AND COALESCE(source, 'game') = 'game'
             ORDER BY id ASC
             LIMIT 1
             """,
@@ -605,6 +1067,7 @@ class GameShowDB:
         meeting: datetime,
         header: str,
         status: str = "template",
+        source: str = "game",
     ) -> dict[str, Any]:
         """Insert a session column and zero cells.
 
@@ -613,13 +1076,16 @@ class GameShowDB:
             meeting: Session start.
             header: Unique header label.
             status: ``template`` or ``active``.
+            source: ``game`` (Begin a New Game) or ``manual`` (added column).
         """
         self.conn.execute(
             """
-            INSERT INTO sessions (class_id, starts_at, header_label, status, log_path)
-            VALUES (?, ?, ?, ?, NULL)
+            INSERT INTO sessions (
+                class_id, starts_at, header_label, status, log_path, source
+            )
+            VALUES (?, ?, ?, ?, NULL, ?)
             """,
-            (class_id, meeting.isoformat(), header, status),
+            (class_id, meeting.isoformat(), header, status, source),
         )
         session_id = int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
         self._ensure_session_scores(session_id, class_id)
@@ -663,6 +1129,13 @@ class GameShowDB:
 
             meeting = self._meeting_datetime(cls, today=today, meeting_date=meeting_date)
             unused = self._unused_template_session(class_id)
+            if unused:
+                frozen_through = self.conn.execute(
+                    "SELECT 1 FROM subtotals WHERE through_session_id = ?",
+                    (int(unused["id"]),),
+                ).fetchone()
+                if frozen_through:
+                    unused = None
             if unused:
                 header = self._label_for_meeting(
                     class_id, cls, meeting, exclude_id=int(unused["id"])

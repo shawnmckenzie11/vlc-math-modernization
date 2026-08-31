@@ -356,6 +356,66 @@ class GameShowHandler(BaseHTTPRequestHandler):
             result = db.end_game(int(end.group(1)))
             self._send_json(200, result)
             return
+        add_student = re.match(r"^/api/classes/(\d+)/students$", path)
+        if add_student:
+            dash = db.add_student(
+                int(add_student.group(1)),
+                first_name=str(body.get("first_name") or ""),
+                last_display=str(body.get("last_display") or ""),
+                sort=str(body.get("sort") or "last"),
+            )
+            self._send_json(200, {"ok": True, **dash})
+            return
+        del_student = re.match(r"^/api/classes/(\d+)/students/delete$", path)
+        if del_student:
+            dash = db.delete_student(
+                int(del_student.group(1)),
+                int(body.get("student_id") or 0),
+                sort=str(body.get("sort") or "last"),
+            )
+            self._send_json(200, {"ok": True, **dash})
+            return
+        add_session = re.match(r"^/api/classes/(\d+)/sessions$", path)
+        if add_session:
+            chosen = _optional_date(body.get("meeting_date"))
+            if chosen is None:
+                raise ValueError("meeting_date is required (YYYY-MM-DD)")
+            dash = db.add_session_column(
+                int(add_session.group(1)),
+                chosen,
+                time_label=str(body["time"]) if body.get("time") else None,
+                sort=str(body.get("sort") or "last"),
+            )
+            self._send_json(200, {"ok": True, **dash})
+            return
+        del_session = re.match(r"^/api/classes/(\d+)/sessions/delete$", path)
+        if del_session:
+            dash = db.delete_session_column(
+                int(del_session.group(1)),
+                int(body.get("session_id") or 0),
+                sort=str(body.get("sort") or "last"),
+            )
+            self._send_json(200, {"ok": True, **dash})
+            return
+        freeze = re.match(r"^/api/classes/(\d+)/subtotals$", path)
+        if freeze:
+            dash = db.freeze_subtotal(
+                int(freeze.group(1)),
+                name=str(body["name"]) if body.get("name") else None,
+                sort=str(body.get("sort") or "last"),
+            )
+            self._send_json(200, {"ok": True, **dash})
+            return
+        rename_sub = re.match(r"^/api/classes/(\d+)/subtotals/rename$", path)
+        if rename_sub:
+            dash = db.rename_subtotal(
+                int(rename_sub.group(1)),
+                int(body.get("id") or 0),
+                str(body.get("name") or ""),
+                sort=str(body.get("sort") or "last"),
+            )
+            self._send_json(200, {"ok": True, **dash})
+            return
         self._send_json(404, {"ok": False, "error": "Unknown API path"})
 
 

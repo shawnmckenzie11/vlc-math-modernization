@@ -21,12 +21,10 @@ Python 3 stdlib only (sqlite3 + `ThreadingHTTPServer`). No pip install. Data liv
 
 Scoring stores **immutable point events** plus separate **individual credited scores** and **team scores**. The class dashboard cell is that student's credited total for the session (individual awards, plus team awards when you choose “each member” or “split”). “Team only” awards raise the ESPN bar without changing individual cells.
 
+The class spreadsheet can add or remove students. Class columns are created by **Begin a New Game**. **Log TOTAL as Subtotal** freezes a named snapshot to the right of the last class column. A live **SUBTOTAL** column (left of **TOTAL SCORE**) then only sums newer class columns; **TOTAL SCORE** still sums every class column since the course started.
+
 A sanitized Canvas-shaped fixture is at `fixtures/sample-canvas-grades.csv`. Do not commit real gradebook exports (IDs + first names).
 
-## Later (out of scope for v1)
+## Later
 
-These are noted in the UI as well — do not treat them as missing bugs:
-
-1. **Class dashboard** — add or remove students by row; add or delete live-class session columns by hand.
-2. **TOTAL SCORE** — freeze TOTAL as a subtotal up to the current point, then start a fresh count.
-3. **Teacher game** — students awarding points to one another (scoring is teacher-only for now).
+- **Teacher game** — students awarding points to one another (scoring is teacher-only for now).

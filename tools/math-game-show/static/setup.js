@@ -80,6 +80,16 @@ function renderAttendance() {
     list.appendChild(row);
     row.querySelector("input").checked = checked.has(student.id);
   }
+  updateAttCount();
+}
+
+/**
+ * Live present count beside Mark Attendance.
+ */
+function updateAttCount() {
+  const el = $("att-count");
+  if (!el) return;
+  el.textContent = `Attendance: ${selectedPresent().length}`;
 }
 
 /**
@@ -152,12 +162,15 @@ $("att-all").addEventListener("click", () => {
   document.querySelectorAll("#att-list input").forEach((el) => {
     el.checked = true;
   });
+  updateAttCount();
 });
 $("att-none").addEventListener("click", () => {
   document.querySelectorAll("#att-list input").forEach((el) => {
     el.checked = false;
   });
+  updateAttCount();
 });
+$("att-list").addEventListener("change", updateAttCount);
 
 $("att-next").addEventListener("click", async () => {
   try {
