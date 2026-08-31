@@ -2,6 +2,8 @@
 
 Local teacher app: a private class spreadsheet (Canvas CSV in, session columns out) and a public ESPN-style scoreboard window you screen-share on Zoom. Students never get a URL. Binds **127.0.0.1** only.
 
+**Setting this up on another Mac (you or a supply teacher):** see [TEACHER-SETUP.md](TEACHER-SETUP.md).
+
 ## Run during Zoom
 
 From the repo root:
@@ -14,10 +16,10 @@ Opens [http://127.0.0.1:8766/](http://127.0.0.1:8766/). Use `--no-browser` if yo
 
 1. **Create New Class** (year / semester / course / Canvas CSV / days / time) or **Start Existing Class**.
 2. On the class dashboard, **Begin a New Game**: confirm or change the date, then attendance → teams → names. Cancel returns to the class dashboard. A second game on the same slot is labeled `_2`, `_3`, … rather than jumping to the next class day.
-3. Keep the **teacher game** window on your machine. Share the **scoreboard** window on Zoom (`/scoreboard/<class_id>`).
+3. Keep the **teacher game** window on your machine. Share the **scoreboard** window on Zoom (`/scoreboard`). There is one board: live scores if a game is running, Final Score right after End Game, otherwise waiting.
 4. Optional **always-on-top overlay** (stays above Notebook/slides on your Mac; share that window on Zoom if students should see it):
    ```bash
-   python3 tools/math-game-show/overlay.py --class 1
+   python3 tools/math-game-show/overlay.py
    ```
    First run installs Electron under `overlay/`. The Game Show server must already be running.
 5. **End Game** writes credited individual scores into that date column and attaches a log of immutable events.

@@ -139,7 +139,15 @@ CREATE INDEX IF NOT EXISTS idx_events_session ON point_events(session_id, seq);
 CREATE INDEX IF NOT EXISTS idx_subtotals_class ON subtotals(class_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_one_open_game
     ON games(class_id) WHERE status != 'ended';
+
+CREATE TABLE IF NOT EXISTS app_state (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
+
+SCOREBOARD_GAME_KEY = "scoreboard_game_id"
+CURRENT_CLASS_KEY = "current_class_id"
 
 TEAM_RULES = ("each_member", "split_members", "team_only")
 
@@ -364,6 +372,7 @@ class GameShowDB:
                 )
             upload_path = self.uploads_dir / f"class-{class_id}.csv"
             upload_path.write_text(csv_text, encoding="utf-8")
+            self._set_current_class(class_id)
             self.conn.commit()
         return self.get_class(class_id)
 
@@ -451,6 +460,7 @@ class GameShowDB:
             sort: ``first`` for First Last, ``last`` for Last, First.
         """
         cls = self.get_class(class_id)
+        self.set_current_class(class_id)
         with self._lock:
             students = [
                 dict(row)
@@ -1121,9 +1131,13 @@ class GameShowDB:
             ).fetchone()
             if existing:
                 if existing["status"] == "live":
+                    self._set_scoreboard_game(int(existing["id"]))
+                    self._set_current_class(class_id)
                     self.conn.commit()
                     return self.game_state(class_id, game_id=int(existing["id"]))
                 self._discard_setup_unlocked(existing)
+            self._set_scoreboard_game(None)
+            self._set_current_class(class_id)
 
             meeting = self._meeting_datetime(cls, today=today, meeting_date=meeting_date)
             unused = self._unused_template_session(class_id)
@@ -1251,6 +1265,8 @@ class GameShowDB:
         self.conn.execute("DELETE FROM game_memberships WHERE game_id = ?", (game_id,))
         self.conn.execute("DELETE FROM team_buckets WHERE game_id = ?", (game_id,))
         self.conn.execute("DELETE FROM game_teams WHERE game_id = ?", (game_id,))
+        if self._scoreboard_game_id() == game_id:
+            self._set_scoreboard_game(None)
         self.conn.execute("DELETE FROM games WHERE id = ?", (game_id,))
         if owns:
             self.conn.execute(
@@ -1539,6 +1555,7 @@ class GameShowDB:
             self.conn.execute(
                 "UPDATE games SET status = 'live' WHERE id = ?", (game_id,)
             )
+            self._set_scoreboard_game(game_id)
             self.conn.commit()
         return self.game_state(class_id)
 
@@ -1854,6 +1871,7 @@ class GameShowDB:
             self.conn.execute(
                 "UPDATE games SET status = 'ended' WHERE id = ?", (game_id,)
             )
+            self._set_scoreboard_game(game_id)
             self.conn.commit()
         return {
             "ok": True,
@@ -1989,25 +2007,49 @@ class GameShowDB:
             "time_options": list(TIME_OPTIONS),
         }
 
-    def scoreboard(self, class_id: int) -> dict[str, Any]:
-        """Public ESPN-bar payload: team names, colors, scores, last event.
+    def set_current_class(self, class_id: int) -> None:
+        """Remember which class the teacher is viewing.
 
-        A live game wins. Otherwise the latest ended game is returned so the
-        scoreboard can keep a Final Score screen up. No roster and no Canvas IDs.
+        The one scoreboard follows this class, not a leftover live game on
+        another class.
 
         Args:
             class_id: Classes primary key.
         """
-        live_id = self._game_id_with_status(class_id, "live")
-        if live_id is not None:
-            return self._scoreboard_payload(
-                self.game_state(class_id, game_id=live_id), live=True
-            )
-        ended_id = self._game_id_with_status(class_id, "ended")
-        if ended_id is not None:
-            return self._scoreboard_payload(
-                self.game_state(class_id, game_id=ended_id), live=False
-            )
+        with self._lock:
+            self._set_current_class(class_id)
+            self.conn.commit()
+
+    def scoreboard(self, class_id: int | None = None) -> dict[str, Any]:
+        """The one public scoreboard for the class the teacher is viewing.
+
+        Live scores if that class has a live game. Final Score only for the
+        game pinned by End Game on that same class. Begin / Quit / opening a
+        different class dashboard leaves leftover boards hidden.
+
+        Args:
+            class_id: Unused; kept so existing callers still compile.
+        """
+        del class_id
+        current_id = self._current_class_id()
+        if current_id is not None:
+            live_id = self._live_game_id_for_class(current_id)
+            if live_id is not None:
+                return self._scoreboard_payload(
+                    self.game_state(current_id, game_id=live_id), live=True
+                )
+            pinned_id = self._scoreboard_game_id()
+            if pinned_id is not None:
+                pinned = self._game_row_by_id(pinned_id)
+                if (
+                    pinned is not None
+                    and pinned["status"] == "ended"
+                    and int(pinned["class_id"]) == current_id
+                ):
+                    return self._scoreboard_payload(
+                        self.game_state(current_id, game_id=pinned_id),
+                        live=False,
+                    )
         return {
             "ok": True,
             "live": False,
@@ -2018,26 +2060,117 @@ class GameShowDB:
             "header": None,
             "status": None,
             "game_id": None,
+            "class_id": current_id,
         }
 
-    def _game_id_with_status(self, class_id: int, status: str) -> int | None:
-        """Return the newest game id for a class with the given status.
+    def _live_game_id_for_class(self, class_id: int) -> int | None:
+        """Return the live game id for a class, if any.
 
         Args:
             class_id: Classes primary key.
-            status: ``live`` or ``ended``.
         """
         with self._lock:
             row = self.conn.execute(
                 """
                 SELECT id FROM games
-                WHERE class_id = ? AND status = ?
+                WHERE class_id = ? AND status = 'live'
                 ORDER BY id DESC
                 LIMIT 1
                 """,
-                (class_id, status),
+                (class_id,),
             ).fetchone()
         return int(row["id"]) if row else None
+
+    def _game_row_by_id(self, game_id: int) -> sqlite3.Row | None:
+        """Load a game by primary key.
+
+        Args:
+            game_id: Games primary key.
+        """
+        with self._lock:
+            return self.conn.execute(
+                "SELECT * FROM games WHERE id = ?", (game_id,)
+            ).fetchone()
+
+    def _scoreboard_game_id(self) -> int | None:
+        """Return the pinned scoreboard game id, if any."""
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT value FROM app_state WHERE key = ?",
+                (SCOREBOARD_GAME_KEY,),
+            ).fetchone()
+        if row is None:
+            return None
+        try:
+            return int(row["value"])
+        except (TypeError, ValueError):
+            return None
+
+    def _current_class_id(self) -> int | None:
+        """Return the class the teacher last opened, if any."""
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT value FROM app_state WHERE key = ?",
+                (CURRENT_CLASS_KEY,),
+            ).fetchone()
+        if row is None:
+            return None
+        try:
+            return int(row["value"])
+        except (TypeError, ValueError):
+            return None
+
+    def _set_current_class(self, class_id: int) -> None:
+        """Write the current-class pointer. Caller holds the lock and commits.
+
+        Args:
+            class_id: Classes primary key.
+        """
+        self.conn.execute(
+            """
+            INSERT INTO app_state (key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (CURRENT_CLASS_KEY, str(int(class_id))),
+        )
+
+    def _set_scoreboard_game(self, game_id: int | None) -> None:
+        """Pin the public scoreboard to a game, or clear it.
+
+        Caller holds the lock and commits.
+
+        Args:
+            game_id: Games primary key, or ``None`` to show idle.
+        """
+        if game_id is None:
+            self.conn.execute(
+                "DELETE FROM app_state WHERE key = ?", (SCOREBOARD_GAME_KEY,)
+            )
+            return
+        self.conn.execute(
+            """
+            INSERT INTO app_state (key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (SCOREBOARD_GAME_KEY, str(int(game_id))),
+        )
+
+    def _scoreboard_players(self, team: dict[str, Any]) -> list[dict[str, str]]:
+        """First names on a team for the public scoreboard.
+
+        Args:
+            team: A ``game_state`` team dict (may include full member rows).
+
+        Returns:
+            ``[{first_name}]`` sorted by first name. No last names or IDs.
+        """
+        names: list[dict[str, str]] = []
+        for member in team.get("members") or []:
+            first = str(member.get("first_name") or "").strip()
+            if first:
+                names.append({"first_name": first})
+        names.sort(key=lambda row: row["first_name"].lower())
+        return names
 
     def _scoreboard_payload(self, state: dict[str, Any], live: bool) -> dict[str, Any]:
         """Build the public scoreboard JSON from a game-state payload.
@@ -2051,12 +2184,14 @@ class GameShowDB:
             "live": live,
             "final": not live,
             "game_id": state["game"]["id"],
+            "class_id": state["class"]["id"],
             "teams": [
                 {
                     "id": t["id"],
                     "name": t["name"],
                     "color": t["color"],
                     "score": t["score"],
+                    "players": self._scoreboard_players(t),
                 }
                 for t in state["teams"]
             ],

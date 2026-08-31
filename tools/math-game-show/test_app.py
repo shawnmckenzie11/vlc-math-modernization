@@ -396,9 +396,17 @@ class GamePersistTests(unittest.TestCase):
         self.assertEqual(final["status"], "ended")
         self.assertEqual(len(final["teams"]), 2)
         self.assertEqual(sum(t["score"] for t in final["teams"]), 15)
+        for team in final["teams"]:
+            self.assertNotIn("members", team)
+            self.assertTrue(team["players"])
+            for player in team["players"]:
+                self.assertEqual(set(player.keys()), {"first_name"})
+                self.assertTrue(player["first_name"])
+        winner = max(final["teams"], key=lambda t: t["score"])
+        self.assertIn(member["first_name"], [p["first_name"] for p in winner["players"]])
 
-    def test_final_scoreboard_survives_next_begin(self) -> None:
-        """Ended standings stay on the scoreboard until the next live game."""
+    def test_final_scoreboard_clears_when_idle(self) -> None:
+        """Final Score stays until Begin / Quit; leftover ended games stay hidden."""
         class_id = self.cls["id"]
         state = self.db.begin_game(class_id, today=date(2026, 8, 31))
         present = [s["id"] for s in state["students"][:4]]
@@ -409,12 +417,51 @@ class GamePersistTests(unittest.TestCase):
         member = self.db.game_state(class_id)["teams"][0]["members"][0]
         self.db.award_points(class_id, kind="student", target_id=member["id"], amount=5)
         self.db.end_game(class_id)
+        ended = self.db.scoreboard()
+        self.assertTrue(ended["final"])
+        self.assertFalse(ended["live"])
+        self.assertTrue(any(t["score"] == 5 for t in ended["teams"]))
         self.db.begin_game(class_id, today=date(2026, 8, 31))
-        board = self.db.scoreboard(class_id)
-        self.assertTrue(board["final"])
+        board = self.db.scoreboard()
         self.assertFalse(board["live"])
-        self.assertEqual(board["status"], "ended")
-        self.assertTrue(any(t["score"] == 5 for t in board["teams"]))
+        self.assertFalse(board["final"])
+        self.assertEqual(board["teams"], [])
+        with self.db._lock:
+            self.db._set_scoreboard_game(None)
+            self.db.conn.commit()
+        leftover = self.db.scoreboard()
+        self.assertFalse(leftover["live"])
+        self.assertFalse(leftover["final"])
+        self.assertEqual(leftover["teams"], [])
+
+    def test_scoreboard_follows_open_dashboard(self) -> None:
+        """A leftover live game on another class does not take the board."""
+        csv_text = FIXTURE_CSV.read_text(encoding="utf-8")
+        other = self.db.create_class(
+            year="2026/27",
+            semester="Semester 1",
+            course_code="MCF3M",
+            days_preset="M/W/F",
+            time_label="8:00am",
+            csv_text=csv_text,
+            today=date(2026, 8, 31),
+        )
+        first_id = self.cls["id"]
+        self.db.begin_game(first_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in self.db.game_state(first_id)["students"][:4]]
+        self.db.save_attendance(first_id, present)
+        self.db.assign_teams(first_id, 2, "random")
+        teams = self.db.game_state(first_id)["teams"]
+        self.db.rename_teams(first_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        live = self.db.scoreboard()
+        self.assertTrue(live["live"])
+        self.assertEqual(live["class_id"], first_id)
+        self.db.dashboard(other["id"])
+        board = self.db.scoreboard()
+        self.assertFalse(board["live"])
+        self.assertFalse(board["final"])
+        self.assertEqual(board["teams"], [])
+        self.assertEqual(board["class_id"], other["id"])
 
     def test_balanced_uses_career_total(self) -> None:
         """After one ended session, balanced assignment splits high TOTALs."""
@@ -788,10 +835,10 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(final["status"], "ended")
         self.assertEqual(len(final["teams"]), 2)
         _http_json(self.base, f"/api/classes/{class_id}/begin", {})
-        still_final = _http_json(self.base, f"/api/classes/{class_id}/scoreboard")
-        self.assertTrue(still_final["final"])
-        self.assertFalse(still_final["live"])
-        self.assertEqual(len(still_final["teams"]), 2)
+        idle = _http_json(self.base, "/api/scoreboard")
+        self.assertFalse(idle["final"])
+        self.assertFalse(idle["live"])
+        self.assertEqual(idle["teams"], [])
         dash2 = _http_json(self.base, f"/api/classes/{class_id}/dashboard")
         self.assertEqual(dash2["sessions"][0]["status"], "ended")
         with urlopen(self.base + f"/api/sessions/{dash2['sessions'][0]['id']}/log", timeout=5) as resp:

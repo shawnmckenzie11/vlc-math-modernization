@@ -296,7 +296,7 @@ document.getElementById("end-game").addEventListener("click", async () => {
 function maybeOpenScoreboard() {
   const params = new URLSearchParams(location.search);
   if (params.get("openscoreboard") !== "1") return;
-  window.open(`/scoreboard/${classId}`, "mgs-scoreboard");
+  window.open("/scoreboard", "mgs-scoreboard");
   params.delete("openscoreboard");
   const qs = params.toString();
   history.replaceState({}, "", `/class/${classId}/game${qs ? `?${qs}` : ""}`);

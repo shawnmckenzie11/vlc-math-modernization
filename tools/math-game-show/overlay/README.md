@@ -10,9 +10,9 @@ This is for **your** screen while you jump between SMART Notebook and slides. St
 2. From the repo root:
 
 ```bash
-python3 tools/math-game-show/overlay.py --class 1
+python3 tools/math-game-show/overlay.py
 ```
 
-`--class` is the class id in the URL (`/scoreboard/1`). Drag the bar to move it; resize from the edges. Quit from the Dock or close the window.
+The overlay follows the single active game (live scores, or Final Score right after End Game). `--class` is ignored. Drag the bar to move it; resize from the edges. Quit from the Dock or close the window.
 
 Requires Node/npm once. `node_modules` is gitignored.

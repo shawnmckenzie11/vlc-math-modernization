@@ -28,12 +28,11 @@ function arg(name, fallback) {
  * Open a bottom-docked, always-on-top scoreboard window.
  */
 function createWindow() {
-  const classId = Number(arg("class", "1"));
   const host = arg("host", "127.0.0.1");
   const port = arg("port", "8766");
-  const url = `http://${host}:${port}/scoreboard/${classId}?overlay=1`;
+  const url = `http://${host}:${port}/scoreboard?overlay=1`;
   const display = screen.getPrimaryDisplay().workArea;
-  const height = Math.min(180, Math.max(120, Math.round(display.height * 0.16)));
+  const height = Math.min(300, Math.max(200, Math.round(display.height * 0.26)));
   const win = new BrowserWindow({
     width: display.width,
     height,

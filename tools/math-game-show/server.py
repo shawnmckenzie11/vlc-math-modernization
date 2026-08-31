@@ -183,8 +183,7 @@ class GameShowHandler(BaseHTTPRequestHandler):
         if game_page:
             self._send_html_file("game.html")
             return
-        scoreboard_page = re.match(r"^/scoreboard/(\d+)$", path)
-        if scoreboard_page:
+        if path == "/scoreboard" or re.match(r"^/scoreboard/(\d+)$", path):
             self._send_html_file("scoreboard.html")
             return
 
@@ -228,10 +227,9 @@ class GameShowHandler(BaseHTTPRequestHandler):
             except Exception as exc:  # noqa: BLE001
                 self._api_error(exc)
             return
-        board = re.match(r"^/api/classes/(\d+)/scoreboard$", path)
-        if board:
+        if path == "/api/scoreboard" or re.match(r"^/api/classes/(\d+)/scoreboard$", path):
             try:
-                self._send_json(200, get_db().scoreboard(int(board.group(1))))
+                self._send_json(200, get_db().scoreboard())
             except Exception as exc:  # noqa: BLE001
                 self._api_error(exc)
             return

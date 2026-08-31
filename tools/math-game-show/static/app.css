@@ -633,6 +633,7 @@ body.scoreboard.overlay .final-board {
   -webkit-app-region: drag;
 }
 
+
 body.scoreboard.overlay .board-idle {
   -webkit-app-region: drag;
   margin: 12px auto;
@@ -700,6 +701,14 @@ body.scoreboard {
   overflow: visible;
 }
 
+.espn-floaters {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
 .espn-swatch { width: 10px; flex: 0 0 10px; }
 .espn-meta {
   flex: 1;
@@ -739,15 +748,16 @@ body.scoreboard {
 
 .float-plus {
   position: absolute;
-  right: 0;
-  top: -12px;
+  left: 0;
+  top: 0;
   color: #f5c518;
   font-size: clamp(22px, 3vw, 32px);
   font-weight: 700;
   white-space: nowrap;
-  animation: floatPlus 1.4s ease forwards;
+  animation: floatHoldFade 5s linear forwards;
   pointer-events: none;
   z-index: 5;
+  will-change: transform, opacity;
 }
 
 .float-plus.float-minus { color: #ff6b6b; }
@@ -764,21 +774,28 @@ body.scoreboard {
   100% { background: transparent; }
 }
 
-@keyframes floatPlus {
-  0% { opacity: 0; transform: translateY(10px); }
-  18% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-64px); }
+@keyframes floatHoldFade {
+  0%, 40% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.board-stage.is-final .espn-bar {
+  display: none;
 }
 
 .final-board {
-  display: block;
-  margin: auto 24px 20px;
-  text-align: center;
-  max-width: 920px;
-  width: calc(100% - 48px);
-  align-self: center;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  text-align: left;
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
   position: relative;
   z-index: 2;
+  background: #0c0d10;
+  border-top: 4px solid #f5c518;
+  min-height: 0;
 }
 
 .final-board.hidden,
@@ -786,17 +803,22 @@ body.scoreboard {
   display: none !important;
 }
 
+.final-scores {
+  flex: 0 0 auto;
+  padding: 8px 16px 6px;
+}
+
 .final-kicker {
-  margin: 0 0 8px;
+  margin: 0;
   letter-spacing: 0.28em;
-  font-size: clamp(18px, 3vw, 28px);
+  font-size: clamp(14px, 2.2vw, 22px);
   color: #f5c518;
   animation: finalSlam 700ms ease both;
 }
 
 .final-header {
-  margin: 0 0 18px;
-  font-size: clamp(16px, 2.4vw, 22px);
+  margin: 2px 0 8px;
+  font-size: clamp(12px, 1.8vw, 16px);
   color: #8a8f99;
   letter-spacing: 0.08em;
 }
@@ -805,41 +827,153 @@ body.scoreboard {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow: hidden;
+  position: relative;
 }
 
 .final-list li {
-  display: grid;
-  grid-template-columns: 3rem 1fr auto;
-  gap: 16px;
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  padding: 12px 18px;
+  gap: 10px;
+  flex: 1 1 0;
+  min-width: 7.5rem;
+  padding: 8px 12px;
   background: #111318;
   border: 1px solid #2a2e36;
+  border-left: 4px solid var(--team, #2a2e36);
   animation: finalRise 640ms ease both;
 }
 
-.final-list li:nth-child(1) { animation-delay: 120ms; border-color: #f5c518; }
+.final-list li.runner {
+  opacity: 0.48;
+}
+
+.final-list li.winner {
+  flex: 1.85 1 0;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(245, 197, 24, 0.28), #19140a 55%);
+  border: 2px solid #f5c518;
+  box-shadow: 0 0 28px rgba(245, 197, 24, 0.38);
+  z-index: 1;
+}
+
+.final-list li:nth-child(1) { animation-delay: 120ms; }
 .final-list li:nth-child(2) { animation-delay: 240ms; }
 .final-list li:nth-child(3) { animation-delay: 360ms; }
 
 .final-place {
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 2vw, 1.4rem);
   color: #f5c518;
   font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.final-list li.winner .final-place {
+  font-size: clamp(1.25rem, 2.6vw, 1.8rem);
 }
 
 .final-name {
   text-align: left;
-  font-size: clamp(22px, 4vw, 40px);
+  font-size: clamp(16px, 2.6vw, 28px);
   letter-spacing: 0.04em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.final-list li.winner .final-name {
+  font-size: clamp(22px, 3.6vw, 38px);
+  color: #f5c518;
+  font-weight: 700;
+}
+
+.final-crown {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid #f5c518;
+  color: #f5c518;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: clamp(10px, 1.4vw, 13px);
 }
 
 .final-score {
-  font-size: clamp(28px, 5vw, 52px);
+  margin-left: auto;
+  font-size: clamp(20px, 3.6vw, 40px);
   font-variant-numeric: tabular-nums;
   color: #fff;
+}
+
+.final-list li.winner .final-score {
+  font-size: clamp(28px, 5vw, 56px);
+  color: #f5c518;
+}
+
+.final-roster-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(7, 8, 10, 0.94);
+  border: 2px solid #f5c518;
+  box-shadow: 0 0 24px rgba(245, 197, 24, 0.32);
+  z-index: 4;
+  overflow: hidden;
+  animation: finalRise 420ms ease both;
+}
+
+.final-roster-kicker {
+  margin: 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: clamp(11px, 1.6vw, 14px);
+  color: #f5c518;
+}
+
+.final-roster-names {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.final-roster-names li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 3px solid var(--team, #f5c518);
+  font-size: clamp(15px, 2.2vw, 22px);
+  white-space: nowrap;
+}
+
+.final-player-team {
+  color: #8a8f99;
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+}
+
+body.scoreboard.overlay .board-stage.is-final {
+  justify-content: stretch;
+}
+
+body.scoreboard.overlay .final-board {
+  flex: 1;
+  max-height: 100%;
 }
 
 @keyframes finalSlam {
@@ -851,6 +985,7 @@ body.scoreboard {
   0% { opacity: 0; transform: translateY(24px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
 
 @media (max-width: 720px) {
   .choices { grid-template-columns: 1fr; }
