@@ -36,7 +36,7 @@ def assign_random(items: Sequence[T], n_teams: int, rng: random.Random | None = 
 def assign_balanced(
     items: Sequence[T],
     n_teams: int,
-    totals: Sequence[int],
+    totals: Sequence[float],
 ) -> list[list[T]]:
     """Snake-draft present students sorted by career TOTAL (high first).
 
@@ -58,7 +58,7 @@ def assign_balanced(
         raise ValueError("Need at least 1 team")
     if len(items) != len(totals):
         raise ValueError("items and totals must be the same length")
-    ranked = sorted(range(len(items)), key=lambda i: (-int(totals[i]), i))
+    ranked = sorted(range(len(items)), key=lambda i: (-float(totals[i]), i))
     teams: list[list[T]] = [[] for _ in range(n_teams)]
     direction = 1
     slot = 0
@@ -90,6 +90,55 @@ def validate_team_count(n_teams: int, present_count: int) -> None:
         raise ValueError("Need at least 2 teams")
     if n_teams > present_count:
         raise ValueError("Cannot have more teams than present students")
+
+
+def assign_manual(
+    present_ids: Sequence[int],
+    n_teams: int,
+    assignments: Sequence[Any],
+) -> list[list[int]]:
+    """Place each present student on a teacher-chosen team.
+
+    Args:
+        present_ids: Students marked present.
+        n_teams: Number of teams.
+        assignments: ``{student_id, team_index}`` rows with 0-based team slots.
+
+    Returns:
+        List of team member id lists in team-index order.
+
+    Raises:
+        ValueError: Missing/extra students, a bad team index, or an empty team.
+    """
+    validate_team_count(n_teams, len(present_ids))
+    present = {int(sid) for sid in present_ids}
+    buckets: list[list[int]] = [[] for _ in range(int(n_teams))]
+    seen: set[int] = set()
+    for item in assignments:
+        if not isinstance(item, dict):
+            raise ValueError("Each assignment needs student_id and team_index")
+        sid = int(item.get("student_id") or 0)
+        if "team_index" not in item:
+            raise ValueError("Each assignment needs a team_index")
+        try:
+            team_index = int(item["team_index"])
+        except (TypeError, ValueError) as exc:
+            raise ValueError("team_index must be a number") from exc
+        if sid not in present:
+            raise ValueError("Can only assign present students")
+        if sid in seen:
+            raise ValueError("Each student can only be on one team")
+        if team_index < 0 or team_index >= int(n_teams):
+            raise ValueError("team_index is out of range")
+        seen.add(sid)
+        buckets[team_index].append(sid)
+    if present - seen:
+        raise ValueError("Assign every present student to a team")
+    empty = [index + 1 for index, members in enumerate(buckets) if not members]
+    if empty:
+        names = ", ".join(f"Team {n}" for n in empty)
+        raise ValueError(f"Every team needs at least one student (empty: {names})")
+    return buckets
 
 
 TEAM_COLORS: tuple[str, ...] = (

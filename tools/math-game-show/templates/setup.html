@@ -8,10 +8,24 @@
 </head>
 <body>
   <div class="wrap">
-    <p class="kicker"><a href="#" id="back-dash">Class dashboard</a></p>
+    <p class="kicker"><a href="/" id="home-link">Teacher Dashboard</a> · <a href="#" id="back-dash">Class dashboard</a></p>
     <h1>Begin a New Game</h1>
-    <p class="sub" id="meta"></p>
+    <p class="sub session-line">
+      <span id="meta"></span>
+      <button type="button" class="text-btn" id="select-manually">Select Manually</button>
+    </p>
     <div id="error" class="error" hidden></div>
+
+    <section id="manual-picker" class="card hidden">
+      <label class="field" for="meeting-date">Date</label>
+      <input id="meeting-date" type="date">
+      <label class="field" for="meeting-time" style="margin-top:12px">Time</label>
+      <select id="meeting-time"></select>
+      <div class="row-actions">
+        <button type="button" class="secondary" id="close-picker">Close</button>
+        <button type="button" id="apply-meeting">Apply</button>
+      </div>
+    </section>
 
     <section id="step-attendance" class="card hidden">
       <h2>1 · Mark Attendance</h2>
@@ -22,6 +36,7 @@
       </div>
       <div id="att-list" class="check-list" style="margin-top:12px"></div>
       <div class="row-actions">
+        <button type="button" class="secondary" id="cancel-setup-att">Cancel</button>
         <button type="button" id="att-next">Continue to teams</button>
       </div>
     </section>
@@ -31,11 +46,21 @@
       <label class="field" for="n-teams">Number of teams</label>
       <input id="n-teams" type="number" min="2" value="2">
       <div class="row-actions">
+        <button type="button" class="secondary" id="cancel-setup-teams">Cancel</button>
         <button type="button" class="secondary" id="teams-back">Back</button>
         <button type="button" id="assign-random">Assign Randomly</button>
         <button type="button" id="assign-balanced">Assign Balanced</button>
+        <button type="button" id="assign-manual">Assign Manually</button>
       </div>
       <p class="hint">Balanced snake-drafts by career TOTAL so high scores land on different teams.</p>
+      <div id="manual-assign" class="hidden">
+        <p class="hint">Choose a team for each present student. Every team needs at least one student.</p>
+        <div id="manual-list" class="manual-list"></div>
+        <div class="row-actions">
+          <button type="button" class="secondary" id="manual-cancel">Cancel</button>
+          <button type="button" id="manual-confirm">Confirm assignment</button>
+        </div>
+      </div>
     </section>
 
     <section id="step-names" class="card hidden">
@@ -43,6 +68,7 @@
       <p class="hint">Rename if you want. Then this window becomes the teacher game view and a scoreboard window opens for Zoom.</p>
       <div id="name-list"></div>
       <div class="row-actions">
+        <button type="button" class="secondary" id="cancel-setup-names">Cancel</button>
         <button type="button" class="secondary" id="names-back">Back</button>
         <button type="button" id="start-game">Create Teams</button>
       </div>

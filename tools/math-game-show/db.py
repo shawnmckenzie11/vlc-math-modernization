@@ -14,11 +14,15 @@ from csv_import import parse_canvas_grades_csv
 from schedule import (
     TIME_OPTIONS,
     format_header_label,
+    format_time_label,
     next_meeting_datetime,
+    parse_time_label,
     store_days,
+    unique_header_label,
 )
 from teams import (
     assign_balanced,
+    assign_manual,
     assign_random,
     color_for_team,
     default_team_name,
@@ -58,7 +62,7 @@ CREATE TABLE IF NOT EXISTS session_scores (
     session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
     student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
     present INTEGER NOT NULL DEFAULT 0,
-    points INTEGER NOT NULL DEFAULT 0,
+    points REAL NOT NULL DEFAULT 0,
     PRIMARY KEY (session_id, student_id)
 );
 
@@ -69,7 +73,23 @@ CREATE TABLE IF NOT EXISTS games (
     status TEXT NOT NULL,
     created_at TEXT NOT NULL,
     event_seq INTEGER NOT NULL DEFAULT 0,
-    last_event_json TEXT
+    last_event_json TEXT,
+    owns_session INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS point_events (
+    id INTEGER PRIMARY KEY,
+    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    seq INTEGER NOT NULL,
+    ts TEXT NOT NULL,
+    from_kind TEXT NOT NULL,
+    from_id INTEGER,
+    to_kind TEXT NOT NULL,
+    to_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL,
+    team_rule TEXT,
+    UNIQUE(session_id, seq)
 );
 
 CREATE TABLE IF NOT EXISTS game_teams (
@@ -90,16 +110,50 @@ CREATE TABLE IF NOT EXISTS game_memberships (
 CREATE TABLE IF NOT EXISTS team_buckets (
     game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
     team_id INTEGER NOT NULL REFERENCES game_teams(id) ON DELETE CASCADE,
-    points INTEGER NOT NULL DEFAULT 0,
+    points REAL NOT NULL DEFAULT 0,
     PRIMARY KEY (game_id, team_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_students_class ON students(class_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_class ON sessions(class_id);
 CREATE INDEX IF NOT EXISTS idx_games_class ON games(class_id);
+CREATE INDEX IF NOT EXISTS idx_events_session ON point_events(session_id, seq);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_one_open_game
     ON games(class_id) WHERE status != 'ended';
 """
+
+TEAM_RULES = ("each_member", "split_members", "team_only")
+
+
+def split_amount(amount: float, n_members: int) -> list[float]:
+    """Give each member the same share, rounded to one decimal place.
+
+    The team board still shows the full awarded amount; any rounding
+    leftover is stored on the team-only bucket (see ``award_points``).
+
+    Args:
+        amount: Points to split (must be positive).
+        n_members: Present team size.
+
+    Returns:
+        Per-member credits, each ``round(amount / n, 1)``.
+    """
+    if n_members < 1:
+        raise ValueError("Cannot split team points across an empty team")
+    share = round(float(amount) / float(n_members), 1)
+    return [share] * int(n_members)
+
+
+def as_points(value: Any) -> float:
+    """Round a credit to one decimal place.
+
+    Args:
+        value: Raw numeric (int, float, or SQLite number).
+
+    Returns:
+        Value rounded to one tenth.
+    """
+    return round(float(value or 0), 1)
 
 # Future TODO (Teacher Class Dashboard): allow students to be added or removed
 # by row, and live class sessions to be added or deleted by column. Schema is
@@ -127,7 +181,7 @@ class GameShowDB:
         self.data_dir = data_dir
         self.logs_dir = data_dir / "logs"
         self.uploads_dir = data_dir / "uploads"
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self.logs_dir.mkdir(parents=True, exist_ok=True)
         self.uploads_dir.mkdir(parents=True, exist_ok=True)
@@ -136,7 +190,71 @@ class GameShowDB:
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.execute("PRAGMA journal_mode = WAL")
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    def _migrate(self) -> None:
+        """Add columns introduced after the first schema.
+
+        Existing local DBs keep their data; ``owns_session`` defaults to 0.
+        """
+        game_cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(games)").fetchall()
+        }
+        if "owns_session" not in game_cols:
+            self.conn.execute(
+                "ALTER TABLE games ADD COLUMN owns_session INTEGER NOT NULL DEFAULT 0"
+            )
+        self._ensure_real_points("session_scores")
+        self._ensure_real_points("team_buckets")
+
+    def _ensure_real_points(self, table: str) -> None:
+        """Rebuild a scores table if ``points`` still has INTEGER affinity.
+
+        SQLite INTEGER columns coerce 3.3 to 3, which breaks 1-decimal splits.
+
+        Args:
+            table: ``session_scores`` or ``team_buckets``.
+        """
+        cols = list(self.conn.execute(f"PRAGMA table_info({table})").fetchall())
+        if not cols:
+            return
+        points = next((row for row in cols if row["name"] == "points"), None)
+        if points is None or str(points["type"]).upper() == "REAL":
+            return
+        self.conn.execute("PRAGMA foreign_keys = OFF")
+        if table == "session_scores":
+            self.conn.executescript(
+                """
+                CREATE TABLE session_scores_v2 (
+                    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+                    student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+                    present INTEGER NOT NULL DEFAULT 0,
+                    points REAL NOT NULL DEFAULT 0,
+                    PRIMARY KEY (session_id, student_id)
+                );
+                INSERT INTO session_scores_v2
+                    SELECT session_id, student_id, present, points FROM session_scores;
+                DROP TABLE session_scores;
+                ALTER TABLE session_scores_v2 RENAME TO session_scores;
+                """
+            )
+        else:
+            self.conn.executescript(
+                """
+                CREATE TABLE team_buckets_v2 (
+                    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+                    team_id INTEGER NOT NULL REFERENCES game_teams(id) ON DELETE CASCADE,
+                    points REAL NOT NULL DEFAULT 0,
+                    PRIMARY KEY (game_id, team_id)
+                );
+                INSERT INTO team_buckets_v2 SELECT game_id, team_id, points FROM team_buckets;
+                DROP TABLE team_buckets;
+                ALTER TABLE team_buckets_v2 RENAME TO team_buckets;
+                """
+            )
+        self.conn.execute("PRAGMA foreign_keys = ON")
 
     def close(self) -> None:
         """Close the SQLite connection."""
@@ -275,10 +393,12 @@ class GameShowDB:
         ).fetchone()
         return int(row["n"])
 
-    def career_totals(self, class_id: int) -> dict[int, int]:
-        """Sum individual session points per student (all columns).
+    def career_totals(self, class_id: int) -> dict[int, float]:
+        """Sum credited individual scores per student (all columns).
 
-        TOTAL is individual-only; team-bucket awards are never included.
+        Dashboard TOTAL is the sum of each session's credited score, which
+        comes from individual events plus any team-rule credits. Pure
+        team-only awards never enter this total.
         Future TODO: freeze TOTAL as a subtotal and start a fresh count.
 
         Args:
@@ -298,7 +418,7 @@ class GameShowDB:
                 """,
                 (class_id,),
             ).fetchall()
-        return {int(row["student_id"]): int(row["total"]) for row in rows}
+        return {int(row["student_id"]): as_points(row["total"]) for row in rows}
 
     def dashboard(self, class_id: int, sort: str = "last") -> dict[str, Any]:
         """Spreadsheet payload: students, session columns, cells, totals.
@@ -343,14 +463,15 @@ class GameShowDB:
                 (class_id,),
             ).fetchone()
         cells: dict[str, dict[str, Any]] = {}
-        totals: dict[int, int] = {int(s["id"]): 0 for s in students}
+        totals: dict[int, float] = {int(s["id"]): 0.0 for s in students}
         for row in score_rows:
             sid = int(row["student_id"])
-            totals[sid] = totals.get(sid, 0) + int(row["points"])
+            pts = as_points(row["points"])
+            totals[sid] = as_points(totals.get(sid, 0) + pts)
             key = f"{row['session_id']}:{sid}"
             cells[key] = {
                 "present": bool(row["present"]),
-                "points": int(row["points"]),
+                "points": pts,
             }
         if sort == "first":
             students.sort(
@@ -376,40 +497,6 @@ class GameShowDB:
             "open_game": dict(open_game) if open_game else None,
         }
 
-    def _unfinished_session(self, class_id: int) -> dict[str, Any] | None:
-        """Latest template/active session for a class, if any.
-
-        Args:
-            class_id: Classes primary key.
-        """
-        row = self.conn.execute(
-            """
-            SELECT * FROM sessions
-            WHERE class_id = ? AND status IN ('template', 'active')
-            ORDER BY starts_at DESC, id DESC
-            LIMIT 1
-            """,
-            (class_id,),
-        ).fetchone()
-        return dict(row) if row else None
-
-    def _latest_session(self, class_id: int) -> dict[str, Any] | None:
-        """Most recently created session for a class.
-
-        Args:
-            class_id: Classes primary key.
-        """
-        row = self.conn.execute(
-            """
-            SELECT * FROM sessions
-            WHERE class_id = ?
-            ORDER BY starts_at DESC, id DESC
-            LIMIT 1
-            """,
-            (class_id,),
-        ).fetchone()
-        return dict(row) if row else None
-
     def _ensure_session_scores(self, session_id: int, class_id: int) -> None:
         """Insert missing zero/absent cells for every student in a session.
 
@@ -425,34 +512,114 @@ class GameShowDB:
             (session_id, class_id),
         )
 
-    def _append_session(
+    def _header_set(self, class_id: int, exclude_id: int | None = None) -> set[str]:
+        """Headers already used by this class.
+
+        Args:
+            class_id: Classes primary key.
+            exclude_id: Session id to ignore (when retargeting).
+        """
+        rows = self.conn.execute(
+            "SELECT id, header_label FROM sessions WHERE class_id = ?",
+            (class_id,),
+        ).fetchall()
+        return {
+            str(row["header_label"])
+            for row in rows
+            if exclude_id is None or int(row["id"]) != exclude_id
+        }
+
+    def _meeting_datetime(
+        self,
+        cls: dict[str, Any],
+        *,
+        today: date | None,
+        meeting_date: date | None,
+    ) -> datetime:
+        """Resolve the session start: override date, else next calendar slot.
+
+        Does not skip forward just because a column already exists for that
+        slot. Manual dates may fall on any weekday.
+
+        Args:
+            cls: Class row dict.
+            today: Reference date for the default next meeting.
+            meeting_date: Teacher-chosen calendar date, if any.
+        """
+        clock = parse_time_label(cls["time"])
+        if meeting_date is not None:
+            return datetime.combine(meeting_date, clock)
+        return next_meeting_datetime(cls["days"], cls["time"], today=today)
+
+    def _label_for_meeting(
         self,
         class_id: int,
         cls: dict[str, Any],
-        after_date: date | None,
-        today: date | None,
-    ) -> dict[str, Any]:
-        """Create a new session column for the next meeting.
+        meeting: datetime,
+        exclude_id: int | None = None,
+        time_label: str | None = None,
+    ) -> str:
+        """Build a unique header for ``meeting`` (``_2``, ``_3``, … if needed).
 
         Args:
             class_id: Classes primary key.
             cls: Class row dict.
-            after_date: Last session calendar date, if appending.
-            today: Reference date.
+            meeting: Session start.
+            exclude_id: Session being retargeted, if any.
+            time_label: Wizard time string; defaults to the class start time.
         """
-        meeting = next_meeting_datetime(
-            cls["days"],
-            cls["time"],
-            today=today,
-            after_date=after_date,
-        )
-        header = format_header_label(meeting, cls["time"])
+        base = format_header_label(meeting, time_label or cls["time"])
+        return unique_header_label(base, self._header_set(class_id, exclude_id))
+
+    def _unused_template_session(self, class_id: int) -> dict[str, Any] | None:
+        """Template column that has never been scored — safe to retarget.
+
+        Args:
+            class_id: Classes primary key.
+        """
+        row = self.conn.execute(
+            """
+            SELECT * FROM sessions
+            WHERE class_id = ? AND status = 'template'
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (class_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        used = self.conn.execute(
+            """
+            SELECT COUNT(*) AS n FROM session_scores
+            WHERE session_id = ? AND (present = 1 OR points != 0)
+            """,
+            (row["id"],),
+        ).fetchone()
+        if int(used["n"]) > 0:
+            return None
+        return dict(row)
+
+    def _insert_session(
+        self,
+        class_id: int,
+        meeting: datetime,
+        header: str,
+        status: str = "template",
+    ) -> dict[str, Any]:
+        """Insert a session column and zero cells.
+
+        Args:
+            class_id: Classes primary key.
+            meeting: Session start.
+            header: Unique header label.
+            status: ``template`` or ``active``.
+        """
         self.conn.execute(
             """
             INSERT INTO sessions (class_id, starts_at, header_label, status, log_path)
-            VALUES (?, ?, ?, 'template', NULL)
+            VALUES (?, ?, ?, ?, NULL)
             """,
-            (class_id, meeting.isoformat(), header),
+            (class_id, meeting.isoformat(), header, status),
         )
         session_id = int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
         self._ensure_session_scores(session_id, class_id)
@@ -461,22 +628,25 @@ class GameShowDB:
         ).fetchone()
         return dict(row)
 
-    def begin_game(self, class_id: int, today: date | None = None) -> dict[str, Any]:
+    def begin_game(
+        self,
+        class_id: int,
+        today: date | None = None,
+        meeting_date: date | None = None,
+    ) -> dict[str, Any]:
         """Start or resume the single open game for a class.
 
-        Reuses an unfinished session column. After End Game, the next Begin
-        on a later calendar meeting appends a new column.
+        Default slot is the next calendar class time from ``today``, even if
+        a column already exists for that meeting. Extra plays use ``_2``,
+        ``_3``, … rather than bumping to the following class day.
 
         Args:
             class_id: Classes primary key.
             today: Optional reference date.
+            meeting_date: Optional teacher override (any calendar day).
 
         Returns:
             Full game-state payload.
-
-        Raises:
-            ValueError: If this meeting was already ended and it is not a
-                later calendar day yet.
         """
         cls = self.get_class(class_id)
         with self._lock:
@@ -488,51 +658,138 @@ class GameShowDB:
                 (class_id,),
             ).fetchone()
             if existing:
-                session = dict(
-                    self.conn.execute(
-                        "SELECT * FROM sessions WHERE id = ?",
-                        (existing["session_id"],),
-                    ).fetchone()
-                )
                 self.conn.commit()
-                game_id = int(existing["id"])
-            else:
-                unfinished = self._unfinished_session(class_id)
-                if unfinished:
-                    session = unfinished
-                else:
-                    latest = self._latest_session(class_id)
-                    after = None
-                    if latest:
-                        after = date.fromisoformat(str(latest["starts_at"])[:10])
-                    meeting = next_meeting_datetime(
-                        cls["days"],
-                        cls["time"],
-                        today=today,
-                        after_date=after,
-                    )
-                    header = format_header_label(meeting, cls["time"])
-                    if latest and header == latest["header_label"]:
-                        raise ValueError(
-                            "This meeting already has an ended game. "
-                            "Begin again on the next class day."
-                        )
-                    session = self._append_session(class_id, cls, after, today)
+                return self.game_state(class_id, game_id=int(existing["id"]))
+
+            meeting = self._meeting_datetime(cls, today=today, meeting_date=meeting_date)
+            unused = self._unused_template_session(class_id)
+            if unused:
+                header = self._label_for_meeting(
+                    class_id, cls, meeting, exclude_id=int(unused["id"])
+                )
                 self.conn.execute(
-                    "UPDATE sessions SET status = 'active' WHERE id = ?",
-                    (session["id"],),
-                )
-                cur = self.conn.execute(
                     """
-                    INSERT INTO games (class_id, session_id, status, created_at)
-                    VALUES (?, ?, 'attendance', ?)
+                    UPDATE sessions
+                    SET starts_at = ?, header_label = ?, status = 'active'
+                    WHERE id = ?
                     """,
-                    (class_id, session["id"], self._now()),
+                    (meeting.isoformat(), header, unused["id"]),
                 )
-                game_id = int(cur.lastrowid)
-                self._ensure_session_scores(int(session["id"]), class_id)
-                self.conn.commit()
+                session_id = int(unused["id"])
+                owns_session = 0
+                self._ensure_session_scores(session_id, class_id)
+            else:
+                header = self._label_for_meeting(class_id, cls, meeting)
+                session = self._insert_session(class_id, meeting, header, status="active")
+                session_id = int(session["id"])
+                owns_session = 1
+            cur = self.conn.execute(
+                """
+                INSERT INTO games (
+                    class_id, session_id, status, created_at, owns_session
+                )
+                VALUES (?, ?, 'attendance', ?, ?)
+                """,
+                (class_id, session_id, self._now(), owns_session),
+            )
+            game_id = int(cur.lastrowid)
+            self.conn.commit()
         return self.game_state(class_id, game_id=game_id)
+
+    def set_meeting_date(
+        self,
+        class_id: int,
+        meeting_date: date,
+        time_label: str | None = None,
+    ) -> dict[str, Any]:
+        """Move the open setup session to a teacher-chosen date and time.
+
+        Allowed until Create Teams. Suffixes the header if that slot already
+        has a column. Does not change the class's usual schedule.
+
+        Args:
+            class_id: Classes primary key.
+            meeting_date: Chosen calendar date.
+            time_label: One of the wizard times; defaults to the class time.
+
+        Returns:
+            Updated game state.
+        """
+        cls = self.get_class(class_id)
+        label = (time_label or cls["time"]).strip()
+        if label not in TIME_OPTIONS:
+            raise ValueError(f"Time must be one of: {', '.join(TIME_OPTIONS)}")
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] not in {"attendance", "teams", "names"}:
+                raise ValueError("Date can only be changed during setup")
+            meeting = datetime.combine(meeting_date, parse_time_label(label))
+            header = self._label_for_meeting(
+                class_id,
+                cls,
+                meeting,
+                exclude_id=int(game["session_id"]),
+                time_label=label,
+            )
+            self.conn.execute(
+                """
+                UPDATE sessions
+                SET starts_at = ?, header_label = ?
+                WHERE id = ?
+                """,
+                (meeting.isoformat(), header, game["session_id"]),
+            )
+            self.conn.commit()
+        return self.game_state(class_id)
+
+    def cancel_setup(self, class_id: int) -> dict[str, Any]:
+        """Abort Begin a New Game before Create Teams.
+
+        Drops the in-progress game. A session this begin created is removed;
+        a retargeted empty template column is restored.
+
+        Args:
+            class_id: Classes primary key.
+
+        Returns:
+            ``{ok, class_id}``.
+        """
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] not in {"attendance", "teams", "names"}:
+                raise ValueError("Cancel is only available before Create Teams")
+            game_id = int(game["id"])
+            session_id = int(game["session_id"])
+            owns = int(game["owns_session"] or 0)
+            self.conn.execute("DELETE FROM point_events WHERE game_id = ?", (game_id,))
+            self.conn.execute("DELETE FROM game_memberships WHERE game_id = ?", (game_id,))
+            self.conn.execute("DELETE FROM team_buckets WHERE game_id = ?", (game_id,))
+            self.conn.execute("DELETE FROM game_teams WHERE game_id = ?", (game_id,))
+            self.conn.execute("DELETE FROM games WHERE id = ?", (game_id,))
+            if owns:
+                self.conn.execute(
+                    "DELETE FROM session_scores WHERE session_id = ?", (session_id,)
+                )
+                self.conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+            else:
+                self.conn.execute(
+                    """
+                    UPDATE session_scores
+                    SET present = 0, points = 0
+                    WHERE session_id = ?
+                    """,
+                    (session_id,),
+                )
+                self.conn.execute(
+                    """
+                    UPDATE sessions
+                    SET status = 'template', log_path = NULL
+                    WHERE id = ?
+                    """,
+                    (session_id,),
+                )
+            self.conn.commit()
+        return {"ok": True, "class_id": class_id}
 
     def _game_row(self, class_id: int, game_id: int | None = None) -> sqlite3.Row:
         """Load the open game, or a specific game id.
@@ -682,14 +939,16 @@ class GameShowDB:
         n_teams: int,
         mode: str,
         rng: Any | None = None,
+        assignments: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        """Build teams from present students (random or balanced snake-draft).
+        """Build teams from present students (random, balanced, or manual).
 
         Args:
             class_id: Classes primary key.
             n_teams: Number of teams.
-            mode: ``random`` or ``balanced``.
+            mode: ``random``, ``balanced``, or ``manual``.
             rng: Optional random.Random for tests.
+            assignments: Required for ``manual``: ``{student_id, team_index}``.
 
         Returns:
             Updated game state including team names for the rename step.
@@ -719,15 +978,17 @@ class GameShowDB:
                     """,
                     (sid,),
                 ).fetchone()
-                totals_map[sid] = int(row["total"])
+                totals_map[sid] = as_points(row["total"])
             if mode == "balanced":
                 buckets = assign_balanced(
                     present_ids, int(n_teams), [totals_map[sid] for sid in present_ids]
                 )
             elif mode == "random":
                 buckets = assign_random(present_ids, int(n_teams), rng=rng)
+            elif mode == "manual":
+                buckets = assign_manual(present_ids, int(n_teams), assignments or [])
             else:
-                raise ValueError("mode must be random or balanced")
+                raise ValueError("mode must be random, balanced, or manual")
             game_id = int(game["id"])
             self.conn.execute("DELETE FROM game_memberships WHERE game_id = ?", (game_id,))
             self.conn.execute("DELETE FROM team_buckets WHERE game_id = ?", (game_id,))
@@ -812,6 +1073,114 @@ class GameShowDB:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
         return path
 
+    def _team_member_ids(self, game_id: int, team_id: int) -> list[int]:
+        """Present members of a team, stable order for split remainder.
+
+        Args:
+            game_id: Games primary key.
+            team_id: Game teams primary key.
+        """
+        rows = self.conn.execute(
+            """
+            SELECT m.student_id AS student_id
+            FROM game_memberships m
+            JOIN students s ON s.id = m.student_id
+            WHERE m.game_id = ? AND m.team_id = ?
+            ORDER BY s.last_display, s.first_name, s.id
+            """,
+            (game_id, team_id),
+        ).fetchall()
+        return [int(r["student_id"]) for r in rows]
+
+    def _credit_student(self, session_id: int, student_id: int, amount: float) -> None:
+        """Add ``amount`` to a present student's credited session score.
+
+        Args:
+            session_id: Sessions primary key.
+            student_id: Students primary key.
+            amount: Signed points (stored to one decimal place).
+        """
+        credit = as_points(amount)
+        cur = self.conn.execute(
+            """
+            UPDATE session_scores
+            SET points = ROUND(points + ?, 1)
+            WHERE session_id = ? AND student_id = ? AND present = 1
+            """,
+            (credit, session_id, student_id),
+        )
+        if cur.rowcount != 1:
+            raise KeyError(f"student {student_id} is not present this session")
+
+    def _bump_team_bucket(self, game_id: int, team_id: int, amount: float) -> None:
+        """Add ``amount`` to the persisted team-only bucket.
+
+        Args:
+            game_id: Games primary key.
+            team_id: Game teams primary key.
+            amount: Points (team awards are positive; stored to one decimal).
+        """
+        self.conn.execute(
+            """
+            UPDATE team_buckets
+            SET points = ROUND(points + ?, 1)
+            WHERE game_id = ? AND team_id = ?
+            """,
+            (as_points(amount), game_id, team_id),
+        )
+
+    def _insert_event(
+        self,
+        *,
+        session_id: int,
+        game_id: int,
+        seq: int,
+        to_kind: str,
+        to_id: int,
+        amount: int,
+        team_rule: str | None,
+    ) -> dict[str, Any]:
+        """Append an immutable point event and a JSONL line.
+
+        Args:
+            session_id: Sessions primary key.
+            game_id: Games primary key.
+            seq: Monotonic per-game sequence.
+            to_kind: ``student`` or ``team``.
+            to_id: Student or team id.
+            amount: Signed amount.
+            team_rule: Team credit rule, or None for individual events.
+
+        Returns:
+            The log record written to JSONL.
+        """
+        ts = self._now()
+        self.conn.execute(
+            """
+            INSERT INTO point_events (
+                session_id, game_id, seq, ts, from_kind, from_id,
+                to_kind, to_id, amount, team_rule
+            )
+            VALUES (?, ?, ?, ?, 'teacher', NULL, ?, ?, ?, ?)
+            """,
+            (session_id, game_id, seq, ts, to_kind, to_id, amount, team_rule),
+        )
+        record = {
+            "ts": ts,
+            "seq": seq,
+            "from": "teacher",
+            "to_kind": to_kind,
+            "to": to_id,
+            "amount": amount,
+            "team_rule": team_rule,
+        }
+        log_path = self._append_log(session_id, record)
+        self.conn.execute(
+            "UPDATE sessions SET log_path = ? WHERE id = ?",
+            (str(log_path), session_id),
+        )
+        return record
+
     def award_points(
         self,
         class_id: int,
@@ -819,18 +1188,29 @@ class GameShowDB:
         kind: str,
         target_id: int,
         amount: int,
+        team_rule: str | None = None,
     ) -> dict[str, Any]:
-        """Apply a teacher +/- award to a student or a team bucket.
+        """Apply a teacher award as an immutable event plus live caches.
 
-        Individual awards change that student's session cell. Team awards
-        change the live team bucket only (fair across uneven sizes).
+        Individual awards change that student's credited score and the team's
+        ESPN total. Team awards always add ``amount`` to the team total, then
+        credit members according to ``team_rule``:
+
+        * ``each_member`` — every member's credited score += amount
+        * ``split_members`` — each member gets ``round(amount / n, 1)``;
+          leftover tenths go on the team bucket so the ESPN total stays
+          the full award
+        * ``team_only`` — team bucket only; individuals unchanged
+
+        Team awards must be positive. Individual awards may be negative.
         Future TODO: students awarding points to one another.
 
         Args:
             class_id: Classes primary key.
             kind: ``student`` or ``team``.
             target_id: Student id or team id.
-            amount: Signed integer (typically ±1/5/10).
+            amount: Signed integer (team awards must be > 0).
+            team_rule: Required for team awards.
 
         Returns:
             Updated game state (includes last_event for the scoreboard).
@@ -839,13 +1219,23 @@ class GameShowDB:
             raise ValueError("Amount cannot be 0")
         if kind not in {"student", "team"}:
             raise ValueError("kind must be student or team")
+        if kind == "team":
+            if amount < 1:
+                raise ValueError("Team awards must be positive")
+            rule = (team_rule or "").strip()
+            if rule not in TEAM_RULES:
+                raise ValueError(
+                    "Team awards need a rule: each_member, split_members, or team_only"
+                )
+        else:
+            rule = None
         with self._lock:
             game = self._game_row(class_id)
             if game["status"] != "live":
                 raise ValueError("Scoring starts after teams are created")
             game_id = int(game["id"])
             session_id = int(game["session_id"])
-            ts = self._now()
+            seq = int(game["event_seq"] or 0) + 1
             last_event: dict[str, Any]
             if kind == "student":
                 member = self.conn.execute(
@@ -857,14 +1247,7 @@ class GameShowDB:
                 ).fetchone()
                 if member is None:
                     raise KeyError(f"student {target_id} is not on a live team")
-                self.conn.execute(
-                    """
-                    UPDATE session_scores
-                    SET points = points + ?
-                    WHERE session_id = ? AND student_id = ? AND present = 1
-                    """,
-                    (amount, session_id, target_id),
-                )
+                self._credit_student(session_id, target_id, amount)
                 team = dict(
                     self.conn.execute(
                         "SELECT * FROM game_teams WHERE id = ?",
@@ -877,10 +1260,19 @@ class GameShowDB:
                     "team_id": int(team["id"]),
                     "team_name": team["name"],
                     "amount": amount,
+                    "team_rule": None,
                     "celebrate": False,
                     "label": f"{team['name']} {amount:+d}",
                 }
-                to_field: str | int = target_id
+                self._insert_event(
+                    session_id=session_id,
+                    game_id=game_id,
+                    seq=seq,
+                    to_kind="student",
+                    to_id=target_id,
+                    amount=amount,
+                    team_rule=None,
+                )
             else:
                 team_row = self.conn.execute(
                     "SELECT * FROM game_teams WHERE id = ? AND game_id = ?",
@@ -888,31 +1280,38 @@ class GameShowDB:
                 ).fetchone()
                 if team_row is None:
                     raise KeyError(f"team {target_id}")
-                self.conn.execute(
-                    """
-                    UPDATE team_buckets
-                    SET points = points + ?
-                    WHERE game_id = ? AND team_id = ?
-                    """,
-                    (amount, game_id, target_id),
-                )
+                member_ids = self._team_member_ids(game_id, target_id)
+                if rule == "each_member":
+                    for sid in member_ids:
+                        self._credit_student(session_id, sid, amount)
+                elif rule == "split_members":
+                    shares = split_amount(amount, len(member_ids))
+                    for sid, share in zip(member_ids, shares, strict=True):
+                        if share:
+                            self._credit_student(session_id, sid, share)
+                    remainder = as_points(amount - sum(shares))
+                    if remainder:
+                        self._bump_team_bucket(game_id, target_id, remainder)
+                else:
+                    self._bump_team_bucket(game_id, target_id, amount)
                 last_event = {
                     "kind": "team",
                     "team_id": target_id,
                     "team_name": team_row["name"],
                     "amount": amount,
-                    "celebrate": amount > 0,
-                    "label": f"{team_row['name']} {amount:+d}",
+                    "team_rule": rule,
+                    "celebrate": True,
+                    "label": f"{team_row['name']} +{amount}",
                 }
-                to_field = f"team:{target_id}"
-            log_record = {
-                "ts": ts,
-                "from": "teacher",
-                "to": to_field,
-                "amount": amount,
-            }
-            log_path = self._append_log(session_id, log_record)
-            seq = int(game["event_seq"]) + 1
+                self._insert_event(
+                    session_id=session_id,
+                    game_id=game_id,
+                    seq=seq,
+                    to_kind="team",
+                    to_id=target_id,
+                    amount=amount,
+                    team_rule=rule,
+                )
             self.conn.execute(
                 """
                 UPDATE games
@@ -921,18 +1320,15 @@ class GameShowDB:
                 """,
                 (seq, json.dumps(last_event), game_id),
             )
-            self.conn.execute(
-                "UPDATE sessions SET log_path = ? WHERE id = ?",
-                (str(log_path), session_id),
-            )
             self.conn.commit()
         return self.game_state(class_id)
 
     def end_game(self, class_id: int) -> dict[str, Any]:
-        """Persist the session column, keep the log link, and close the game.
+        """Close the live game; keep events, team scores, and credited cells.
 
-        Present/absent and individual points are already on ``session_scores``.
-        Team buckets are live-only and are discarded with the game rows.
+        Individual credited scores are already on ``session_scores``. Team
+        buckets and memberships stay so the session remains inspectable.
+        Dashboard cells show credited scores only (not a blended formula).
 
         Args:
             class_id: Classes primary key.
@@ -959,15 +1355,6 @@ class GameShowDB:
             self.conn.execute(
                 "UPDATE games SET status = 'ended' WHERE id = ?", (game_id,)
             )
-            self.conn.execute(
-                "DELETE FROM game_memberships WHERE game_id = ?", (game_id,)
-            )
-            self.conn.execute(
-                "DELETE FROM team_buckets WHERE game_id = ?", (game_id,)
-            )
-            self.conn.execute(
-                "DELETE FROM game_teams WHERE game_id = ?", (game_id,)
-            )
             self.conn.commit()
         return {
             "ok": True,
@@ -991,6 +1378,12 @@ class GameShowDB:
                     "SELECT * FROM sessions WHERE id = ?", (game["session_id"],)
                 ).fetchone()
             )
+            session["meeting_date"] = str(session["starts_at"])[:10]
+            try:
+                started = datetime.fromisoformat(str(session["starts_at"]))
+                session["time"] = format_time_label(started.time())
+            except ValueError:
+                session["time"] = cls["time"]
             students = [
                 dict(r)
                 for r in self.conn.execute(
@@ -1001,7 +1394,7 @@ class GameShowDB:
             scores = {
                 int(r["student_id"]): {
                     "present": bool(r["present"]),
-                    "points": int(r["points"]),
+                    "points": as_points(r["points"]),
                 }
                 for r in self.conn.execute(
                     "SELECT student_id, present, points FROM session_scores WHERE session_id = ?",
@@ -1045,21 +1438,21 @@ class GameShowDB:
         teams_out: list[dict[str, Any]] = []
         for team in teams:
             members = []
-            individual_sum = 0
+            individual_sum = 0.0
             for student in students:
                 sid = int(student["id"])
                 if team_of.get(sid) != int(team["id"]):
                     continue
-                pts = int(scores.get(sid, {}).get("points") or 0)
-                individual_sum += pts
+                pts = as_points(scores.get(sid, {}).get("points") or 0)
+                individual_sum = as_points(individual_sum + pts)
                 members.append(
                     {
                         **student,
                         "session_points": pts,
-                        "career_total": totals.get(sid, 0),
+                        "career_total": as_points(totals.get(sid, 0)),
                     }
                 )
-            bucket = int(team["bucket"])
+            bucket = as_points(team["bucket"])
             teams_out.append(
                 {
                     "id": int(team["id"]),
@@ -1068,7 +1461,7 @@ class GameShowDB:
                     "sort_order": int(team["sort_order"]),
                     "bucket": bucket,
                     "individual_sum": individual_sum,
-                    "score": individual_sum + bucket,
+                    "score": as_points(individual_sum + bucket),
                     "members": members,
                 }
             )
@@ -1094,6 +1487,7 @@ class GameShowDB:
             "present_ids": present_ids,
             "default_present_ids": default_present,
             "teams": teams_out,
+            "time_options": list(TIME_OPTIONS),
         }
 
     def scoreboard(self, class_id: int) -> dict[str, Any]:

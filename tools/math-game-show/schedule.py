@@ -268,6 +268,36 @@ def format_header_label(when: datetime, time_label: str) -> str:
     return f"{abbr} {when.month}/{when.day} {time_label}"
 
 
+def format_time_label(clock: time) -> str:
+    """Turn a ``datetime.time`` into a wizard label like ``2:00pm``.
+
+    Args:
+        clock: Naive local time.
+    """
+    hour = clock.hour
+    suffix = "am" if hour < 12 else "pm"
+    display = hour % 12 or 12
+    return f"{display}:{clock.minute:02d}{suffix}"
+
+
+def unique_header_label(base: str, existing: set[str]) -> str:
+    """Return ``base``, or ``base_2`` / ``base_3`` / … if that label is taken.
+
+    Same calendar slot can be played more than once; suffixes keep SQLite
+    headers distinct without bumping to the next class day.
+
+    Args:
+        base: Header from :func:`format_header_label`.
+        existing: Headers already used by this class (other sessions).
+    """
+    if base not in existing:
+        return base
+    n = 2
+    while f"{base}_{n}" in existing:
+        n += 1
+    return f"{base}_{n}"
+
+
 def next_meeting_datetime(
     days_stored: str,
     time_label: str,

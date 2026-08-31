@@ -90,3 +90,42 @@ export function displayName(student, sort) {
   }
   return first ? `${last}, ${first}` : last;
 }
+
+/**
+ * Dashboard name-order preference for this class (localStorage).
+ * @param {number} classId
+ * @returns {"first"|"last"}
+ */
+export function dashboardSort(classId) {
+  return localStorage.getItem(`mgs-sort-${classId}`) === "first" ? "first" : "last";
+}
+
+/**
+ * Sort a roster the same way as the class spreadsheet.
+ * @param {Array<{first_name:string, last_display:string}>} students
+ * @param {"first"|"last"} sort
+ */
+export function sortStudents(students, sort) {
+  const copy = [...(students || [])];
+  copy.sort((a, b) => {
+    const primaryA = (sort === "first" ? a.first_name : a.last_display) || "";
+    const primaryB = (sort === "first" ? b.first_name : b.last_display) || "";
+    const cmp = primaryA.toLowerCase().localeCompare(primaryB.toLowerCase());
+    if (cmp !== 0) return cmp;
+    const secondaryA = (sort === "first" ? a.last_display : a.first_name) || "";
+    const secondaryB = (sort === "first" ? b.last_display : b.first_name) || "";
+    return secondaryA.toLowerCase().localeCompare(secondaryB.toLowerCase());
+  });
+  return copy;
+}
+
+/**
+ * Show whole points as integers; tenths otherwise (e.g. 3.3).
+ * @param {unknown} value
+ */
+export function formatPoints(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "0";
+  const rounded = Math.round(n * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}

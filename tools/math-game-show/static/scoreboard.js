@@ -1,4 +1,4 @@
-import { classIdFromPath } from "./common.js";
+import { classIdFromPath, formatPoints } from "./common.js";
 
 const classId = classIdFromPath();
 let lastSeq = 0;
@@ -24,7 +24,7 @@ function render(data) {
         <div class="espn-swatch" style="background:${team.color}"></div>
         <div class="espn-meta">
           <div class="espn-name">${escapeText(team.name)}</div>
-          <div class="espn-score">${escapeText(team.score)}</div>
+          <div class="espn-score">${escapeText(formatPoints(team.score))}</div>
         </div>
       </div>`;
     })

@@ -18,16 +18,17 @@ APP_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(APP_DIR))
 
 from csv_import import parse_canvas_grades_csv, parse_student_name  # noqa: E402
-from db import GameShowDB  # noqa: E402
 from schedule import (  # noqa: E402
     format_header_label,
     heuristic_year_semester,
     next_meeting_datetime,
     parse_semester_field,
     picker_year_semester,
+    unique_header_label,
     wizard_defaults,
 )
-from teams import assign_balanced  # noqa: E402
+from db import GameShowDB, split_amount  # noqa: E402
+from teams import assign_balanced, assign_manual  # noqa: E402
 import server as game_server  # noqa: E402
 
 REAL_CSV = Path("/Users/shawnscomputer/Downloads/2026-08-31T1109_Grades-MCF3M-SM.csv")
@@ -120,6 +121,16 @@ class ScheduleTests(unittest.TestCase):
         self.assertEqual(when.date(), date(2026, 9, 8))
         self.assertEqual(format_header_label(when, "2:00pm"), "Tue 9/8 2:00pm")
 
+    def test_unique_header_suffix(self) -> None:
+        """Second play of the same slot becomes ``_2``, then ``_3``."""
+        base = "Tue 9/8 2:00pm"
+        self.assertEqual(unique_header_label(base, set()), base)
+        self.assertEqual(unique_header_label(base, {base}), "Tue 9/8 2:00pm_2")
+        self.assertEqual(
+            unique_header_label(base, {base, "Tue 9/8 2:00pm_2"}),
+            "Tue 9/8 2:00pm_3",
+        )
+
 
 class BalancedAssignTests(unittest.TestCase):
     """Snake draft sends high TOTALs to different teams."""
@@ -137,6 +148,32 @@ class BalancedAssignTests(unittest.TestCase):
         team_of_1 = 0 if 1 in teams[0] else 1
         team_of_2 = 0 if 2 in teams[0] else 1
         self.assertNotEqual(team_of_1, team_of_2)
+
+
+class ManualAssignTests(unittest.TestCase):
+    """Teacher-chosen team slots."""
+
+    def test_places_each_student(self) -> None:
+        """Present students land on the requested teams; empty teams are rejected."""
+        buckets = assign_manual(
+            [10, 20, 30],
+            2,
+            [
+                {"student_id": 10, "team_index": 0},
+                {"student_id": 20, "team_index": 1},
+                {"student_id": 30, "team_index": 0},
+            ],
+        )
+        self.assertEqual(buckets, [[10, 30], [20]])
+        with self.assertRaises(ValueError):
+            assign_manual(
+                [10, 20],
+                2,
+                [
+                    {"student_id": 10, "team_index": 0},
+                    {"student_id": 20, "team_index": 0},
+                ],
+            )
 
 
 class GamePersistTests(unittest.TestCase):
@@ -194,7 +231,13 @@ class GamePersistTests(unittest.TestCase):
         member = state["teams"][0]["members"][0]
         team = state["teams"][0]
         state = self.db.award_points(class_id, kind="student", target_id=member["id"], amount=5)
-        state = self.db.award_points(class_id, kind="team", target_id=team["id"], amount=10)
+        state = self.db.award_points(
+            class_id,
+            kind="team",
+            target_id=team["id"],
+            amount=10,
+            team_rule="team_only",
+        )
         board = self.db.scoreboard(class_id)
         self.assertTrue(board["live"])
         scored = next(t for t in board["teams"] if t["id"] == team["id"])
@@ -244,6 +287,145 @@ class GamePersistTests(unittest.TestCase):
             for member in team["members"]:
                 team_of[member["id"]] = team["id"]
         self.assertNotEqual(team_of[a], team_of[b])
+
+    def test_same_slot_suffix_not_next_day(self) -> None:
+        """A second game on the same calendar slot is ``_2``, not the next day."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        self.db.end_game(class_id)
+        again = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        self.assertEqual(again["session"]["header_label"], "Tue 9/8 2:00pm_2")
+        headers = [s["header_label"] for s in self.db.dashboard(class_id)["sessions"]]
+        self.assertEqual(headers, ["Tue 9/8 2:00pm", "Tue 9/8 2:00pm_2"])
+
+    def test_cancel_setup_restores_template(self) -> None:
+        """Cancel before Create Teams drops the in-progress game."""
+        class_id = self.cls["id"]
+        self.db.begin_game(class_id, today=date(2026, 8, 31))
+        self.db.cancel_setup(class_id)
+        dash = self.db.dashboard(class_id)
+        self.assertEqual(len(dash["sessions"]), 1)
+        self.assertEqual(dash["sessions"][0]["status"], "template")
+        self.assertEqual(dash["sessions"][0]["header_label"], "Tue 9/8 2:00pm")
+        self.assertIsNone(dash["open_game"])
+
+    def test_manual_date_override(self) -> None:
+        """Teacher can point the setup session at another calendar day."""
+        class_id = self.cls["id"]
+        self.db.begin_game(class_id, today=date(2026, 8, 31))
+        state = self.db.set_meeting_date(class_id, date(2026, 9, 10))
+        self.assertEqual(state["session"]["header_label"], "Thu 9/10 2:00pm")
+        self.assertEqual(state["session"]["meeting_date"], "2026-09-10")
+        state = self.db.set_meeting_date(class_id, date(2026, 9, 10), time_label="3:15pm")
+        self.assertEqual(state["session"]["header_label"], "Thu 9/10 3:15pm")
+        self.assertEqual(state["session"]["time"], "3:15pm")
+
+    def test_team_credit_rules(self) -> None:
+        """each_member, split_members, and team_only credit individuals differently."""
+        self.assertEqual(split_amount(10, 3), [3.3, 3.3, 3.3])
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        live = self.db.game_state(class_id)
+        team = next(t for t in live["teams"] if len(t["members"]) >= 2)
+        n = len(team["members"])
+        before = {m["id"]: m["session_points"] for m in team["members"]}
+        state = self.db.award_points(
+            class_id, kind="team", target_id=team["id"], amount=10, team_rule="each_member"
+        )
+        scored = next(t for t in state["teams"] if t["id"] == team["id"])
+        for member in scored["members"]:
+            self.assertEqual(member["session_points"], before[member["id"]] + 10)
+        self.assertEqual(scored["bucket"], 0)
+        self.assertEqual(scored["score"], scored["individual_sum"])
+        self.assertEqual(scored["individual_sum"], 10 * n)
+
+        self.db.end_game(class_id)
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        live = self.db.game_state(class_id)
+        team = next(t for t in live["teams"] if len(t["members"]) >= 2)
+        n = len(team["members"])
+        state = self.db.award_points(
+            class_id, kind="team", target_id=team["id"], amount=10, team_rule="split_members"
+        )
+        scored = next(t for t in state["teams"] if t["id"] == team["id"])
+        credits = [m["session_points"] for m in scored["members"]]
+        share = round(10 / n, 1)
+        self.assertTrue(all(c == share for c in credits))
+        leftover = round(10 - share * n, 1)
+        self.assertEqual(scored["bucket"], leftover)
+        self.assertEqual(scored["individual_sum"], round(share * n, 1))
+        self.assertEqual(scored["score"], 10)
+
+        state = self.db.award_points(
+            class_id, kind="team", target_id=team["id"], amount=7, team_rule="team_only"
+        )
+        scored = next(t for t in state["teams"] if t["id"] == team["id"])
+        self.assertEqual(scored["bucket"], leftover + 7)
+        self.assertEqual(
+            sum(m["session_points"] for m in scored["members"]),
+            round(share * n, 1),
+        )
+        self.assertEqual(scored["score"], 17)
+        dash = self.db.dashboard(class_id)
+        # Still live; credited cells already show split points, not the team-only 7.
+        session_id = state["session"]["id"]
+        member_id = scored["members"][0]["id"]
+        self.assertEqual(
+            dash["cells"][f"{session_id}:{member_id}"]["points"],
+            scored["members"][0]["session_points"],
+        )
+        with self.assertRaises(ValueError):
+            self.db.award_points(
+                class_id, kind="team", target_id=team["id"], amount=-5, team_rule="team_only"
+            )
+
+
+    def test_split_three_keeps_board_score(self) -> None:
+        """10 split three ways is 3.3 each; ESPN team total stays 10."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(
+            class_id,
+            2,
+            "manual",
+            assignments=[
+                {"student_id": present[0], "team_index": 0},
+                {"student_id": present[1], "team_index": 0},
+                {"student_id": present[2], "team_index": 0},
+                {"student_id": present[3], "team_index": 1},
+            ],
+        )
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        live = self.db.game_state(class_id)
+        trio = next(t for t in live["teams"] if len(t["members"]) == 3)
+        state = self.db.award_points(
+            class_id, kind="team", target_id=trio["id"], amount=10, team_rule="split_members"
+        )
+        scored = next(t for t in state["teams"] if t["id"] == trio["id"])
+        self.assertEqual([m["session_points"] for m in scored["members"]], [3.3, 3.3, 3.3])
+        self.assertEqual(scored["individual_sum"], 9.9)
+        self.assertEqual(scored["bucket"], 0.1)
+        self.assertEqual(scored["score"], 10)
+        board = self.db.scoreboard(class_id)
+        shown = next(t for t in board["teams"] if t["id"] == trio["id"])
+        self.assertEqual(shown["score"], 10)
 
 
 def _http_json(base: str, path: str, payload: dict | None = None) -> dict:
@@ -323,6 +505,14 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(dash["sessions"][0]["header_label"], "Tue 9/8 2:00pm")
         begin = _http_json(self.base, f"/api/classes/{class_id}/begin", {})
         present = [s["id"] for s in begin["students"][:4]]
+        moved = _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/meeting",
+            {"meeting_date": "2026-09-18", "time": "2:00pm"},
+        )
+        self.assertIn("Fri 9/18 2:00pm", moved["session"]["header_label"])
+        _http_json(self.base, f"/api/classes/{class_id}/game/cancel", {})
+        begin = _http_json(self.base, f"/api/classes/{class_id}/begin", {})
         _http_json(
             self.base,
             f"/api/classes/{class_id}/game/attendance",
@@ -347,7 +537,12 @@ class HttpApiTests(unittest.TestCase):
         _http_json(
             self.base,
             f"/api/classes/{class_id}/game/score",
-            {"kind": "team", "id": assigned["teams"][0]["id"], "amount": 10},
+            {
+                "kind": "team",
+                "id": assigned["teams"][0]["id"],
+                "amount": 10,
+                "team_rule": "team_only",
+            },
         )
         board = _http_json(self.base, f"/api/classes/{class_id}/scoreboard")
         self.assertTrue(board["live"])

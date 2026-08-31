@@ -20,6 +20,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from datetime import date
 from urllib.parse import parse_qs, unquote, urlparse
 
 APP_DIR = Path(__file__).resolve().parent
@@ -285,8 +286,27 @@ class GameShowHandler(BaseHTTPRequestHandler):
             return
         begin = re.match(r"^/api/classes/(\d+)/begin$", path)
         if begin:
-            state = db.begin_game(int(begin.group(1)))
+            meeting = _optional_date(body.get("meeting_date"))
+            state = db.begin_game(int(begin.group(1)), meeting_date=meeting)
             self._send_json(200, {"ok": True, **state})
+            return
+        meeting_post = re.match(r"^/api/classes/(\d+)/game/meeting$", path)
+        if meeting_post:
+            chosen = _optional_date(body.get("meeting_date"))
+            if chosen is None:
+                raise ValueError("meeting_date is required (YYYY-MM-DD)")
+            time_label = body.get("time")
+            state = db.set_meeting_date(
+                int(meeting_post.group(1)),
+                chosen,
+                time_label=str(time_label) if time_label else None,
+            )
+            self._send_json(200, {"ok": True, **state})
+            return
+        cancel = re.match(r"^/api/classes/(\d+)/game/cancel$", path)
+        if cancel:
+            result = db.cancel_setup(int(cancel.group(1)))
+            self._send_json(200, result)
             return
         attendance = re.match(r"^/api/classes/(\d+)/game/attendance$", path)
         if attendance:
@@ -301,10 +321,14 @@ class GameShowHandler(BaseHTTPRequestHandler):
             return
         assign = re.match(r"^/api/classes/(\d+)/game/assign$", path)
         if assign:
+            raw_assignments = body.get("assignments")
+            if raw_assignments is not None and not isinstance(raw_assignments, list):
+                raise ValueError("assignments must be a list")
             state = db.assign_teams(
                 int(assign.group(1)),
                 int(body.get("n_teams") or 0),
                 str(body.get("mode") or ""),
+                assignments=raw_assignments,
             )
             self._send_json(200, {"ok": True, **state})
             return
@@ -323,6 +347,7 @@ class GameShowHandler(BaseHTTPRequestHandler):
                 kind=str(body.get("kind") or ""),
                 target_id=int(body.get("id") or 0),
                 amount=int(body.get("amount") or 0),
+                team_rule=(str(body["team_rule"]) if body.get("team_rule") else None),
             )
             self._send_json(200, {"ok": True, **state})
             return
@@ -332,6 +357,17 @@ class GameShowHandler(BaseHTTPRequestHandler):
             self._send_json(200, result)
             return
         self._send_json(404, {"ok": False, "error": "Unknown API path"})
+
+
+def _optional_date(value: Any) -> date | None:
+    """Parse YYYY-MM-DD from a JSON field, or None if blank.
+
+    Args:
+        value: Raw JSON value.
+    """
+    if value is None or value == "":
+        return None
+    return date.fromisoformat(str(value)[:10])
 
 
 def main(argv: list[str] | None = None) -> int:

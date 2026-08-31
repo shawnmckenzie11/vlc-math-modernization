@@ -13,11 +13,13 @@ python3 tools/math-game-show/server.py
 Opens [http://127.0.0.1:8766/](http://127.0.0.1:8766/). Use `--no-browser` if you already have a tab.
 
 1. **Create New Class** (year / semester / course / Canvas CSV / days / time) or **Start Existing Class**.
-2. On the class dashboard, **Begin a New Game**: attendance → teams → names.
+2. On the class dashboard, **Begin a New Game**: confirm or change the date, then attendance → teams → names. Cancel returns to the class dashboard. A second game on the same slot is labeled `_2`, `_3`, … rather than jumping to the next class day.
 3. Keep the **teacher game** window on your machine. Share the **scoreboard** window on Zoom (`/scoreboard/<class_id>`).
-4. **End Game** writes present/absent + individual points into that date column and attaches a log link.
+4. **End Game** writes credited individual scores into that date column and attaches a log of immutable events.
 
 Python 3 stdlib only (sqlite3 + `ThreadingHTTPServer`). No pip install. Data lives in `tools/math-game-show/data/` (gitignored): `app.sqlite`, uploaded CSVs, JSONL logs.
+
+Scoring stores **immutable point events** plus separate **individual credited scores** and **team scores**. The class dashboard cell is that student's credited total for the session (individual awards, plus team awards when you choose “each member” or “split”). “Team only” awards raise the ESPN bar without changing individual cells.
 
 A sanitized Canvas-shaped fixture is at `fixtures/sample-canvas-grades.csv`. Do not commit real gradebook exports (IDs + first names).
 

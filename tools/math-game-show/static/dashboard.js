@@ -1,4 +1,4 @@
-import { api, classIdFromPath, displayName, escapeHtml, hideError, showError } from "./common.js";
+import { api, classIdFromPath, displayName, escapeHtml, formatPoints, hideError, showError } from "./common.js";
 
 const classId = classIdFromPath();
 const sortKey = `mgs-sort-${classId}`;
@@ -20,7 +20,9 @@ async function refresh() {
 }
 
 /**
- * Build the Excel-like table: names, one-or-more date columns, frozen TOTAL.
+ * Build the Excel-like table: names, date columns, frozen TOTAL.
+ * Session cells are that student's credited score for the game (not a
+ * blend of hidden team math). Team-only awards stay off this grid.
  * Future TODO: add/remove student rows; add/delete session columns by hand.
  * Future TODO: freeze TOTAL as a subtotal and start a fresh count afterward.
  * @param {any} data
@@ -43,10 +45,10 @@ function renderSheet(data) {
     for (const session of sessions) {
       const cell = data.cells[`${session.id}:${student.id}`] || { present: false, points: 0 };
       const kind = cell.present ? "present" : "absent";
-      html += `<td class="cell ${kind}">${escapeHtml(cell.points)}</td>`;
+      html += `<td class="cell ${kind}">${escapeHtml(formatPoints(cell.points))}</td>`;
     }
     const total = data.totals[String(student.id)] ?? 0;
-    html += `<td class="total">${escapeHtml(total)}</td></tr>`;
+    html += `<td class="total">${escapeHtml(formatPoints(total))}</td></tr>`;
   }
   html += "</tbody>";
   table.innerHTML = html;
