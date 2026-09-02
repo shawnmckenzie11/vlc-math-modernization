@@ -9,6 +9,7 @@ import {
   lockRoundDeadline,
   remainingUntilMs,
   hideError,
+  openScoreboardOverlay,
   showError,
   sortStudents,
 } from "./common.js";
@@ -419,18 +420,22 @@ document.getElementById("end-game").addEventListener("click", async () => {
 });
 
 /**
- * Open the scoreboard window once after Create Teams.
+ * Open the scoreboard window once after Create Teams (legacy query).
  */
 function maybeOpenScoreboard() {
   const params = new URLSearchParams(location.search);
   if (params.get("openscoreboard") !== "1") return;
-  window.open("/scoreboard", "mgs-scoreboard");
+  openScoreboardOverlay();
   params.delete("openscoreboard");
   const qs = params.toString();
   history.replaceState({}, "", `/class/${classId}/game${qs ? `?${qs}` : ""}`);
 }
 
 maybeOpenScoreboard();
+
+document.getElementById("open-overlay")?.addEventListener("click", () => {
+  openScoreboardOverlay();
+});
 
 /**
  * Poll so a second teacher window stays in sync with scoring.

@@ -167,3 +167,46 @@ export function lockRoundDeadline(currentMs, nextMs) {
   if (!currentMs || Math.abs(next - currentMs) > 750) return next;
   return currentMs;
 }
+
+const SCOREBOARD_OVERLAY_NAME = "mgs-scoreboard";
+
+/**
+ * Popup chrome for the student-facing ESPN overlay (Zoom share window).
+ * @returns {string}
+ */
+function scoreboardOverlayFeatures() {
+  const height = 400;
+  const width = Math.max(960, Math.round(Number(screen.availWidth) || 1280));
+  const top = Math.max(0, Math.round((Number(screen.availHeight) || 900) - height));
+  return `popup=yes,width=${width},height=${height},left=0,top=${top}`;
+}
+
+/**
+ * Reserve a popup during a click, before any ``await`` (avoids blockers).
+ * @returns {Window|null}
+ */
+export function reserveScoreboardOverlay() {
+  const win = window.open("about:blank", SCOREBOARD_OVERLAY_NAME, scoreboardOverlayFeatures());
+  return win && !win.closed ? win : null;
+}
+
+/**
+ * Point the reserved (or a new) window at the overlay scoreboard.
+ * @param {Window|null} [existing]
+ * @returns {Window|null}
+ */
+export function openScoreboardOverlay(existing) {
+  const url = "/scoreboard?overlay=1";
+  const features = scoreboardOverlayFeatures();
+  if (existing && !existing.closed) {
+    try {
+      existing.location.href = url;
+      existing.focus();
+      return existing;
+    } catch {
+      existing.close();
+    }
+  }
+  const win = window.open(url, SCOREBOARD_OVERLAY_NAME, features);
+  return win && !win.closed ? win : null;
+}

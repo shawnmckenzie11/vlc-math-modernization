@@ -6,6 +6,8 @@ import {
   escapeHtml,
   formatPoints,
   hideError,
+  openScoreboardOverlay,
+  reserveScoreboardOverlay,
   showError,
   sortStudents,
 } from "./common.js";
@@ -319,6 +321,7 @@ $("names-back").addEventListener("click", async () => {
 
 $("start-game").addEventListener("click", async () => {
   hideError("#error");
+  const overlay = reserveScoreboardOverlay();
   const teams = [...document.querySelectorAll("#name-list input")].map((el) => ({
     id: Number(el.dataset.teamId),
     name: el.value,
@@ -328,8 +331,10 @@ $("start-game").addEventListener("click", async () => {
       method: "POST",
       body: JSON.stringify({ teams }),
     });
-    location.href = `/class/${classId}/game?openscoreboard=1`;
+    openScoreboardOverlay(overlay);
+    location.href = `/class/${classId}/game`;
   } catch (err) {
+    overlay?.close();
     showError("#error", err);
   }
 });

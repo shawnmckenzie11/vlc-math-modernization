@@ -1,4 +1,4 @@
-import { api, classIdFromPath, displayName, escapeHtml, formatPoints, hideError, showError } from "./common.js";
+import { api, classIdFromPath, displayName, escapeHtml, formatPoints, hideError, openScoreboardOverlay, reserveScoreboardOverlay, showError } from "./common.js";
 
 const classId = classIdFromPath();
 const sortKey = `mgs-sort-${classId}`;
@@ -333,6 +333,7 @@ document.getElementById("stat-window-toggle")?.addEventListener("click", (event)
 
 document.getElementById("begin").addEventListener("click", async () => {
   hideError("#error");
+  const overlay = reserveScoreboardOverlay();
   try {
     const state = await api(`/api/classes/${classId}/begin`, {
       method: "POST",
@@ -340,11 +341,14 @@ document.getElementById("begin").addEventListener("click", async () => {
     });
     const status = state.game && state.game.status;
     if (status === "live") {
-      location.href = `/class/${classId}/game?openscoreboard=1`;
+      openScoreboardOverlay(overlay);
+      location.href = `/class/${classId}/game`;
       return;
     }
+    overlay?.close();
     location.href = `/class/${classId}/setup`;
   } catch (err) {
+    overlay?.close();
     showError("#error", err);
   }
 });
