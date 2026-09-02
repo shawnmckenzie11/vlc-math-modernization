@@ -16,7 +16,6 @@ async function loadNav() {
     nav.innerHTML = `<p class="hint">${data.message || "No module pack for this course yet."}</p>`;
     return;
   }
-  const code = data.code;
   let html = '<ul class="nav-list">';
   for (const mod of data.modules || []) {
     html += `<li class="mod">${escapeText(mod.title)}</li>`;
@@ -27,7 +26,7 @@ async function loadNav() {
         href: item.href || "",
         type: item.content_type || "",
       });
-      const url = `/lms/modules/${encodeURIComponent(code)}/item?${params}`;
+      const url = `/staff/class/${classId}/module-item?${params}`;
       html += `<li><button type="button" data-url="${escapeText(url)}">${escapeText(item.title)}</button></li>`;
     }
   }

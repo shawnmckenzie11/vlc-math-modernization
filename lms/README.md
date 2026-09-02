@@ -11,7 +11,9 @@ python3 lms/app.py
 
 Landing page: **http://127.0.0.1:8787/**
 
-Staff/IT: real Google OAuth (see [GOOGLE.md](GOOGLE.md)). First LLOVES login still shows a 6-digit code on the verify page until SMTP/Resend is configured. Mock Google is tests-only.
+IT can assign **Mathematics**, **Grade 11–12 Science**, and **Health and Physical Education** (plus MCF3M expectations). Other subjects are not in the catalog yet. Science/HPE PDFs: `python lms/fetch_ontario_curriculum_pdfs.py`.
+
+Staff/IT: real Google OAuth (see [GOOGLE.md](GOOGLE.md)). First LLOVES login emails a 6-digit code (see [DEPLOY.md](DEPLOY.md) for Resend/SMTP). The verify page shows the code only in local/dev when `ALLOW_DEV_VERIFICATION_CODE=1` and email is not configured — never when `FLASK_ENV=production`. Mock Google is tests-only.
 
 Bootstrap IT account: `solutions@mckenzian.com`
 
@@ -34,6 +36,6 @@ Deploy from the **repository root** (`fly.toml` there) so Docker copies `courses
 ## Tests
 
 ```bash
-python3 -m unittest lms.test_auth lms.test_it lms.test_roster
+python3 -m unittest lms.test_auth lms.test_it lms.test_roster lms.test_module_pack
 python3 tools/math-game-show/test_app.py
 ```

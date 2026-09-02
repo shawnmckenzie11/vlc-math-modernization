@@ -50,7 +50,18 @@ Do not turn the consent screen **Internal**.
 
 Production sqlite starts empty. Log in as IT (`solutions@mckenzian.com`) at https://alc.mckenzian.com → activate 2026–2027 S1 → register `rspercival10@gmail.com` → assign MCF3M.
 
-First Google login still asks for the 6-digit LLOVES code. Until Resend/SMTP is set, the code is shown on the verify page (`ALLOW_DEV_VERIFICATION_CODE=1`).
+First Google login emails a 6-digit LLOVES code to that Google account (later logins skip 2SV). Production never shows the code on the verify page (`FLASK_ENV=production`). Set Resend or SMTP **secrets** before anyone needs first login:
+
+```bash
+# Resend (preferred) — paste the key at the prompt; do not echo it into shell history if you can avoid it.
+fly secrets set RESEND_API_KEY='re_…' EMAIL_FROM='LLOVES <noreply@mckenzian.com>' --app lloves-lms
+
+# Or SMTP instead of / in addition to Resend
+fly secrets set SMTP_SERVER='smtp.example.com' SMTP_PORT='587' \
+  SMTP_USERNAME='…' SMTP_PASSWORD='…' --app lloves-lms
+```
+
+`ALLOW_DEV_VERIFICATION_CODE` is not set on Fly. Local `.env` may keep it for when email is not configured.
 
 ## Deploy commands (from repo root)
 

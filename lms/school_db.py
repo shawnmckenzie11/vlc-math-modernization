@@ -675,6 +675,7 @@ class SchoolDB(LovesDB):
         sys.modules.setdefault("mgs_db", mod)
         spec.loader.exec_module(mod)
         self.game = mod.GameShowDB(path, store)
+        self.data_dir = store
 
     def close(self) -> None:
         """Close both sqlite connections."""
@@ -751,6 +752,25 @@ class SchoolDB(LovesDB):
                 self.conn.commit()
             offering = self.get_offering(int(offering["id"]))
         return offering
+
+    def set_offering_imscc(self, offering_id: int, imscc_path: str) -> dict[str, Any]:
+        """Store a staff-uploaded Common Cartridge path on the offering.
+
+        Args:
+            offering_id: ``course_offerings.id``.
+            imscc_path: Absolute or volume-relative path to the ``.imscc``.
+
+        Returns:
+            Updated offering dict.
+        """
+        offering = self.get_offering(offering_id)
+        with self._lock:
+            self.conn.execute(
+                "UPDATE course_offerings SET imscc_path = ? WHERE id = ?",
+                (imscc_path, int(offering_id)),
+            )
+            self.conn.commit()
+        return self.get_offering(int(offering["id"]))
 
     def rotate_live_access_code(self, offering_id: int) -> dict[str, Any]:
         """Mint a new shared key for this (semester, course) pair."""

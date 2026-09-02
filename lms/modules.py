@@ -5,8 +5,11 @@ from __future__ import annotations
 import html
 import json
 import logging
+import os
 import re
 import sys
+import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote
@@ -24,6 +27,9 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 logger = logging.getLogger(__name__)
 
+# Canvas MCF3M export is ~189MB; allow a similar staff upload with headroom.
+IMSCC_MAX_BYTES = 250 * 1024 * 1024
+
 PLACEHOLDER_TYPES = {
     "Quizzes::Quiz",
     "Assignment",
@@ -39,6 +45,77 @@ _WEB_RES_RE = re.compile(
 )
 
 
+@dataclass(frozen=True)
+class ModulePackPaths:
+    """Resolved cartridge, unpacked tree, and inventory for one offering."""
+
+    imscc: Path | None
+    unpacked: Path
+    inventory: Path
+    preloaded: bool
+
+
+def module_pack_root(data_dir: Path, offering_id: int) -> Path:
+    """Volume-local folder for a staff-uploaded Common Cartridge.
+
+    Args:
+        data_dir: LMS data directory (``/data`` on Fly, ``lms/data`` locally).
+        offering_id: ``course_offerings.id``.
+    """
+    return Path(data_dir) / "module_packs" / str(int(offering_id))
+
+
+def resolve_module_pack(
+    ontario_code: str,
+    offering_imscc: str | None,
+    *,
+    data_dir: Path | None = None,
+    offering_id: int | None = None,
+) -> ModulePackPaths:
+    """Resolve IMSCC / unpacked / inventory paths for a course offering.
+
+    MCF3M uses the repo preloaded cartridge. Staff uploads live under
+    ``data_dir/module_packs/<offering_id>/``.
+
+    Args:
+        ontario_code: Assigned Ontario course code.
+        offering_imscc: Path stored on the offering, if any.
+        data_dir: LMS data directory (upload destination).
+        offering_id: Offering primary key (upload destination).
+    """
+    code = (ontario_code or "").strip().upper()
+    stored: Path | None = None
+    if offering_imscc:
+        raw = Path(offering_imscc)
+        stored = raw if raw.is_absolute() else (REPO_ROOT / raw)
+
+    mcf_default = code == "MCF3M" and MCF3M_IMSCC.is_file()
+    if stored and stored.is_file():
+        try:
+            is_mcf_file = stored.resolve() == MCF3M_IMSCC.resolve()
+        except OSError:
+            is_mcf_file = False
+        if mcf_default and is_mcf_file:
+            return ModulePackPaths(
+                MCF3M_IMSCC, MCF3M_UNPACKED, MCF3M_INVENTORY, True
+            )
+        root = stored.parent
+        return ModulePackPaths(
+            stored, root / "unpacked", root / "inventory.json", False
+        )
+    if mcf_default:
+        return ModulePackPaths(MCF3M_IMSCC, MCF3M_UNPACKED, MCF3M_INVENTORY, True)
+    if data_dir is not None and offering_id is not None:
+        root = module_pack_root(data_dir, int(offering_id))
+        return ModulePackPaths(None, root / "unpacked", root / "inventory.json", False)
+    return ModulePackPaths(
+        None,
+        unpacked_dir_for_code(code),
+        inventory_path_for_code(code),
+        False,
+    )
+
+
 def imscc_path_for_code(ontario_code: str, offering_imscc: str | None) -> Path | None:
     """Resolve a cartridge path from the offering or the MCF3M default.
 
@@ -49,14 +126,24 @@ def imscc_path_for_code(ontario_code: str, offering_imscc: str | None) -> Path |
     Returns:
         Path if the file exists, else None.
     """
-    if offering_imscc:
-        raw = Path(offering_imscc)
-        candidate = raw if raw.is_absolute() else (REPO_ROOT / raw)
-        if candidate.is_file():
-            return candidate
-    if ontario_code.upper() == "MCF3M" and MCF3M_IMSCC.is_file():
-        return MCF3M_IMSCC
-    return None
+    return resolve_module_pack(ontario_code, offering_imscc).imscc
+
+
+def offering_has_imscc(
+    ontario_code: str,
+    offering_imscc: str | None,
+    *,
+    data_dir: Path | None = None,
+    offering_id: int | None = None,
+) -> bool:
+    """Return True when Modules/Syllabus already have a readable .imscc."""
+    pack = resolve_module_pack(
+        ontario_code,
+        offering_imscc,
+        data_dir=data_dir,
+        offering_id=offering_id,
+    )
+    return pack.imscc is not None and pack.imscc.is_file()
 
 
 def unpacked_dir_for_code(ontario_code: str) -> Path:
@@ -77,18 +164,19 @@ def inventory_path_for_code(ontario_code: str) -> Path:
     return REPO_ROOT / "courses" / ontario_code.upper() / "canvas" / "inventory.json"
 
 
-def ensure_unpacked(imscc: Path, out_dir: Path) -> dict[str, Any]:
+def ensure_unpacked(imscc: Path, out_dir: Path, *, force: bool = False) -> dict[str, Any]:
     """Unpack the cartridge when the working tree is missing.
 
     Args:
         imscc: ``.imscc`` archive.
-        out_dir: Destination (gitignored).
+        out_dir: Destination (gitignored / volume).
+        force: If True, replace an existing unpack (used after staff upload).
 
     Returns:
         Status dict: ``ok``, ``unpacked``, ``error``.
     """
     wiki = out_dir / "wiki_content"
-    if wiki.is_dir():
+    if wiki.is_dir() and not force:
         return {"ok": True, "unpacked": False, "error": None}
     if not imscc.is_file():
         return {"ok": False, "unpacked": False, "error": "IMSCC archive is not on this machine."}
@@ -98,11 +186,165 @@ def ensure_unpacked(imscc: Path, out_dir: Path) -> dict[str, Any]:
         logger.exception("canvas_unpack import failed")
         return {"ok": False, "unpacked": False, "error": "Unpack tool is missing."}
     try:
-        canvas_unpack.unpack_imscc(imscc, out_dir, clean=False)
+        canvas_unpack.unpack_imscc(imscc, out_dir, clean=force)
     except Exception as exc:  # noqa: BLE001 — surface to the Modules empty state
         logger.exception("IMSCC unpack failed")
         return {"ok": False, "unpacked": False, "error": str(exc)}
     return {"ok": True, "unpacked": True, "error": None}
+
+
+def write_pack_inventory(imscc: Path, unpacked: Path, inventory_path: Path) -> Path:
+    """Write ``inventory.json`` used by the Modules left nav.
+
+    Args:
+        imscc: Cartridge file.
+        unpacked: Unpacked working tree (preferred when ``imsmanifest.xml`` exists).
+        inventory_path: Output JSON path.
+
+    Returns:
+        ``inventory_path``.
+    """
+    import canvas_inventory
+
+    root = unpacked if (unpacked / "imsmanifest.xml").is_file() else None
+    archive = imscc if imscc.is_file() else None
+    with canvas_inventory.CourseSource(root=root, archive=archive) as source:
+        inv = canvas_inventory.build_inventory(
+            source,
+            source_label="uploaded-imscc" if root is None else "unpacked",
+            imscc_path=str(imscc) if archive else None,
+            unpacked_path=str(unpacked) if root else None,
+        )
+    inventory_path.parent.mkdir(parents=True, exist_ok=True)
+    inventory_path.write_text(json.dumps(inv, indent=2) + "\n", encoding="utf-8")
+    return inventory_path
+
+
+def install_uploaded_module_pack(imscc: Path, dest_root: Path) -> dict[str, Any]:
+    """Unpack a stored cartridge and write inventory so Modules and Syllabus load.
+
+    Args:
+        imscc: Stored ``.imscc`` file (usually ``dest_root/course.imscc``).
+        dest_root: Offering folder on the data volume.
+
+    Returns:
+        Status dict with ``ok``, ``unpacked``, ``inventory``, ``error``.
+    """
+    dest_root.mkdir(parents=True, exist_ok=True)
+    unpacked = dest_root / "unpacked"
+    inventory_path = dest_root / "inventory.json"
+    status = ensure_unpacked(imscc, unpacked, force=True)
+    if not status.get("ok"):
+        return {**status, "inventory": None}
+    try:
+        write_pack_inventory(imscc, unpacked, inventory_path)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("inventory after IMSCC upload failed")
+        return {
+            "ok": False,
+            "unpacked": True,
+            "error": str(exc),
+            "inventory": None,
+        }
+    return {
+        "ok": True,
+        "unpacked": True,
+        "error": None,
+        "inventory": str(inventory_path),
+    }
+
+
+def validate_imscc_upload(filename: str, path: Path, *, max_bytes: int = IMSCC_MAX_BYTES) -> None:
+    """Raise ``ValueError`` if ``path`` is not a reasonable Common Cartridge.
+
+    Args:
+        filename: Original upload name (extension check).
+        path: Saved file on disk.
+        max_bytes: Size ceiling.
+
+    Raises:
+        ValueError: Type, size, ZIP, or missing ``imsmanifest.xml``.
+    """
+    name = (filename or "").lower().strip()
+    if not (name.endswith(".imscc") or name.endswith(".zip")):
+        raise ValueError("Module pack must be a .imscc (or .zip) Common Cartridge.")
+    if not path.is_file():
+        raise ValueError("Upload did not land on disk.")
+    size = path.stat().st_size
+    if size == 0:
+        raise ValueError("That file is empty.")
+    if size > max_bytes:
+        raise ValueError(
+            f"Module pack is too large (max {max_bytes // (1024 * 1024)} MB)."
+        )
+    with path.open("rb") as handle:
+        header = handle.read(4)
+    if header[:2] != b"PK":
+        raise ValueError("That file is not a ZIP/IMSCC archive.")
+    try:
+        with zipfile.ZipFile(path) as archive:
+            names = archive.namelist()
+    except zipfile.BadZipFile as exc:
+        raise ValueError("That file is not a readable ZIP/IMSCC archive.") from exc
+    if not any(n.rstrip("/").endswith("imsmanifest.xml") for n in names):
+        raise ValueError(
+            "That archive is missing imsmanifest.xml (not a Common Cartridge)."
+        )
+
+
+def save_uploaded_module_pack(
+    file_storage: Any,
+    dest_root: Path,
+    *,
+    max_bytes: int = IMSCC_MAX_BYTES,
+) -> Path:
+    """Validate, store, unpack, and inventory a staff IMSCC upload.
+
+    Args:
+        file_storage: Werkzeug ``FileStorage`` from the upload form.
+        dest_root: Offering folder (``module_packs/<id>/``).
+        max_bytes: Size ceiling.
+
+    Returns:
+        Path to the stored ``course.imscc``.
+
+    Raises:
+        ValueError: Invalid type, size, or cartridge contents.
+    """
+    if file_storage is None or not getattr(file_storage, "filename", None):
+        raise ValueError("Choose a .imscc module pack to upload.")
+    dest_root.mkdir(parents=True, exist_ok=True)
+    dest = dest_root / "course.imscc"
+    tmp = dest.with_suffix(".imscc.part")
+    if tmp.exists():
+        tmp.unlink()
+    file_storage.save(tmp)
+    try:
+        validate_imscc_upload(str(file_storage.filename), tmp, max_bytes=max_bytes)
+        os.replace(tmp, dest)
+    except Exception:
+        if tmp.exists():
+            tmp.unlink()
+        raise
+    status = install_uploaded_module_pack(dest, dest_root)
+    if not status.get("ok"):
+        raise ValueError(status.get("error") or "Could not unpack that module pack.")
+    return dest
+
+
+def load_inventory_file(path: Path) -> dict[str, Any] | None:
+    """Load a module-nav ``inventory.json`` from disk.
+
+    Args:
+        path: Inventory JSON path.
+    """
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
 
 
 def load_inventory(ontario_code: str) -> dict[str, Any] | None:
@@ -111,14 +353,7 @@ def load_inventory(ontario_code: str) -> dict[str, Any] | None:
     Args:
         ontario_code: Course code.
     """
-    path = inventory_path_for_code(ontario_code)
-    if not path.is_file():
-        return None
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    return data if isinstance(data, dict) else None
+    return load_inventory_file(inventory_path_for_code(ontario_code))
 
 
 def module_nav(inventory: dict[str, Any]) -> list[dict[str, Any]]:
@@ -159,17 +394,20 @@ def module_nav(inventory: dict[str, Any]) -> list[dict[str, Any]]:
     return nav
 
 
-def rewrite_wiki_html(raw: str, ontario_code: str) -> str:
+def rewrite_wiki_html(
+    raw: str, ontario_code: str, *, files_root: str | None = None
+) -> str:
     """Rewrite Canvas IMSCC tokens and relative asset URLs for LLOVES.
 
     Args:
         raw: Unpacked wiki HTML.
-        ontario_code: Course code used in file URLs.
+        ontario_code: Course code used in default file URLs.
+        files_root: Prefix for ``web_resources`` (class-scoped staff route).
     """
-    files_root = f"/lms/modules/{ontario_code}/files/web_resources"
-    html_out = _FILEBASE_RE.sub(files_root, raw)
+    root = files_root or f"/lms/modules/{ontario_code}/files/web_resources"
+    html_out = _FILEBASE_RE.sub(root, raw)
     html_out = _CANVAS_REF_RE.sub("#", html_out)
-    html_out = _WEB_RES_RE.sub(rf"\1{files_root}/", html_out)
+    html_out = _WEB_RES_RE.sub(rf"\1{root}/", html_out)
     return html_out
 
 

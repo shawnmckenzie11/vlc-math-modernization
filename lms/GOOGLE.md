@@ -83,7 +83,7 @@ Open **http://127.0.0.1:8787** → IT Login. You should go to `accounts.google.c
 ## 5. First login on LLOVES (after Google)
 
 1. Google account must match an allowlisted user (`solutions@mckenzian.com` is seeded as IT).
-2. First LLOVES login still asks for a 6-digit email code (shown on the verify page until SMTP/Resend is configured). Later Google logins skip that code.
+2. First LLOVES login emails a 6-digit code to that Google account (later Google logins skip that code). Production never displays the code on the verify page. Configure `RESEND_API_KEY` + `EMAIL_FROM`, or SMTP, in `.env` locally and as Fly secrets in production. `ALLOW_DEV_VERIFICATION_CODE=1` may show the code locally only when email is not configured.
 3. Unknown Google accounts get **403** and are not created.
 
 ## 6. Common Google errors

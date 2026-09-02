@@ -147,6 +147,92 @@ class ItTests(unittest.TestCase):
         rv = self.client.get(f"/staff/class/{created['id']}/syllabus/editor")
         self.assertIn(rv.status_code, {200, 302})
 
+    def test_extract_open_and_university_codes_from_text(self) -> None:
+        """TOC parser keeps Open courses (no 'Preparation') and university codes."""
+        from curriculum import extract_courses_from_pdf_text
+
+        text = (
+            "Grade 11\n"
+            "English, Grade 11, University Preparation (ENG3U)\n"
+            "Media Studies, Grade 11, Open (EMS3O)\n"
+            "Functions, University Preparation (MCR3U)\n"
+        )
+        courses = {row["code"]: row for row in extract_courses_from_pdf_text(text)}
+        self.assertIn("ENG3U", courses)
+        self.assertIn("EMS3O", courses)
+        self.assertIn("MCR3U", courses)
+        self.assertIn("Open", courses["EMS3O"]["title"])
+        self.assertNotIn("Open Preparation", courses["EMS3O"]["title"])
+        hale = extract_courses_from_pdf_text(
+            "Grade 9\nHealthy Active Living Education, Grade 9, Open (PPL1O)\n",
+            grade_digits="1234",
+        )
+        self.assertEqual(hale[0]["code"], "PPL1O")
+        self.assertEqual(hale[0]["grade"], 9)
+        spaced = extract_courses_from_pdf_text(
+            "Biology, Grade 11, College Preparation (SBI3C )\n"
+        )
+        self.assertEqual(spaced[0]["code"], "SBI3C")
+
+    def test_catalog_is_math_science_hpe_only(self) -> None:
+        """IT documents this round are Mathematics, Science, and HPE — not English/etc."""
+        from curriculum import ONTARIO_DOCUMENTS
+
+        subjects = {spec["subject"] for spec in ONTARIO_DOCUMENTS}
+        self.assertIn("Mathematics", subjects)
+        self.assertIn("Science", subjects)
+        self.assertTrue(any("Health and Physical Education" in s for s in subjects))
+        self.assertNotIn("English", subjects)
+        self.assertNotIn("The Arts", subjects)
+        self.assertNotIn("Business Studies", subjects)
+
+    def test_it_search_and_assign_non_math_when_extracted(self) -> None:
+        """IT autocomplete can assign a science or HPE code extracted from a local PDF."""
+        from curriculum import ONTARIO_DOCUMENTS, extract_courses_from_pdf
+        from paths import REPO_ROOT
+
+        catalog = {
+            row["code"]: row
+            for row in self.school.search_ontario_courses("", limit=300)
+        }
+        self.assertIn("MCF3M", catalog)
+        extracted = []
+        for spec in ONTARIO_DOCUMENTS:
+            if spec.get("subject") == "Mathematics":
+                continue
+            rel = spec.get("local_path") or ""
+            if not rel:
+                continue
+            extracted.extend(
+                extract_courses_from_pdf(
+                    REPO_ROOT / rel,
+                    grade_digits=spec.get("code_grade_digits") or "34",
+                )
+            )
+        if not extracted:
+            self.skipTest("No science/HPE Ontario PDF extract in this environment")
+        found = [row for row in extracted if row["code"] in catalog]
+        self.assertTrue(
+            found,
+            "seed_curriculum did not store extracted science/HPE codes",
+        )
+        picked = next(
+            (row for row in found if row["code"] in {"SBI3U", "PPL3O", "SNC3M"}),
+            found[0],
+        )
+        self.school.activate_from_semester_json()
+        teacher = self.school.register_staff("engteacher@gmail.com")
+        offering = self.school.assign_course(
+            teacher_user_id=int(teacher["id"]), ontario_code=picked["code"]
+        )
+        self.assertEqual(offering["ontario_code"], picked["code"])
+        self.assertEqual(offering["expectations_status"], "unverified")
+        self._login_it()
+        search = self.client.get(f"/it/courses?q={picked['code']}")
+        self.assertEqual(search.status_code, 200)
+        codes = {row["code"] for row in search.get_json()["courses"]}
+        self.assertIn(picked["code"], codes)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 LMS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = LMS_DIR.parent
@@ -26,6 +27,20 @@ class AuthTests(unittest.TestCase):
 
     def setUp(self) -> None:
         """Isolated sqlite + Flask test client."""
+        self._env_prev = {
+            key: os.environ.get(key)
+            for key in (
+                "FLASK_ENV",
+                "RESEND_API_KEY",
+                "SMTP_SERVER",
+                "SMTP_USERNAME",
+                "SMTP_PASSWORD",
+            )
+        }
+        for key in self._env_prev:
+            if key != "FLASK_ENV":
+                os.environ.pop(key, None)
+        os.environ.pop("FLASK_ENV", None)
         self.tmp = tempfile.TemporaryDirectory()
         root = Path(self.tmp.name)
         self.app = create_app(
@@ -37,9 +52,14 @@ class AuthTests(unittest.TestCase):
         self.client = self.app.test_client()
 
     def tearDown(self) -> None:
-        """Close db and temp dir."""
+        """Close db and temp dir; restore env."""
         self.school.close()
         self.tmp.cleanup()
+        for key, value in self._env_prev.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
 
     def _callback(self, email: str, portal: str = "staff"):
         """Mock Google OAuth: start then callback with an email."""
@@ -95,13 +115,57 @@ class AuthTests(unittest.TestCase):
     def test_first_login_requires_email_code_second_skips(self) -> None:
         """First LLOVES login is 2SV; later Google logins skip the email code."""
         self.school.register_staff("teacher@gmail.com")
-        first = self._callback("teacher@gmail.com", "staff")
+        with patch("email_service.send_verification_email", return_value=True) as mocked:
+            first = self._callback("teacher@gmail.com", "staff")
+            mocked.assert_called_once()
+            self.assertEqual(mocked.call_args.args[0], "teacher@gmail.com")
+            self.assertRegex(str(mocked.call_args.args[2]), r"^\d{6}$")
         self.assertIn("/verify-email", first.headers.get("Location", ""))
+        self.assertIn("sent=1", first.headers.get("Location", ""))
         self._complete_2sv("teacher@gmail.com")
         self.client.get("/logout")
         second = self._callback("teacher@gmail.com", "staff")
         self.assertEqual(second.status_code, 302)
         self.assertIn("/staff", second.headers.get("Location", ""))
+
+    def test_production_never_shows_verification_code(self) -> None:
+        """FLASK_ENV=production hides the on-page code even if ALLOW_DEV is on."""
+        self.school.register_staff("teacher@gmail.com")
+        self._callback("teacher@gmail.com", "staff")
+        user = self.school.get_user_by_email("teacher@gmail.com")
+        assert user is not None
+        code = str(user["verification_code"])
+        os.environ["FLASK_ENV"] = "production"
+        os.environ["ALLOW_DEV_VERIFICATION_CODE"] = "1"
+        rv = self.client.get("/verify-email")
+        body = rv.get_data(as_text=True)
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotIn(code, body)
+        self.assertNotIn("Dev code", body)
+
+    def test_configured_email_hides_on_page_code(self) -> None:
+        """When Resend is configured, the verify page does not print the code."""
+        os.environ["RESEND_API_KEY"] = "re_test_not_a_real_key"
+        self.school.register_staff("teacher@gmail.com")
+        with patch("email_service.send_verification_email", return_value=True):
+            self._callback("teacher@gmail.com", "staff")
+        user = self.school.get_user_by_email("teacher@gmail.com")
+        assert user is not None
+        code = str(user["verification_code"])
+        rv = self.client.get("/verify-email")
+        body = rv.get_data(as_text=True)
+        self.assertNotIn(code, body)
+        self.assertNotIn("Dev code", body)
+
+    def test_dev_page_shows_code_when_email_is_off(self) -> None:
+        """Local ALLOW_DEV + no Resend/SMTP still prints the code for developers."""
+        self.school.register_staff("teacher@gmail.com")
+        self._callback("teacher@gmail.com", "staff")
+        user = self.school.get_user_by_email("teacher@gmail.com")
+        assert user is not None
+        code = str(user["verification_code"])
+        rv = self.client.get("/verify-email")
+        self.assertIn(code, rv.get_data(as_text=True))
 
     def test_wrong_student_code_401(self) -> None:
         """Unknown 8-char keys are rejected."""

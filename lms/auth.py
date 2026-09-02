@@ -227,20 +227,22 @@ def staff_or_student_scoreboard(f: Callable) -> Callable:
     return decorated
 
 
-def _send_first_login_code(user: dict[str, Any]) -> str:
+def _send_first_login_code(user: dict[str, Any]) -> tuple[str, bool]:
     """Generate and store a 6-digit code; email it when delivery is configured.
 
     Args:
         user: Allowlisted user row.
 
     Returns:
-        The plaintext code (also stored on the user row).
+        ``(code, emailed)``. ``emailed`` is True only when Resend or SMTP
+        accepted the message. The code is stored on the user row; production
+        never puts it on the verify page.
     """
     code = f"{random.randint(100000, 999999)}"
     school_db().set_verification_code(int(user["id"]), code)
     name = user.get("display_name") or user["email"].split("@")[0]
-    email_service.send_verification_email(user["email"], name, code)
-    return code
+    emailed = email_service.send_verification_email(user["email"], name, code)
+    return code, emailed
 
 
 def _decode_google_jwt(jwt_token: str) -> dict[str, Any] | None:
@@ -309,9 +311,9 @@ def _finish_google_identity(
         ), 403
 
     if not user.get("verified_at"):
-        _send_first_login_code(user)
+        _code, emailed = _send_first_login_code(user)
         begin_pending_2sv(user, portal=portal_key)
-        return redirect(url_for("verify_email"))
+        return redirect(url_for("verify_email", sent="1" if emailed else "0"))
 
     establish_user_session(user, portal=portal_key)
     return _post_login_redirect(portal_key)
@@ -511,7 +513,7 @@ def register_auth_routes(app: Flask) -> None:
             error = error or email_service.delivery_status_message(False)
 
         dev_code = None
-        if email_service.allow_dev_verification_code() and not email_service.is_email_delivery_configured():
+        if email_service.show_on_page_verification_code():
             dev_code = user.get("verification_code")
 
         return render_template(
@@ -532,9 +534,8 @@ def register_auth_routes(app: Flask) -> None:
         user = db.get_user_by_id(int(session["pending_user_id"]))
         if not user or user.get("verified_at"):
             return redirect(url_for("landing"))
-        _send_first_login_code(user)
-        sent = 1 if email_service.is_email_delivery_configured() else 0
-        return redirect(url_for("verify_email", sent=sent))
+        _code, emailed = _send_first_login_code(user)
+        return redirect(url_for("verify_email", sent="1" if emailed else "0"))
 
     @app.route("/logout")
     def logout():

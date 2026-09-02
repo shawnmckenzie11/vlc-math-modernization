@@ -25,6 +25,22 @@ def allow_dev_verification_code() -> bool:
     }
 
 
+def is_production() -> bool:
+    """Return True when this process is running as production."""
+    return (os.getenv("FLASK_ENV") or "").strip().lower() == "production"
+
+
+def show_on_page_verification_code() -> bool:
+    """Whether the verify page may display the plaintext 6-digit code.
+
+    Production never shows the code. Local/dev may show it only when
+    ``ALLOW_DEV_VERIFICATION_CODE`` is on and Resend/SMTP is not configured.
+    """
+    if is_production():
+        return False
+    return allow_dev_verification_code() and not is_email_delivery_configured()
+
+
 def is_email_delivery_configured() -> bool:
     """Return True when Resend or SMTP credentials are present."""
     if (os.getenv("RESEND_API_KEY") or "").strip():

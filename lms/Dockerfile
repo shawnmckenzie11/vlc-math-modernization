@@ -17,6 +17,9 @@ RUN pip install --no-cache-dir -r lms/requirements.txt
 
 COPY . .
 
+# Science 11–12 + HPE 9–12 PDFs (not always in git). Skip if already copied.
+RUN python lms/fetch_ontario_curriculum_pdfs.py
+
 EXPOSE 8080
 
 CMD ["gunicorn", "--workers", "1", "--timeout", "120", "--bind", "0.0.0.0:8080", "--chdir", "lms", "app:create_app()"]

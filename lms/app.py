@@ -56,16 +56,22 @@ from auth import (  # noqa: E402
 from curriculum import seed_curriculum  # noqa: E402
 from school_db import SchoolDB  # noqa: E402
 from modules import (  # noqa: E402
+    IMSCC_MAX_BYTES,
     ensure_unpacked,
     imscc_path_for_code,
-    inventory_path_for_code,
     load_inventory,
+    load_inventory_file,
     module_nav,
+    module_pack_root,
+    offering_has_imscc,
     placeholder_html,
+    resolve_module_pack,
     rewrite_wiki_html,
     safe_unpacked_file,
+    save_uploaded_module_pack,
     unpacked_dir_for_code,
     wrap_page,
+    write_pack_inventory,
 )
 from paths import (  # noqa: E402
     DATA_DIR,
@@ -100,6 +106,64 @@ def _json_error(exc: BaseException):
     return jsonify({"ok": False, "error": str(exc)}), 500
 
 
+def _class_pack(school: SchoolDB, cls: dict[str, Any]):
+    """Resolve the IMSCC pack for a staff class row.
+
+    Args:
+        school: Open school database (provides ``data_dir``).
+        cls: Enriched class dict.
+
+    Returns:
+        ``ModulePackPaths`` for this offering.
+    """
+    code = str(cls.get("ontario_code") or cls.get("course_code") or "")
+    offering_id = cls.get("offering_id")
+    return resolve_module_pack(
+        code,
+        cls.get("imscc_path"),
+        data_dir=getattr(school, "data_dir", None),
+        offering_id=int(offering_id) if offering_id else None,
+    )
+
+
+def _serve_module_item(unpacked, ontario_code: str, *, files_root: str):
+    """Render one module-nav item from an unpacked IMSCC tree.
+
+    Args:
+        unpacked: Unpacked cartridge directory.
+        ontario_code: Course code (wiki rewrite fallback).
+        files_root: Prefix for ``web_resources`` URLs.
+    """
+    kind = request.args.get("kind") or "page"
+    title = request.args.get("title") or "Item"
+    href = request.args.get("href") or ""
+    content_type = request.args.get("type") or ""
+    if kind == "placeholder" or content_type in {
+        "Quizzes::Quiz",
+        "Assignment",
+        "DiscussionTopic",
+    }:
+        return placeholder_html(title, content_type)
+    if kind == "header":
+        return wrap_page(title, f"<h1>{title}</h1>")
+    if href.startswith("web_resources/") or kind == "file":
+        target = safe_unpacked_file(unpacked, href)
+        if not target:
+            abort(404)
+        return send_from_directory(target.parent, target.name)
+    rel = href if href.startswith("wiki_content/") else f"wiki_content/{href}"
+    target = safe_unpacked_file(unpacked, rel)
+    if not target:
+        return wrap_page(
+            title,
+            f"<h1>{title}</h1><p>This page is not in the unpacked module pack.</p>",
+        ), 404
+    raw = target.read_text(encoding="utf-8", errors="replace")
+    return wrap_page(
+        title, rewrite_wiki_html(raw, ontario_code, files_root=files_root)
+    )
+
+
 def create_app(
     *,
     db_path: Path | None = None,
@@ -121,6 +185,7 @@ def create_app(
     secret = os.getenv("FLASK_SECRET_KEY", "lloves-dev-secret-change-me")
     app.secret_key = secret
     app.config["TESTING"] = testing
+    app.config["MAX_CONTENT_LENGTH"] = IMSCC_MAX_BYTES
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=31)
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -139,6 +204,7 @@ def create_app(
         it_email=it_email or DEFAULT_IT_EMAIL,
     )
     app.config["SCHOOL_DB"] = school
+    app.config["DATA_DIR"] = store
     seed_curriculum(school)
 
     register_auth_routes(app)
@@ -149,6 +215,23 @@ def create_app(
 
 def _register_pages(app: Flask, school: SchoolDB) -> None:
     """Landing, IT, staff, student, static, and module/syllabus routes."""
+
+    @app.errorhandler(413)
+    def upload_too_large(_err):
+        """Reject oversized IMSCC uploads with a course-dashboard message."""
+        if request.path.endswith("/module-pack"):
+            session["pack_error"] = (
+                f"Module pack is too large (max {IMSCC_MAX_BYTES // (1024 * 1024)} MB)."
+            )
+            parts = request.path.strip("/").split("/")
+            try:
+                class_id = int(parts[parts.index("class") + 1])
+                return redirect(
+                    url_for("staff_course", class_id=class_id, tab="modules")
+                )
+            except (ValueError, IndexError):
+                pass
+        return ("File too large.", 413)
 
     @app.route("/static/<path:filename>")
     def static_files(filename: str):
@@ -189,7 +272,7 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
             active=active,
             staff=school.list_staff(),
             offerings=offerings,
-            courses=school.search_ontario_courses("", limit=80),
+            courses=school.search_ontario_courses("", limit=300),
             school_name=SCHOOL_NAME,
         )
         resp = make_response(html)
@@ -227,7 +310,7 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
     def it_search_courses():
         """JSON autocomplete for Ontario course codes."""
         q = request.args.get("q") or ""
-        return jsonify({"ok": True, "courses": school.search_ontario_courses(q)})
+        return jsonify({"ok": True, "courses": school.search_ontario_courses(q, limit=80)})
 
     @app.route("/it/offerings", methods=["POST"])
     @it_required
@@ -366,6 +449,15 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
         if offering:
             expectations = school.list_expectations(str(offering["ontario_code"]))
         tab = request.args.get("tab") or "modules"
+        code = str(cls.get("ontario_code") or cls.get("course_code") or "")
+        show_upload = not offering_has_imscc(
+            code,
+            cls.get("imscc_path"),
+            data_dir=school.data_dir,
+            offering_id=int(cls["offering_id"]) if cls.get("offering_id") else None,
+        )
+        pack_error = session.pop("pack_error", None)
+        pack_ok = request.args.get("pack") == "ok"
         return render_template(
             "staff/course.html",
             user=user,
@@ -374,6 +466,46 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
             expectations=expectations,
             tab=tab,
             school_name=SCHOOL_NAME,
+            show_module_pack_upload=show_upload,
+            pack_error=pack_error,
+            pack_ok=pack_ok,
+        )
+
+    @app.route("/staff/class/<int:class_id>/module-pack", methods=["POST"])
+    @staff_required
+    def staff_upload_module_pack(class_id: int):
+        """Accept a Common Cartridge for a class that has no preloaded IMSCC."""
+        user = current_user()
+        assert user is not None
+        if not school.teacher_owns_class(int(user["id"]), class_id):
+            abort(403)
+        cls = school.enrich_class(school.game.get_class(class_id))
+        offering_id = cls.get("offering_id")
+        if not offering_id:
+            abort(403)
+        offering = school.get_offering(int(offering_id))
+        if int(offering["teacher_user_id"]) != int(user["id"]) and user["role"] != "it":
+            abort(403)
+        code = str(offering["ontario_code"])
+        if offering_has_imscc(
+            code,
+            offering.get("imscc_path"),
+            data_dir=school.data_dir,
+            offering_id=int(offering["id"]),
+        ):
+            session["pack_error"] = "This course already has a module pack."
+            return redirect(url_for("staff_course", class_id=class_id, tab="modules"))
+        dest_root = module_pack_root(school.data_dir, int(offering["id"]))
+        try:
+            stored = save_uploaded_module_pack(
+                request.files.get("module_pack"), dest_root
+            )
+        except ValueError as exc:
+            session["pack_error"] = str(exc)
+            return redirect(url_for("staff_course", class_id=class_id, tab="modules"))
+        school.set_offering_imscc(int(offering["id"]), str(stored))
+        return redirect(
+            url_for("staff_course", class_id=class_id, tab="modules", pack="ok")
         )
 
     @app.route("/api/staff/class/<int:class_id>/modules")
@@ -386,12 +518,16 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
             return jsonify({"ok": False, "error": "Forbidden"}), 403
         cls = school.enrich_class(school.game.get_class(class_id))
         code = str(cls.get("ontario_code") or cls.get("course_code") or "")
-        imscc = imscc_path_for_code(code, cls.get("imscc_path"))
-        unpacked = unpacked_dir_for_code(code)
+        pack = _class_pack(school, cls)
         status = {"ok": True, "unpacked": False, "error": None}
-        if imscc:
-            status = ensure_unpacked(imscc, unpacked)
-        inventory = load_inventory(code)
+        if pack.imscc:
+            status = ensure_unpacked(pack.imscc, pack.unpacked)
+            if status.get("ok") and not pack.inventory.is_file():
+                try:
+                    write_pack_inventory(pack.imscc, pack.unpacked, pack.inventory)
+                except Exception as exc:  # noqa: BLE001
+                    status = {"ok": False, "unpacked": status.get("unpacked"), "error": str(exc)}
+        inventory = load_inventory_file(pack.inventory) or load_inventory(code)
         if not inventory:
             return jsonify(
                 {
@@ -402,7 +538,7 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
                     "modules": [],
                 }
             )
-        if not (unpacked / "wiki_content").is_dir():
+        if not (pack.unpacked / "wiki_content").is_dir():
             return jsonify(
                 {
                     "ok": True,
@@ -419,34 +555,12 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
     @app.route("/lms/modules/<code>/item")
     @staff_required
     def module_item(code: str):
-        """Serve a wiki page, file, or titled placeholder."""
-        kind = request.args.get("kind") or "page"
-        title = request.args.get("title") or "Item"
-        href = request.args.get("href") or ""
-        content_type = request.args.get("type") or ""
-        if kind == "placeholder" or content_type in {
-            "Quizzes::Quiz",
-            "Assignment",
-            "DiscussionTopic",
-        }:
-            return placeholder_html(title, content_type)
-        if kind == "header":
-            return wrap_page(title, f"<h1>{title}</h1>")
-        unpacked = unpacked_dir_for_code(code)
-        if href.startswith("web_resources/") or kind == "file":
-            target = safe_unpacked_file(unpacked, href)
-            if not target:
-                abort(404)
-            return send_from_directory(target.parent, target.name)
-        rel = href if href.startswith("wiki_content/") else f"wiki_content/{href}"
-        target = safe_unpacked_file(unpacked, rel)
-        if not target:
-            return wrap_page(
-                title,
-                f"<h1>{title}</h1><p>This page is not in the unpacked module pack.</p>",
-            ), 404
-        raw = target.read_text(encoding="utf-8", errors="replace")
-        return wrap_page(title, rewrite_wiki_html(raw, code))
+        """Serve a wiki page, file, or titled placeholder (course-code URL)."""
+        return _serve_module_item(
+            unpacked_dir_for_code(code),
+            code,
+            files_root=f"/lms/modules/{code}/files/web_resources",
+        )
 
     @app.route("/lms/modules/<code>/files/<path:rel>")
     @staff_required
@@ -454,6 +568,40 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
         """Serve a rewritten IMSCC asset from the unpacked tree."""
         unpacked = unpacked_dir_for_code(code)
         target = safe_unpacked_file(unpacked, rel)
+        if not target:
+            abort(404)
+        return send_from_directory(target.parent, target.name)
+
+    @app.route("/staff/class/<int:class_id>/module-item")
+    @staff_required
+    def staff_module_item(class_id: int):
+        """Serve a wiki page from this class's module pack."""
+        user = current_user()
+        assert user is not None
+        if not school.teacher_owns_class(int(user["id"]), class_id):
+            abort(403)
+        cls = school.enrich_class(school.game.get_class(class_id))
+        pack = _class_pack(school, cls)
+        code = str(cls.get("ontario_code") or cls.get("course_code") or "")
+        if pack.imscc:
+            ensure_unpacked(pack.imscc, pack.unpacked)
+        return _serve_module_item(
+            pack.unpacked,
+            code,
+            files_root=f"/staff/class/{class_id}/module-files/web_resources",
+        )
+
+    @app.route("/staff/class/<int:class_id>/module-files/<path:rel>")
+    @staff_required
+    def staff_module_file(class_id: int, rel: str):
+        """Serve an IMSCC asset from this class's unpacked pack."""
+        user = current_user()
+        assert user is not None
+        if not school.teacher_owns_class(int(user["id"]), class_id):
+            abort(403)
+        cls = school.enrich_class(school.game.get_class(class_id))
+        pack = _class_pack(school, cls)
+        target = safe_unpacked_file(pack.unpacked, rel)
         if not target:
             abort(404)
         return send_from_directory(target.parent, target.name)
@@ -1043,6 +1191,8 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT") or "8787")
     host = os.getenv("HOST") or "127.0.0.1"
     application = create_app()
+    catalog_n = len(application.config["SCHOOL_DB"].list_ontario_courses())
     print(f"LLOVES LMS: http://{host}:{port}/")
     print(f"Database: {application.config['SCHOOL_DB'].db_path}")
+    print(f"Ontario catalog: {catalog_n} courses")
     application.run(host=host, port=port, debug=os.getenv("FLASK_DEBUG") == "1")

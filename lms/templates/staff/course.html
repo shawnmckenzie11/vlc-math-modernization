@@ -24,6 +24,24 @@
       </div>
     </div>
 
+    {% if show_module_pack_upload %}
+    <section class="card" style="margin-bottom:1rem">
+      <h2>Upload Module Pack</h2>
+      <p class="hint">Upload a Canvas Common Cartridge (<code>.imscc</code>) to fill Modules and the syllabus editor for this class.</p>
+      {% if pack_error %}<div class="error">{{ pack_error }}</div>{% endif %}
+      {% if pack_ok %}<p>Module pack installed. Open Modules or Syllabus to use it.</p>{% endif %}
+      <form method="post" action="{{ url_for('staff_upload_module_pack', class_id=cls.id) }}" enctype="multipart/form-data">
+        <label class="field" for="module_pack">Common Cartridge file</label>
+        <input id="module_pack" name="module_pack" type="file" accept=".imscc,.zip,application/zip" required>
+        <div class="row-actions" style="margin-top:0.75rem">
+          <button type="submit">Upload Module Pack</button>
+        </div>
+      </form>
+    </section>
+    {% elif pack_ok %}
+    <p class="hint">Module pack installed.</p>
+    {% endif %}
+
     {% if expectations %}
     <details class="card exp-panel" style="margin-bottom:1rem">
       <summary>Inherited curriculum expectations ({{ cls.ontario_code or cls.course_code }})</summary>
@@ -52,7 +70,7 @@
     </div>
     <script type="module" src="/static/course_modules.js"></script>
     {% elif tab == 'syllabus' %}
-    <p class="hint">Click-to-place editor only (no sequential packer, no IMSCC upload). Calendar is locked from IT.</p>
+    <p class="hint">Click-to-place editor only (no sequential packer). Calendar is locked from IT.</p>
     <p class="row-actions">
       <a class="btn" href="{{ url_for('staff_syllabus_editor', class_id=cls.id) }}">Edit placements</a>
       <a class="btn secondary" href="{{ url_for('staff_syllabus', class_id=cls.id) }}">View saved calendar</a>
