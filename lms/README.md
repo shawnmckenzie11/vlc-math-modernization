@@ -5,7 +5,7 @@ Learning Live Online Virtually & Explicitly School. This app is **not** a rename
 ## Run locally
 
 ```bash
-python3 -m pip install flask requests python-dotenv
+python3 -m pip install -r lms/requirements.txt
 python3 lms/app.py
 ```
 
@@ -29,10 +29,11 @@ Authorized JavaScript origins and redirect URIs must include both localhost and 
 
 ## Fly.io
 
-See `lms/fly.toml`. Needs a persistent volume for `lms/data/` (sqlite + unpacked IMSCC).
+Deploy from the **repository root** (`fly.toml` there) so Docker copies `courses/` and `frameworks/`. See `lms/FLY.md`. Needs a persistent volume at `/data` for sqlite + unpacked IMSCC.
 
 ## Tests
 
 ```bash
 python3 -m unittest lms.test_auth lms.test_it lms.test_roster
+python3 tools/math-game-show/test_app.py
 ```

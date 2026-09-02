@@ -23,6 +23,8 @@ See `.env.example`. Set Google OAuth redirect URIs to:
 
 Consent screen: External, personal Google accounts (no Workspace domain restriction). App-side allowlist: IT registers staff emails first.
 
+Deploy Fly from the **repository root** (`fly.toml`) so the image includes `courses/` and `frameworks/`. Volume `/data` holds sqlite and unpacked IMSCC.
+
 ## Tests
 
 ```bash

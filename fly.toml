@@ -1,7 +1,11 @@
-# fly.toml — LLOVES LMS
+# LLOVES LMS — deploy from the repository root so Docker context
+# includes courses/, frameworks/, tools/, and scripts/.
 #
 # Google OAuth: add https://<app>.fly.dev/auth/google/callback
 # as an authorized redirect URI, and https://<app>.fly.dev as a JS origin.
+#
+#   fly deploy
+#   fly volumes create lloves_data --region yyz --size 3
 #
 # Persistent volume holds sqlite + unpacked IMSCC.
 

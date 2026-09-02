@@ -765,6 +765,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Set the live-game meeting date."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             chosen = _optional_date(body.get("meeting_date"))
             if chosen is None:
                 raise ValueError("meeting_date is required (YYYY-MM-DD)")
@@ -789,6 +790,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Save who is present."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             ids = [int(x) for x in (body.get("present_ids") or [])]
             return school.game.save_attendance(class_id, ids)
 
@@ -809,6 +811,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Assign teams."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             raw_assignments = body.get("assignments")
             if raw_assignments is not None and not isinstance(raw_assignments, list):
                 raise ValueError("assignments must be a list")
@@ -827,6 +830,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Rename teams."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             names = body.get("teams") or []
             if not isinstance(names, list):
                 raise ValueError("teams must be a list")
@@ -849,6 +853,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Award points — staff only."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             return school.game.award_points(
                 class_id,
                 kind=str(body.get("kind") or ""),
@@ -865,6 +870,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Add a late student to a live game."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             return school.game.add_late_student(
                 class_id,
                 int(body.get("student_id") or 0),
@@ -885,6 +891,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Add a Codename (LLOVES) or last/first (legacy)."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             return _dashboard_payload_from_add(class_id, body)
 
         return _staff_post(class_id, run)
@@ -907,6 +914,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Remove a roster row."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             dash = school.game.delete_student(
                 class_id,
                 int(body.get("student_id") or 0),
@@ -923,6 +931,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Append a session column."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             chosen = _optional_date(body.get("meeting_date"))
             if chosen is None:
                 raise ValueError("meeting_date is required (YYYY-MM-DD)")
@@ -943,6 +952,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Delete a session column."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             dash = school.game.delete_session_column(
                 class_id,
                 int(body.get("session_id") or 0),
@@ -959,6 +969,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Freeze a SUBTOTAL column."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             dash = school.game.freeze_subtotal(
                 class_id,
                 name=str(body["name"]) if body.get("name") else None,
@@ -975,6 +986,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Rename a frozen subtotal."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             dash = school.game.rename_subtotal(
                 class_id,
                 int(body.get("id") or 0),
@@ -992,6 +1004,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Delete a frozen subtotal."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             dash = school.game.delete_subtotal(
                 class_id,
                 int(body.get("id") or 0),
@@ -1008,6 +1021,7 @@ def _register_game_api(app: Flask, school: SchoolDB) -> None:
         """Set scoreboard stats period."""
 
         def run(body):
+            """Apply one staff JSON mutation for this class."""
             dash = school.game.set_stat_window(
                 class_id,
                 str(body.get("window") or ""),
