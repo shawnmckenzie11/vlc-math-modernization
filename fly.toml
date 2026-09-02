@@ -1,11 +1,11 @@
 # LLOVES LMS — deploy from the repository root so Docker context
 # includes courses/, frameworks/, tools/, and scripts/.
 #
-# Google OAuth: add https://<app>.fly.dev/auth/google/callback
-# as an authorized redirect URI, and https://<app>.fly.dev as a JS origin.
+# Public URL: https://alc.mckenzian.com
+# See lms/DEPLOY.md (Fly + Cloudflare CNAME, same pattern as hh / iaw).
 #
-#   fly deploy
 #   fly volumes create lloves_data --region yyz --size 3
+#   fly deploy
 #
 # Persistent volume holds sqlite + unpacked IMSCC.
 
@@ -14,6 +14,13 @@ primary_region = 'yyz'
 
 [build]
   dockerfile = 'lms/Dockerfile'
+
+[env]
+  FLASK_ENV = 'production'
+  IT_EMAILS = 'solutions@mckenzian.com'
+  GOOGLE_REDIRECT_URI = 'https://alc.mckenzian.com/auth/google/callback'
+  ALLOW_DEV_VERIFICATION_CODE = '1'
+  PUBLIC_APP_URL = 'https://alc.mckenzian.com'
 
 [http_service]
   internal_port = 8080

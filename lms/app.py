@@ -40,6 +40,7 @@ from flask import (  # noqa: E402
     session,
     url_for,
 )
+from werkzeug.middleware.proxy_fix import ProxyFix  # noqa: E402
 
 from auth import (  # noqa: E402
     current_user,
@@ -125,6 +126,9 @@ def create_app(
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     secure = (os.getenv("FLASK_ENV") or "").lower() == "production"
     app.config["SESSION_COOKIE_SECURE"] = secure and not testing
+    if secure:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+        app.config["PREFERRED_URL_SCHEME"] = "https"
 
     db_file = Path(db_path or os.getenv("LLOVES_DB") or DEFAULT_DB_PATH)
     store = Path(data_dir or os.getenv("LLOVES_DATA_DIR") or db_file.parent)
@@ -162,6 +166,11 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
             "landing.html",
             **landing_kwargs(one_tap_auto=returning),
         )
+
+    @app.route("/health")
+    def health():
+        """Fly / DNS liveness — no auth."""
+        return jsonify({"ok": True, "school": SCHOOL_SHORT})
 
     @app.route("/it")
     @it_required

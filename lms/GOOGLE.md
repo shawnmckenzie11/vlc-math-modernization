@@ -18,14 +18,14 @@ This is **Google Cloud Console** work (APIs & Services), not Google Workspace Ad
 | App name | Learning Live Online Virtually & Explicitly School |
 | User support email | `solutions@mckenzian.com` |
 | App logo | optional |
-| App domain / home page | `http://127.0.0.1:8787` for local; add the Fly URL later |
+| App domain / home page | `http://127.0.0.1:8787` for local; `https://alc.mckenzian.com` in production |
 | Developer contact | `solutions@mckenzian.com` |
 | Scopes | `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile` (non-sensitive) |
 | Publishing status | **Testing** until you are ready to publish |
 
 While **Testing**:
 
-- Add **Test users**: `solutions@mckenzian.com` and every personal Gmail that should be able to click Sign in with Google.
+- Add **Test users**: `solutions@mckenzian.com`, `rspercival10@gmail.com`, and every personal Gmail that should be able to click Sign in with Google.
 - Anyone not on that list sees Google’s “app hasn’t been verified” / access denied screen. That is Google, not LLOVES.
 
 Do **not** turn on “Google Workspace domain only” or pass `hd=` — that would block personal Gmail.
@@ -41,15 +41,15 @@ APIs & Services → Credentials → **Create credentials** → **OAuth client ID
 
 - `http://127.0.0.1:8787`
 - `http://localhost:8787` (only if you will open that host)
-- later: `https://<your-fly-app>.fly.dev`
+- `https://alc.mckenzian.com`
 
 **Authorized redirect URIs** (exact match, including `/auth/google/callback`):
 
 - `http://127.0.0.1:8787/auth/google/callback`
 - `http://localhost:8787/auth/google/callback` (if you added that origin)
-- later: `https://<your-fly-app>.fly.dev/auth/google/callback`
+- `https://alc.mckenzian.com/auth/google/callback`
 
-Google treats `localhost` and `127.0.0.1` as different. This repo’s default is **http://127.0.0.1:8787**.
+Google treats `localhost` and `127.0.0.1` as different. This repo’s default for local is **http://127.0.0.1:8787**. Production is **https://alc.mckenzian.com** (not a `.fly.dev` placeholder).
 
 If you **reuse** the Cannabis Paper Scraper Web client, add the LLOVES origins and redirect URIs to that client. Do not change the scraper’s existing URIs.
 
@@ -69,7 +69,7 @@ GOOGLE_REDIRECT_URI=http://127.0.0.1:8787/auth/google/callback
 IT_EMAILS=solutions@mckenzian.com
 ```
 
-`lms/.env` is gitignored. On Fly, set the same names as secrets (`fly secrets set GOOGLE_CLIENT_ID=...`) and set `GOOGLE_REDIRECT_URI` to the **https** callback.
+`lms/.env` is gitignored. On Fly, set the same names as secrets (`fly secrets set GOOGLE_CLIENT_ID=...`). Production `GOOGLE_REDIRECT_URI` is already `https://alc.mckenzian.com/auth/google/callback` in [`fly.toml`](../fly.toml).
 
 Restart the LMS after editing `.env`:
 
