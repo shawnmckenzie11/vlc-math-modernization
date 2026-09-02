@@ -13,6 +13,7 @@ from typing import Any, Callable
 import requests
 from flask import (
     Flask,
+    current_app,
     redirect,
     render_template,
     request,
@@ -25,14 +26,36 @@ from school_db import SchoolDB
 from paths import DEFAULT_IT_EMAIL, SCHOOL_NAME, SCHOOL_SHORT
 
 
+def google_client_id() -> str:
+    """Return the configured Web OAuth client id, or empty."""
+    return (os.getenv("GOOGLE_CLIENT_ID") or "").strip()
+
+
+def google_client_secret() -> str:
+    """Return the configured Web OAuth client secret, or empty."""
+    return (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
+
+
+def google_oauth_ready() -> bool:
+    """True when this process should redirect to real Google accounts.
+
+    Flask ``TESTING`` always uses the mock picker so unit tests stay offline
+    even if ``lms/.env`` has production credentials.
+    """
+    if current_app.config.get("TESTING"):
+        return False
+    return bool(google_client_id() and google_client_secret())
+
+
 def landing_kwargs(**extra: Any) -> dict[str, Any]:
     """Template context for the public landing page."""
     ctx = {
         "school_name": SCHOOL_NAME,
         "school_short": SCHOOL_SHORT,
-        "google_client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "google_client_id": google_client_id() if google_oauth_ready() else "",
         "one_tap_auto": False,
         "student_error": None,
+        "oauth_ready": google_oauth_ready(),
     }
     ctx.update(extra)
     return ctx
@@ -309,7 +332,7 @@ def register_auth_routes(app: Flask) -> None:
 
     @app.route("/auth/google")
     def auth_google():
-        """Start Google OAuth (or the mock picker when credentials are unset)."""
+        """Start Google OAuth, or the test mock / setup page when OAuth is off."""
         portal = (request.args.get("portal") or "staff").strip().lower()
         if portal not in {"staff", "it"}:
             portal = "staff"
@@ -329,17 +352,29 @@ def register_auth_routes(app: Flask) -> None:
                 session["portal"] = "staff"
                 return redirect(url_for("staff_home"))
 
-        client_id = os.getenv("GOOGLE_CLIENT_ID")
-        if not client_id:
+        if not google_oauth_ready():
+            if current_app.config.get("TESTING"):
+                app.logger.warning(
+                    "TESTING=1; using mock Google login instead of OAuth."
+                )
+                return render_template(
+                    "google_auth.html", portal=portal, school=SCHOOL_SHORT
+                )
             app.logger.warning(
-                "GOOGLE_CLIENT_ID is not configured; using mock Google login."
+                "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set; OAuth is off."
             )
-            return render_template("google_auth.html", portal=portal, school=SCHOOL_SHORT)
+            return render_template(
+                "google_setup.html",
+                portal=portal,
+                school=SCHOOL_SHORT,
+                school_name=SCHOOL_NAME,
+                redirect_uri=_google_redirect_uri(),
+            ), 503
 
         state = f"{random.randint(100000, 999999)}"
         session["google_oauth_state"] = state
         params = {
-            "client_id": client_id,
+            "client_id": google_client_id(),
             "redirect_uri": _google_redirect_uri(),
             "response_type": "code",
             "scope": "openid email profile",
@@ -356,8 +391,9 @@ def register_auth_routes(app: Flask) -> None:
     def auth_google_callback():
         """Complete OAuth, One Tap JWT, or mock Google login."""
         portal = session.get("oauth_portal") or request.args.get("portal") or "staff"
-        client_id = os.getenv("GOOGLE_CLIENT_ID")
-        client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+        client_id = google_client_id()
+        client_secret = google_client_secret()
+        oauth_ready = google_oauth_ready()
 
         jwt_token = request.form.get("credential")
         if jwt_token:
@@ -379,7 +415,9 @@ def register_auth_routes(app: Flask) -> None:
                 email=email, google_sub=str(google_id), name=name, portal=portal
             )
 
-        if not client_id or not client_secret:
+        if not oauth_ready:
+            if not current_app.config.get("TESTING"):
+                return redirect(url_for("auth_google", portal=portal))
             email = request.args.get("email")
             name = request.args.get("name") or (email.split("@")[0] if email else None)
             if not email:

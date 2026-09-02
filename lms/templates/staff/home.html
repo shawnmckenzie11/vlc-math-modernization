@@ -11,7 +11,7 @@
     <p class="kicker">Staff · {{ user.email }}{% if user.role == 'it' %} · <a href="{{ url_for('it_dashboard') }}">IT</a>{% endif %} · <a href="{{ url_for('logout') }}">Log out</a></p>
     <h1>Teacher Dashboard</h1>
     {% if active %}
-    <p class="sub">{{ active.label }} · inherited from IT. Student course codes are shown on each class.</p>
+    <p class="sub">{{ active.label }} · courses IT assigned to this account. Populate a class to add Codenames, days, and time.</p>
     {% else %}
     <p class="sub">Ask IT to activate a semester before you populate a class.</p>
     {% endif %}
@@ -20,27 +20,40 @@
     {% if not offerings %}
     <p>No course is assigned to you for the active semester. Ask IT to assign an Ontario course code.</p>
     {% else %}
-    <section id="mode-pick" class="choices">
-      <button type="button" class="choice" id="btn-create">
-        <strong>Populate Class</strong><br>
-        <span class="hint">Codenames, live-class days, and time. Year and course come from IT.</span>
-      </button>
-      <button type="button" class="choice" id="btn-existing">
-        <strong>Start Existing Class</strong><br>
-        <span class="hint">Open Modules, Syllabus, and Grades for a section you already populated.</span>
-      </button>
+    <section id="course-dash" class="course-dash">
+      {% for o in offerings %}
+      <article class="card" data-ontario-code="{{ o.ontario_code }}">
+        <p class="kicker">Assigned course</p>
+        <h2>{{ o.ontario_code }}</h2>
+        <p class="sub">{{ o.course_title }}</p>
+        <p>Student code <code class="live-code">{{ o.live_access_code }}</code></p>
+        {% if o.classes %}
+        <div class="class-list">
+          {% for cls in o.classes %}
+          <a class="btn secondary" href="{{ url_for('staff_course', class_id=cls.id) }}">{{ cls.days }} · {{ cls.time }}</a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="hint">No section yet.</p>
+        {% endif %}
+        <div class="row-actions" style="margin-top:0.75rem">
+          <button type="button" class="btn-populate" data-offering-id="{{ o.id }}">Populate Class</button>
+        </div>
+      </article>
+      {% endfor %}
     </section>
+    <select id="offering" class="hidden" aria-hidden="true">
+      {% for o in offerings %}
+      <option value="{{ o.id }}" data-code="{{ o.live_access_code }}">{{ o.ontario_code }} · student code {{ o.live_access_code }}</option>
+      {% endfor %}
+    </select>
 
     <section id="wizard" class="card hidden">
       <p class="wizard-progress" id="wiz-progress"></p>
       <h2 id="wiz-title">Populate Class</h2>
-      <div id="step-offering" class="{% if offerings|length == 1 %}hidden{% endif %}">
-        <label class="field" for="offering">Assigned course</label>
-        <select id="offering">
-          {% for o in offerings %}
-          <option value="{{ o.id }}" data-code="{{ o.live_access_code }}">{{ o.ontario_code }} · student code {{ o.live_access_code }}</option>
-          {% endfor %}
-        </select>
+      <div id="step-offering" class="hidden">
+        <label class="field" for="offering-visible">Assigned course</label>
+        <p id="offering-chosen" class="sub"></p>
       </div>
       <div id="step-roster" class="hidden">
         <label class="field" for="codename-input">Codenames (one per student)</label>
@@ -73,19 +86,6 @@
       </div>
     </section>
 
-    <section id="existing" class="card hidden">
-      <h2>Start Existing Class</h2>
-      <div id="class-list" class="class-list">
-        {% for cls in classes %}
-        <a class="btn secondary" href="{{ url_for('staff_course', class_id=cls.id) }}">{{ cls.course_code }} · {{ cls.days }} · {{ cls.time }}</a>
-        {% else %}
-        <p class="hint">No sections yet. Populate a class first.</p>
-        {% endfor %}
-      </div>
-      <div class="row-actions">
-        <button type="button" class="secondary" id="exist-back">Back</button>
-      </div>
-    </section>
     {% endif %}
   </div>
   <script type="module" src="/static/staff_home.js"></script>

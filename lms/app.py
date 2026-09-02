@@ -43,7 +43,9 @@ from flask import (  # noqa: E402
 
 from auth import (  # noqa: E402
     current_user,
+    google_oauth_ready,
     it_required,
+    landing_kwargs,
     login_required,
     register_auth_routes,
     staff_or_student_scoreboard,
@@ -155,15 +157,10 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
     @app.route("/")
     def landing():
         """Public landing: Staff Login, IT Login, Student Code."""
-        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
         returning = request.cookies.get("lloves_seen") == "1"
         return render_template(
             "landing.html",
-            school_name=SCHOOL_NAME,
-            school_short=SCHOOL_SHORT,
-            google_client_id=google_client_id,
-            one_tap_auto=returning,
-            student_error=None,
+            **landing_kwargs(one_tap_auto=returning),
         )
 
     @app.route("/it")

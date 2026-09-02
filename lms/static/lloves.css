@@ -59,6 +59,8 @@ code { font-family: ui-monospace, Menlo, monospace; }
 .nav-list .mod { color: var(--accent-2); margin-top: 0.7rem; font-weight: 650; }
 iframe.module-frame { width: 100%; min-height: 70vh; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 .sheet-wrap { overflow: auto; background: #fffdf8; color: #1c1914; border-radius: 10px; }
+.course-dash { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.course-dash h2 { margin: 0.2rem 0 0.35rem; }
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 @media (max-width: 700px) { .choices { grid-template-columns: 1fr; } }
 .class-list button { display: block; width: 100%; margin: 0.4rem 0; text-align: left; background: #1e3348; color: var(--ink); }
@@ -67,3 +69,5 @@ iframe.module-frame { width: 100%; min-height: 70vh; border: 1px solid var(--lin
 .exp-panel { font-size: 0.85rem; color: var(--muted); }
 .exp-panel code { color: var(--accent-2); }
 .live-code { font-size: 1.4rem; letter-spacing: 0.12em; font-family: ui-monospace, Menlo, monospace; }
+.setup-steps { color: var(--ink); line-height: 1.55; padding-left: 1.2rem; }
+.setup-steps li { margin: 0.45rem 0; }

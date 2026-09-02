@@ -12,11 +12,11 @@ python3 lms/app.py
 # http://127.0.0.1:8787
 ```
 
-Without `GOOGLE_CLIENT_ID`, Staff/IT login uses a mock Google email form (allowlisted accounts only).
+Staff/IT use **real Google OAuth**. Mock email login is tests-only. Follow [GOOGLE.md](GOOGLE.md) (same Web client + External consent screen as the Cannabis Paper Scraper).
 
 ## Environment
 
-See `.env.example`. Set Google OAuth redirect URIs to:
+Copy `.env.example` to `.env` and paste the Cloud Console client id/secret. Redirect URIs:
 
 - `http://127.0.0.1:8787/auth/google/callback`
 - `https://<fly-app>.fly.dev/auth/google/callback`

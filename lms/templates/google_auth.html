@@ -8,9 +8,9 @@
 </head>
 <body>
   <div class="wrap" style="max-width:28rem">
-    <p class="kicker">Mock Google · {{ portal }} portal</p>
+    <p class="kicker">Test mock · {{ portal }} portal</p>
     <h1>Simulated Google Sign-In</h1>
-    <p class="sub">GOOGLE_CLIENT_ID is not set. Enter an allowlisted personal Google email.</p>
+    <p class="sub">Flask TESTING is on. Unit tests use this form. For a real browser login, set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in lms/.env (see GOOGLE.md) and restart without TESTING.</p>
     <form method="get" action="{{ url_for('auth_google_callback') }}">
       <input type="hidden" name="portal" value="{{ portal }}">
       <label class="field" for="email">Google email</label>

@@ -11,7 +11,7 @@ python3 lms/app.py
 
 Landing page: **http://127.0.0.1:8787/**
 
-Without `GOOGLE_CLIENT_ID`, Staff/IT login uses a mock Google email form. First login shows a 6-digit code on the verify page (email is not sent until SMTP is configured).
+Staff/IT: real Google OAuth (see [GOOGLE.md](GOOGLE.md)). First LLOVES login still shows a 6-digit code on the verify page until SMTP/Resend is configured. Mock Google is tests-only.
 
 Bootstrap IT account: `solutions@mckenzian.com`
 

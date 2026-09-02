@@ -1,7 +1,6 @@
 import { api, hideError, showError } from "/static/common.js";
 
-const offeringCount = document.querySelectorAll("#offering option").length;
-const STEPS = offeringCount > 1 ? ["offering", "roster", "days", "time"] : ["roster", "days", "time"];
+const STEPS = ["roster", "days", "time"];
 const TITLES = {
   offering: "Assigned course",
   roster: "Codenames",
@@ -70,13 +69,30 @@ function addNames(raw) {
 }
 
 /**
- * Show the home picker.
+ * Show the assigned-course dashboard.
  */
 function showPicker() {
-  $("mode-pick")?.classList.remove("hidden");
+  $("course-dash")?.classList.remove("hidden");
   $("wizard")?.classList.add("hidden");
-  $("existing")?.classList.add("hidden");
   hideError("#error");
+}
+
+/**
+ * Start the roster wizard for one IT-assigned course.
+ * @param {string} offeringId
+ */
+function startPopulate(offeringId) {
+  const select = $("offering");
+  if (select) select.value = String(offeringId);
+  const label = select?.selectedOptions?.[0]?.textContent || "";
+  const chosen = $("offering-chosen");
+  if (chosen) chosen.textContent = label;
+  $("course-dash")?.classList.add("hidden");
+  $("wizard")?.classList.remove("hidden");
+  step = 0;
+  names.length = 0;
+  renderRoster();
+  renderStep();
 }
 
 /**
@@ -131,21 +147,11 @@ async function submitClass() {
   location.href = `/staff/class/${data.class.id}`;
 }
 
-$("btn-create")?.addEventListener("click", () => {
-  $("mode-pick").classList.add("hidden");
-  $("wizard").classList.remove("hidden");
-  step = 0;
-  names.length = 0;
-  renderRoster();
-  renderStep();
+document.querySelectorAll(".btn-populate").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    startPopulate(btn.getAttribute("data-offering-id") || "");
+  });
 });
-
-$("btn-existing")?.addEventListener("click", () => {
-  $("mode-pick").classList.add("hidden");
-  $("existing").classList.remove("hidden");
-});
-
-$("exist-back")?.addEventListener("click", showPicker);
 
 $("wiz-back")?.addEventListener("click", () => {
   if (step === 0) {
