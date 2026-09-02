@@ -139,7 +139,10 @@ class ModulePackTests(unittest.TestCase):
         """SBI3U (no preloaded IMSCC) can upload a cartridge for Modules + Syllabus."""
         dash = self.client.get(f"/staff/class/{self.eng_class['id']}")
         self.assertEqual(dash.status_code, 200)
-        self.assertIn("Upload Module Pack", dash.get_data(as_text=True))
+        html = dash.get_data(as_text=True)
+        self.assertIn("Upload Module Pack", html)
+        self.assertIn("pack-progress", html)
+        self.assertIn("/static/module_pack_upload.js", html)
         empty_nav = self.client.get(
             f"/api/staff/class/{self.eng_class['id']}/modules"
         )
@@ -191,6 +194,58 @@ class ModulePackTests(unittest.TestCase):
         self.assertIn("Module pack must be a .imscc", rv.get_data(as_text=True))
         offering = self.school.get_offering(int(self.eng_offering["id"]))
         self.assertFalse(offering.get("imscc_path"))
+
+    def test_module_pack_status_idle_then_unpacking(self) -> None:
+        """Status starts idle and reflects a written install_status.json."""
+        from modules import module_pack_root, read_pack_status, write_pack_status
+
+        rv = self.client.get(
+            f"/staff/class/{self.eng_class['id']}/module-pack/status"
+        )
+        self.assertEqual(rv.status_code, 200)
+        idle = rv.get_json()
+        self.assertEqual(idle["stage"], "idle")
+        self.assertFalse(idle["busy"])
+
+        dest = module_pack_root(
+            Path(self.tmp.name), int(self.eng_offering["id"])
+        )
+        write_pack_status(
+            dest,
+            stage="unpacking",
+            detail="Unpacking Common Cartridge… this can take a few minutes",
+        )
+        busy = self.client.get(
+            f"/staff/class/{self.eng_class['id']}/module-pack/status"
+        ).get_json()
+        self.assertEqual(busy["stage"], "unpacking")
+        self.assertTrue(busy["busy"])
+        self.assertIn("Unpacking Common Cartridge", busy["detail"])
+        disk = read_pack_status(dest)
+        self.assertEqual(disk["stage"], "unpacking")
+
+    def test_json_upload_installs_and_reports_redirect(self) -> None:
+        """XHR upload (tests run install synchronously) returns JSON + installed pack."""
+        payload = _minimal_imscc_bytes()
+        rv = self.client.post(
+            f"/staff/class/{self.eng_class['id']}/module-pack",
+            data={"module_pack": (io.BytesIO(payload), "english.imscc")},
+            headers={
+                "X-Requested-With": "XMLHttpRequest",
+                "Accept": "application/json",
+            },
+        )
+        self.assertEqual(rv.status_code, 200)
+        body = rv.get_json()
+        self.assertTrue(body.get("ok"))
+        self.assertFalse(body.get("installing"))
+        self.assertIn("pack=ok", body.get("redirect") or "")
+        offering = self.school.get_offering(int(self.eng_offering["id"]))
+        self.assertTrue(offering.get("imscc_path"))
+        status = self.client.get(
+            f"/staff/class/{self.eng_class['id']}/module-pack/status"
+        ).get_json()
+        self.assertEqual(status["stage"], "done")
 
 
 if __name__ == "__main__":

@@ -9,8 +9,10 @@ Usage:
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
+import threading
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -59,19 +61,23 @@ from modules import (  # noqa: E402
     IMSCC_MAX_BYTES,
     ensure_unpacked,
     imscc_path_for_code,
+    install_uploaded_module_pack,
     load_inventory,
     load_inventory_file,
     module_nav,
     module_pack_root,
     offering_has_imscc,
     placeholder_html,
+    read_pack_status,
     resolve_module_pack,
     rewrite_wiki_html,
     safe_unpacked_file,
     save_uploaded_module_pack,
+    store_uploaded_module_pack,
     unpacked_dir_for_code,
     wrap_page,
     write_pack_inventory,
+    write_pack_status,
 )
 from paths import (  # noqa: E402
     DATA_DIR,
@@ -95,6 +101,9 @@ def _optional_date(value: Any) -> date | None:
     return date.fromisoformat(str(value)[:10])
 
 
+logger = logging.getLogger(__name__)
+
+
 def _json_error(exc: BaseException):
     """Map domain exceptions to JSON API errors."""
     if isinstance(exc, KeyError):
@@ -104,6 +113,14 @@ def _json_error(exc: BaseException):
     if isinstance(exc, ValueError):
         return jsonify({"ok": False, "error": str(exc)}), 400
     return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+def _wants_json() -> bool:
+    """True when the client asked for a JSON module-pack response."""
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return True
+    best = request.accept_mimetypes.best_match(("application/json", "text/html"))
+    return best == "application/json"
 
 
 def _class_pack(school: SchoolDB, cls: dict[str, Any]):
@@ -216,13 +233,59 @@ def create_app(
 def _register_pages(app: Flask, school: SchoolDB) -> None:
     """Landing, IT, staff, student, static, and module/syllabus routes."""
 
+    def _owned_offering_for_pack(class_id: int) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Return the class and offering for a staff module-pack route, or abort.
+
+        Args:
+            class_id: Staff class id.
+        """
+        user = current_user()
+        assert user is not None
+        if not school.teacher_owns_class(int(user["id"]), class_id):
+            abort(403)
+        cls = school.enrich_class(school.game.get_class(class_id))
+        offering_id = cls.get("offering_id")
+        if not offering_id:
+            abort(403)
+        offering = school.get_offering(int(offering_id))
+        if int(offering["teacher_user_id"]) != int(user["id"]) and user["role"] != "it":
+            abort(403)
+        return cls, offering
+
+    def _install_module_pack_job(
+        offering_id: int, stored: Path, dest_root: Path
+    ) -> None:
+        """Unpack, inventory, and attach a stored cartridge (background thread).
+
+        Args:
+            offering_id: ``course_offerings.id``.
+            stored: Path to ``course.imscc`` already on disk.
+            dest_root: Offering ``module_packs/<id>/`` folder.
+        """
+        try:
+            status = install_uploaded_module_pack(stored, dest_root)
+            if not status.get("ok"):
+                return
+            school.set_offering_imscc(int(offering_id), str(stored))
+            write_pack_status(
+                dest_root, stage="done", detail="Module pack installed."
+            )
+        except Exception as exc:  # noqa: BLE001 — surface on the status poll
+            logger.exception("Background module-pack install failed")
+            write_pack_status(
+                dest_root, stage="error", detail=str(exc), error=str(exc)
+            )
+
     @app.errorhandler(413)
     def upload_too_large(_err):
         """Reject oversized IMSCC uploads with a course-dashboard message."""
         if request.path.endswith("/module-pack"):
-            session["pack_error"] = (
+            message = (
                 f"Module pack is too large (max {IMSCC_MAX_BYTES // (1024 * 1024)} MB)."
             )
+            if _wants_json():
+                return jsonify({"ok": False, "error": message}), 413
+            session["pack_error"] = message
             parts = request.path.strip("/").split("/")
             try:
                 class_id = int(parts[parts.index("class") + 1])
@@ -475,17 +538,7 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
     @staff_required
     def staff_upload_module_pack(class_id: int):
         """Accept a Common Cartridge for a class that has no preloaded IMSCC."""
-        user = current_user()
-        assert user is not None
-        if not school.teacher_owns_class(int(user["id"]), class_id):
-            abort(403)
-        cls = school.enrich_class(school.game.get_class(class_id))
-        offering_id = cls.get("offering_id")
-        if not offering_id:
-            abort(403)
-        offering = school.get_offering(int(offering_id))
-        if int(offering["teacher_user_id"]) != int(user["id"]) and user["role"] != "it":
-            abort(403)
+        _, offering = _owned_offering_for_pack(class_id)
         code = str(offering["ontario_code"])
         if offering_has_imscc(
             code,
@@ -493,20 +546,59 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
             data_dir=school.data_dir,
             offering_id=int(offering["id"]),
         ):
-            session["pack_error"] = "This course already has a module pack."
+            message = "This course already has a module pack."
+            if _wants_json():
+                return jsonify({"ok": False, "error": message}), 400
+            session["pack_error"] = message
             return redirect(url_for("staff_course", class_id=class_id, tab="modules"))
         dest_root = module_pack_root(school.data_dir, int(offering["id"]))
+        done_url = url_for(
+            "staff_course", class_id=class_id, tab="modules", pack="ok"
+        )
+        json_client = _wants_json()
+        background = json_client and not app.config.get("TESTING")
         try:
-            stored = save_uploaded_module_pack(
-                request.files.get("module_pack"), dest_root
-            )
+            if background:
+                stored = store_uploaded_module_pack(
+                    request.files.get("module_pack"), dest_root
+                )
+            else:
+                stored = save_uploaded_module_pack(
+                    request.files.get("module_pack"), dest_root
+                )
         except ValueError as exc:
+            if json_client:
+                return jsonify({"ok": False, "error": str(exc)}), 400
             session["pack_error"] = str(exc)
             return redirect(url_for("staff_course", class_id=class_id, tab="modules"))
+        if background:
+            worker = threading.Thread(
+                target=_install_module_pack_job,
+                args=(int(offering["id"]), stored, dest_root),
+                daemon=True,
+            )
+            worker.start()
+            return jsonify(
+                {
+                    "ok": True,
+                    "installing": True,
+                    "redirect": done_url,
+                }
+            )
         school.set_offering_imscc(int(offering["id"]), str(stored))
-        return redirect(
-            url_for("staff_course", class_id=class_id, tab="modules", pack="ok")
-        )
+        if json_client:
+            return jsonify(
+                {"ok": True, "installing": False, "redirect": done_url}
+            )
+        return redirect(done_url)
+
+    @app.route("/staff/class/<int:class_id>/module-pack/status")
+    @staff_required
+    def staff_module_pack_status(class_id: int):
+        """JSON progress for a module-pack save/unpack in progress."""
+        _, offering = _owned_offering_for_pack(class_id)
+        dest_root = module_pack_root(school.data_dir, int(offering["id"]))
+        return jsonify(read_pack_status(dest_root))
 
     @app.route("/api/staff/class/<int:class_id>/modules")
     @staff_required

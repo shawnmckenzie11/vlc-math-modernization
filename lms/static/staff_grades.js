@@ -60,10 +60,6 @@ function payloadStatWindow(data) {
 function paint(data) {
   latest = data;
   const cls = data.class;
-  const sortBtn = document.getElementById("sort-toggle");
-  if (sortBtn) {
-    sortBtn.textContent = sort === "za" ? "Sort: Z–A" : "Sort: A–Z";
-  }
   document.querySelectorAll("[data-round-view]").forEach((btn) => {
     const on = btn.dataset.roundView === roundView;
     btn.classList.toggle("on", on);
@@ -98,7 +94,8 @@ function renderSheet(data) {
     ...session,
   }));
   const students = data.students || [];
-  let html = "<thead><tr><th class='name'>Student</th>";
+  const sortLabel = sort === "za" ? "Sort: Z–A" : "Sort: A–Z";
+  let html = `<thead><tr><th class='name'>Student <button type="button" class="secondary" id="sort-toggle">${sortLabel}</button></th>`;
   for (const column of columns) {
     if (column.kind === "subtotal") {
       html += `<th class="subtotal-col">${escapeHtml(column.name || column.header_label)}
@@ -309,12 +306,6 @@ async function mutate(url, extra) {
   paint(data);
 }
 
-document.getElementById("sort-toggle")?.addEventListener("click", () => {
-  sort = sort === "az" ? "za" : "az";
-  localStorage.setItem(sortKey, sort);
-  refresh().catch((err) => showError("#error", err));
-});
-
 document.querySelector("[aria-label='Lesson score view']")?.addEventListener("click", (event) => {
   const btn = event.target instanceof Element ? event.target.closest("[data-round-view]") : null;
   if (!btn) return;
@@ -414,6 +405,13 @@ document.getElementById("confirm-dialog")?.addEventListener("click", (event) => 
 document.getElementById("sheet").addEventListener("click", (event) => {
   const target = event.target instanceof Element ? event.target : event.target.parentElement;
   if (!target) return;
+  if (target.closest("#sort-toggle")) {
+    event.preventDefault();
+    sort = sort === "az" ? "za" : "az";
+    localStorage.setItem(sortKey, sort);
+    refresh().catch((err) => showError("#error", err));
+    return;
+  }
   const delStudent = target.closest("[data-del-student]");
   if (delStudent) {
     event.preventDefault();

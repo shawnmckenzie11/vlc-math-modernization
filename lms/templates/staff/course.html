@@ -23,13 +23,18 @@
       <p class="hint">Upload a Canvas Common Cartridge (<code>.imscc</code>) to fill Modules and the syllabus editor for this class.</p>
       {% if pack_error %}<div class="error">{{ pack_error }}</div>{% endif %}
       {% if pack_ok %}<p>Module pack installed. Open Modules or Syllabus to use it.</p>{% endif %}
-      <form method="post" action="{{ url_for('staff_upload_module_pack', class_id=cls.id) }}" enctype="multipart/form-data">
+      <form id="module-pack-form" method="post" action="{{ url_for('staff_upload_module_pack', class_id=cls.id) }}" enctype="multipart/form-data" data-class-id="{{ cls.id }}">
         <label class="field" for="module_pack">Common Cartridge file</label>
         <input id="module_pack" name="module_pack" type="file" accept=".imscc,.zip,application/zip" required>
         <div class="row-actions" style="margin-top:0.75rem">
-          <button type="submit">Upload Module Pack</button>
+          <button type="submit" id="module-pack-submit">Upload Module Pack</button>
+        </div>
+        <div id="pack-progress" class="pack-progress" hidden>
+          <progress id="pack-progress-bar" max="100" value="0"></progress>
+          <p id="pack-progress-detail" class="pack-progress-detail" role="status" aria-live="polite"></p>
         </div>
       </form>
+      <script type="module" src="/static/module_pack_upload.js"></script>
     </section>
     {% elif pack_ok %}
     <p class="hint">Module pack installed.</p>
@@ -73,36 +78,51 @@
     <div id="grades-root" data-class-id="{{ cls.id }}">
       <div class="topbar">
         <div class="row-actions">
-          <button type="button" class="secondary" id="sort-toggle">Sort: A–Z</button>
-          <div class="view-toggle" role="group" aria-label="Lesson score view">
-            <button type="button" class="on" data-round-view="total" aria-pressed="true">Total</button>
-            <button type="button" data-round-view="r1" aria-pressed="false">Open Question</button>
-            <button type="button" data-round-view="r2" aria-pressed="false">Team Challenge</button>
-            <button type="button" data-round-view="r3" aria-pressed="false">Formative</button>
-            <button type="button" data-round-view="all" aria-pressed="false">All</button>
-          </div>
-          <div class="view-toggle" id="stat-window-toggle" role="group" aria-label="Scoreboard stats period">
-            <button type="button" class="on" data-stat-window="last_class" aria-pressed="true">Last class</button>
-            <button type="button" data-stat-window="last_week" aria-pressed="false">Last week</button>
-            <button type="button" data-stat-window="year" aria-pressed="false">This year</button>
-          </div>
-          <button type="button" id="begin">Begin a New Game</button>
+          <button type="button" id="begin">Start Live Class Tracker</button>
         </div>
       </div>
+      <section class="card grades-panel">
+        <h2>Class Data View</h2>
+        <div class="view-toggle" role="group" aria-label="Lesson score view">
+          <button type="button" class="on" data-round-view="total" aria-pressed="true">Total</button>
+          <button type="button" data-round-view="r1" aria-pressed="false">Open Question</button>
+          <button type="button" data-round-view="r2" aria-pressed="false">Team Challenge</button>
+          <button type="button" data-round-view="r3" aria-pressed="false">Formative</button>
+          <button type="button" data-round-view="all" aria-pressed="false">All</button>
+        </div>
+      </section>
       <div id="error" class="error" hidden></div>
       <div class="sheet-wrap">
-        <table class="sheet" id="sheet"></table>
+        <table class="sheet" id="sheet">
+          <thead>
+            <tr>
+              <th class="name">Student <button type="button" class="secondary" id="sort-toggle">Sort: A–Z</button></th>
+            </tr>
+          </thead>
+        </table>
       </div>
-      <div class="sheet-tools">
+      <section class="card grades-panel">
+        <h2>Scoreboard period</h2>
+        <div class="view-toggle" id="stat-window-toggle" role="group" aria-label="Scoreboard stats period">
+          <button type="button" class="on" data-stat-window="last_class" aria-pressed="true">Last class</button>
+          <button type="button" data-stat-window="last_week" aria-pressed="false">Last week</button>
+          <button type="button" data-stat-window="year" aria-pressed="false">This year</button>
+        </div>
+      </section>
+      <section class="card grades-panel">
+        <h2>Add Student</h2>
         <form id="add-student" class="tool-form">
           <input id="new-codename" type="text" placeholder="Codename" autocomplete="off">
           <button type="submit">Add student</button>
         </form>
+      </section>
+      <section class="card grades-panel">
+        <h2>Log TOTAL</h2>
         <form id="freeze-sub" class="tool-form">
           <input id="sub-name" type="text" value="SUBTOTAL" placeholder="SUBTOTAL" autocomplete="off">
           <button type="submit">Log TOTAL as Subtotal</button>
         </form>
-      </div>
+      </section>
     </div>
     <dialog id="confirm-dialog" class="confirm-dialog">
       <form method="dialog">

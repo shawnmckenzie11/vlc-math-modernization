@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import sys
+import time
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 # Canvas MCF3M export is ~189MB; allow a similar staff upload with headroom.
 IMSCC_MAX_BYTES = 250 * 1024 * 1024
+PACK_STATUS_NAME = "install_status.json"
+PACK_BUSY_STAGES = frozenset({"saving", "validating", "unpacking", "inventory"})
 
 PLACEHOLDER_TYPES = {
     "Quizzes::Quiz",
@@ -63,6 +66,88 @@ def module_pack_root(data_dir: Path, offering_id: int) -> Path:
         offering_id: ``course_offerings.id``.
     """
     return Path(data_dir) / "module_packs" / str(int(offering_id))
+
+
+def pack_status_path(dest_root: Path) -> Path:
+    """Return the install-status JSON path for an offering pack folder.
+
+    Args:
+        dest_root: Offering ``module_packs/<id>/`` folder.
+    """
+    return Path(dest_root) / PACK_STATUS_NAME
+
+
+def write_pack_status(
+    dest_root: Path,
+    *,
+    stage: str,
+    detail: str,
+    error: str | None = None,
+) -> None:
+    """Atomically write pack install progress for the staff upload UI to poll.
+
+    Args:
+        dest_root: Offering ``module_packs/<id>/`` folder.
+        stage: Machine-readable step (``saving``, ``unpacking``, ``done``, …).
+        detail: Short teacher-facing sentence.
+        error: Failure message when ``stage`` is ``error``.
+    """
+    dest_root = Path(dest_root)
+    dest_root.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "ok": stage not in {"error"},
+        "stage": stage,
+        "detail": detail,
+        "error": error,
+        "busy": stage in PACK_BUSY_STAGES,
+        "updated_at": time.time(),
+    }
+    path = pack_status_path(dest_root)
+    tmp = path.with_suffix(".json.tmp")
+    try:
+        tmp.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError:
+        logger.exception("Could not write module-pack status")
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
+
+
+def read_pack_status(dest_root: Path) -> dict[str, Any]:
+    """Load install status, or an idle payload when none has been written.
+
+    Args:
+        dest_root: Offering ``module_packs/<id>/`` folder.
+    """
+    idle = {
+        "ok": True,
+        "stage": "idle",
+        "detail": "",
+        "error": None,
+        "busy": False,
+        "updated_at": None,
+    }
+    path = pack_status_path(Path(dest_root))
+    if not path.is_file():
+        return idle
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return idle
+    if not isinstance(data, dict):
+        return idle
+    stage = str(data.get("stage") or "idle")
+    return {
+        "ok": bool(data.get("ok", stage != "error")),
+        "stage": stage,
+        "detail": str(data.get("detail") or ""),
+        "error": data.get("error"),
+        "busy": stage in PACK_BUSY_STAGES,
+        "updated_at": data.get("updated_at"),
+    }
 
 
 def resolve_module_pack(
@@ -233,13 +318,22 @@ def install_uploaded_module_pack(imscc: Path, dest_root: Path) -> dict[str, Any]
     dest_root.mkdir(parents=True, exist_ok=True)
     unpacked = dest_root / "unpacked"
     inventory_path = dest_root / "inventory.json"
+    write_pack_status(
+        dest_root,
+        stage="unpacking",
+        detail="Unpacking Common Cartridge… this can take a few minutes",
+    )
     status = ensure_unpacked(imscc, unpacked, force=True)
     if not status.get("ok"):
+        err = str(status.get("error") or "Could not unpack that module pack.")
+        write_pack_status(dest_root, stage="error", detail=err, error=err)
         return {**status, "inventory": None}
+    write_pack_status(dest_root, stage="inventory", detail="Writing module inventory…")
     try:
         write_pack_inventory(imscc, unpacked, inventory_path)
     except Exception as exc:  # noqa: BLE001
         logger.exception("inventory after IMSCC upload failed")
+        write_pack_status(dest_root, stage="error", detail=str(exc), error=str(exc))
         return {
             "ok": False,
             "unpacked": True,
@@ -292,13 +386,13 @@ def validate_imscc_upload(filename: str, path: Path, *, max_bytes: int = IMSCC_M
         )
 
 
-def save_uploaded_module_pack(
+def store_uploaded_module_pack(
     file_storage: Any,
     dest_root: Path,
     *,
     max_bytes: int = IMSCC_MAX_BYTES,
 ) -> Path:
-    """Validate, store, unpack, and inventory a staff IMSCC upload.
+    """Validate and store an IMSCC upload without unpacking it.
 
     Args:
         file_storage: Werkzeug ``FileStorage`` from the upload form.
@@ -318,17 +412,49 @@ def save_uploaded_module_pack(
     tmp = dest.with_suffix(".imscc.part")
     if tmp.exists():
         tmp.unlink()
-    file_storage.save(tmp)
+    write_pack_status(dest_root, stage="saving", detail="Saving upload to disk…")
     try:
+        file_storage.save(tmp)
+        write_pack_status(
+            dest_root, stage="validating", detail="Checking Common Cartridge…"
+        )
         validate_imscc_upload(str(file_storage.filename), tmp, max_bytes=max_bytes)
         os.replace(tmp, dest)
-    except Exception:
+    except Exception as exc:
         if tmp.exists():
             tmp.unlink()
+        message = str(exc) if isinstance(exc, ValueError) else "Could not store that module pack."
+        write_pack_status(dest_root, stage="error", detail=message, error=message)
         raise
+    return dest
+
+
+def save_uploaded_module_pack(
+    file_storage: Any,
+    dest_root: Path,
+    *,
+    max_bytes: int = IMSCC_MAX_BYTES,
+) -> Path:
+    """Validate, store, unpack, and inventory a staff IMSCC upload.
+
+    Args:
+        file_storage: Werkzeug ``FileStorage`` from the upload form.
+        dest_root: Offering folder (``module_packs/<id>/``).
+        max_bytes: Size ceiling.
+
+    Returns:
+        Path to the stored ``course.imscc``.
+
+    Raises:
+        ValueError: Invalid type, size, or cartridge contents.
+    """
+    dest = store_uploaded_module_pack(
+        file_storage, dest_root, max_bytes=max_bytes
+    )
     status = install_uploaded_module_pack(dest, dest_root)
     if not status.get("ok"):
         raise ValueError(status.get("error") or "Could not unpack that module pack.")
+    write_pack_status(dest_root, stage="done", detail="Module pack installed.")
     return dest
 
 

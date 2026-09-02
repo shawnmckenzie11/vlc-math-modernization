@@ -124,3 +124,31 @@ body.staff-shell #grades-root .view-toggle button.on {
   color: #fff;
   border-color: #0b5f59;
 }
+body.staff-shell .grades-panel {
+  margin-top: 1rem;
+}
+body.staff-shell .grades-panel h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.65rem;
+}
+body.staff-shell table.sheet th.name #sort-toggle {
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  font-size: 0.8rem;
+  padding: 0.28rem 0.55rem;
+  font-weight: 650;
+}
+body.staff-shell .pack-progress {
+  margin-top: 0.85rem;
+}
+body.staff-shell .pack-progress progress {
+  display: block;
+  width: 100%;
+  height: 0.85rem;
+  accent-color: #0f766e;
+}
+body.staff-shell .pack-progress-detail {
+  margin: 0.4rem 0 0;
+  font-size: 0.88rem;
+  color: #3d4f63;
+}

@@ -93,6 +93,11 @@ class RosterTests(unittest.TestCase):
         self.assertNotIn(">Grades</a>", html)
         self.assertIn("<h1>MCF3M</h1>", html)
         self.assertNotIn("Tue/Thu/Fri", html)
+        self.assertIn("Start Live Class Tracker", html)
+        self.assertIn("Class Data View", html)
+        self.assertIn(">Add Student</h2>", html)
+        self.assertIn(">Log TOTAL</h2>", html)
+        self.assertNotIn("Begin a New Game", html)
 
     def test_staff_home_populate_vs_repopulate(self) -> None:
         """Empty offerings say Populate Class; existing sections say Repopulate."""
