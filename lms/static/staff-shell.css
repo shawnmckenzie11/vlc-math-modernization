@@ -1,0 +1,126 @@
+/* Staff home + course chrome. Loaded last so Math Game Show app.css cannot
+   wash out body text (that file resets :root to dark ink on cream paper). */
+body.staff-shell {
+  background: #e8eef4;
+  color: #12202e;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+body.staff-shell a { color: #0b5f59; }
+body.staff-shell .wrap { color: #12202e; }
+body.staff-shell .wrap.course-shell { max-width: none; }
+body.staff-shell .kicker {
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 0.9rem;
+  color: #334155;
+}
+body.staff-shell h1,
+body.staff-shell h2 {
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+body.staff-shell .sub,
+body.staff-shell .hint,
+body.staff-shell .wizard-progress,
+body.staff-shell label,
+body.staff-shell .field {
+  color: #3d4f63;
+}
+body.staff-shell .card {
+  background: #fff;
+  border: 1px solid #c5d0dc;
+  border-left: 4px solid #0f766e;
+  color: #12202e;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+body.staff-shell .course-dash h2 { margin: 0.15rem 0 0.25rem; }
+body.staff-shell .live-code {
+  color: #0f172a;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.12rem 0.4rem;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+}
+body.staff-shell .schedule-line {
+  margin: 0.65rem 0 0.45rem;
+  color: #12202e;
+  font-size: 0.98rem;
+}
+body.staff-shell .class-section { margin-bottom: 0.75rem; }
+body.staff-shell .class-list .btn-open-course { display: inline-block; margin: 0; }
+body.staff-shell .row-actions { margin-top: 0.75rem; }
+body.staff-shell .btn,
+body.staff-shell .btn-populate,
+body.staff-shell .row-actions > button {
+  background: #0f766e;
+  color: #fff;
+  border: 1px solid #0b5f59;
+  font-weight: 650;
+}
+body.staff-shell .btn:hover,
+body.staff-shell .btn-populate:hover,
+body.staff-shell .row-actions > button:hover {
+  border-color: #0b5f59;
+  filter: brightness(1.05);
+}
+body.staff-shell button.secondary,
+body.staff-shell .btn.secondary,
+body.staff-shell .btn-populate.secondary {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #64748b;
+}
+body.staff-shell button.danger {
+  background: #9f1239;
+  color: #fff;
+  border-color: #9f1239;
+}
+body.staff-shell input,
+body.staff-shell select,
+body.staff-shell textarea {
+  background: #fff;
+  color: #12202e;
+  border: 1px solid #94a3b8;
+}
+body.staff-shell .tabs a {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #94a3b8;
+}
+body.staff-shell .tabs a.on {
+  background: #0f766e;
+  color: #fff;
+  border-color: #0b5f59;
+}
+body.staff-shell .tabs { flex-wrap: wrap; }
+body.staff-shell .nav-list button {
+  color: #12202e;
+  background: transparent;
+  border: 0;
+  text-align: left;
+}
+body.staff-shell .nav-list .mod { color: #0b5f59; }
+body.staff-shell .exp-panel { color: #3d4f63; }
+body.staff-shell .exp-panel code { color: #0b5f59; }
+body.staff-shell .error {
+  background: #fef2f2;
+  color: #9f1239;
+  border: 1px solid #fecaca;
+}
+body.staff-shell .sheet-wrap {
+  background: #fffdf8;
+  color: #1c1914;
+  padding: 0.5rem;
+}
+body.staff-shell #grades-root .view-toggle button {
+  background: #fff;
+  color: #12202e;
+  border: 1px solid #94a3b8;
+}
+body.staff-shell #grades-root .view-toggle button.on {
+  background: #0f766e;
+  color: #fff;
+  border-color: #0b5f59;
+}

@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Staff · {{ school_name }}</title>
   <link rel="stylesheet" href="/static/lloves.css">
+  <link rel="stylesheet" href="/static/staff-shell.css">
 </head>
-<body>
+<body class="staff-shell">
   <div class="wrap">
     <p class="kicker">Staff · {{ user.email }}{% if user.role == 'it' %} · <a href="{{ url_for('it_dashboard') }}">IT</a>{% endif %} · <a href="{{ url_for('logout') }}">Log out</a></p>
     <h1>Teacher Dashboard</h1>
@@ -30,14 +31,17 @@
         {% if o.classes %}
         <div class="class-list">
           {% for cls in o.classes %}
-          <a class="btn secondary" href="{{ url_for('staff_course', class_id=cls.id) }}">{{ cls.days }} · {{ cls.time }}</a>
+          <div class="class-section">
+            <p class="schedule-line">Schedule: {{ cls.days }} · {{ cls.time }}</p>
+            <a class="btn btn-open-course" href="{{ url_for('staff_course', class_id=cls.id) }}">OPEN COURSE</a>
+          </div>
           {% endfor %}
         </div>
         {% else %}
         <p class="hint">No section yet.</p>
         {% endif %}
-        <div class="row-actions" style="margin-top:0.75rem">
-          <button type="button" class="btn-populate" data-offering-id="{{ o.id }}">Populate Class</button>
+        <div class="row-actions">
+          <button type="button" class="btn-populate secondary" data-offering-id="{{ o.id }}">{% if o.classes %}Repopulate Class{% else %}Populate Class{% endif %}</button>
         </div>
       </article>
       {% endfor %}

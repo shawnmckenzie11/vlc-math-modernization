@@ -334,7 +334,7 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
     @app.route("/staff")
     @staff_required
     def staff_home():
-        """Populate Class / Start Existing Class."""
+        """Teacher course cards: populate, repopulate, or open a class."""
         user = current_user()
         assert user is not None
         active = school.get_active_semester()
@@ -438,7 +438,7 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
     @app.route("/staff/class/<int:class_id>")
     @staff_required
     def staff_course(class_id: int):
-        """Course dashboard shell: Modules / Syllabus / Grades."""
+        """Course dashboard: Modules, Syllabus, Track Attendance & Participation."""
         user = current_user()
         assert user is not None
         if not school.teacher_owns_class(int(user["id"]), class_id):

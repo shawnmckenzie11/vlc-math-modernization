@@ -89,6 +89,57 @@ class RosterTests(unittest.TestCase):
         html = course.get_data(as_text=True)
         self.assertIn("Codename", html)
         self.assertNotIn('placeholder="Last name"', html)
+        self.assertIn("Track Attendance &amp; Participation", html)
+        self.assertNotIn(">Grades</a>", html)
+        self.assertIn("<h1>MCF3M</h1>", html)
+        self.assertNotIn("Tue/Thu/Fri", html)
+
+    def test_staff_home_populate_vs_repopulate(self) -> None:
+        """Empty offerings say Populate Class; existing sections say Repopulate."""
+        home = self.client.get("/staff")
+        self.assertEqual(home.status_code, 200)
+        empty = home.get_data(as_text=True)
+        self.assertRegex(
+            empty,
+            r'<button[^>]*class="btn-populate secondary"[^>]*>Populate Class</button>',
+        )
+        self.assertNotIn("Repopulate Class", empty)
+        self.assertNotIn("OPEN COURSE", empty)
+        self.assertNotIn("Schedule:", empty)
+
+        created = self.client.post(
+            "/api/staff/classes",
+            json={
+                "offering_id": self.offering["id"],
+                "days": "M/W/F",
+                "time": "2:00pm",
+                "codenames": ["Maple"],
+            },
+        )
+        self.assertEqual(created.status_code, 200)
+        class_id = created.get_json()["class"]["id"]
+
+        filled = self.client.get("/staff").get_data(as_text=True)
+        self.assertRegex(
+            filled,
+            r'<button[^>]*class="btn-populate secondary"[^>]*>Repopulate Class</button>',
+        )
+        self.assertNotRegex(
+            filled,
+            r'<button[^>]*class="btn-populate secondary"[^>]*>Populate Class</button>',
+        )
+        self.assertIn("OPEN COURSE", filled)
+        self.assertIn("Schedule: Mon/Wed/Fri · 2:00pm", filled)
+        self.assertIn(f"/staff/class/{class_id}", filled)
+
+        dash = self.client.get(f"/staff/class/{class_id}").get_data(as_text=True)
+        self.assertIn("<h1>MCF3M</h1>", dash)
+        self.assertIn("Track Attendance &amp; Participation", dash)
+        self.assertIn(">Modules</a>", dash)
+        self.assertIn(">Syllabus</a>", dash)
+        header, _, _ = dash.partition('class="tabs"')
+        self.assertNotIn("Mon/Wed/Fri", header)
+        self.assertNotIn("Student code", header)
 
 
 if __name__ == "__main__":

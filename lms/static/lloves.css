@@ -71,3 +71,5 @@ iframe.module-frame { width: 100%; min-height: 70vh; border: 1px solid var(--lin
 .live-code { font-size: 1.4rem; letter-spacing: 0.12em; font-family: ui-monospace, Menlo, monospace; }
 .setup-steps { color: var(--ink); line-height: 1.55; padding-left: 1.2rem; }
 .setup-steps li { margin: 0.45rem 0; }
+
+/* Staff home + course dashboard chrome lives in staff-shell.css (loaded last). */

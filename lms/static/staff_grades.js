@@ -60,18 +60,6 @@ function payloadStatWindow(data) {
 function paint(data) {
   latest = data;
   const cls = data.class;
-  const titleEl = document.getElementById("title");
-  if (titleEl) {
-    titleEl.textContent = `${cls.course_code} · ${cls.days} · ${cls.time}`;
-  }
-  const metaEl = document.getElementById("meta");
-  if (metaEl) {
-    const bits = [
-      cls.semester_label || cls.semester,
-      cls.live_access_code ? `Student code ${cls.live_access_code}` : "",
-    ].filter(Boolean);
-    metaEl.textContent = bits.join(" · ");
-  }
   const sortBtn = document.getElementById("sort-toggle");
   if (sortBtn) {
     sortBtn.textContent = sort === "za" ? "Sort: Z–A" : "Sort: A–Z";

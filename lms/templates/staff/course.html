@@ -6,21 +6,14 @@
   <title>{{ cls.course_code }} · {{ school_name }}</title>
   <link rel="stylesheet" href="/static/lloves.css">
   <link rel="stylesheet" href="/static/app.css">
-  <style>
-    body { background: #07111c; }
-    .sheet-wrap { background: #fffdf8; color: #1c1914; padding: 0.5rem; }
-  </style>
+  <link rel="stylesheet" href="/static/staff-shell.css">
 </head>
-<body>
-  <div class="wrap" style="max-width:none">
+<body class="staff-shell">
+  <div class="wrap course-shell">
     <div class="topbar">
       <div>
         <p class="kicker"><a href="{{ url_for('staff_home') }}">Staff home</a></p>
-        <h1>{{ cls.course_code }} · {{ cls.days }} · {{ cls.time }}</h1>
-        <p class="sub">
-          {{ cls.semester_label or cls.semester }}
-          {% if cls.live_access_code %} · Student code <code class="live-code">{{ cls.live_access_code }}</code>{% endif %}
-        </p>
+        <h1>{{ cls.ontario_code or cls.course_code }}</h1>
       </div>
     </div>
 
@@ -58,7 +51,7 @@
     <nav class="tabs">
       <a href="{{ url_for('staff_course', class_id=cls.id, tab='modules') }}" class="{{ 'on' if tab == 'modules' else '' }}">Modules</a>
       <a href="{{ url_for('staff_course', class_id=cls.id, tab='syllabus') }}" class="{{ 'on' if tab == 'syllabus' else '' }}">Syllabus</a>
-      <a href="{{ url_for('staff_course', class_id=cls.id, tab='grades') }}" class="{{ 'on' if tab == 'grades' else '' }}">Grades</a>
+      <a href="{{ url_for('staff_course', class_id=cls.id, tab='grades') }}" class="{{ 'on' if tab == 'grades' else '' }}">Track Attendance &amp; Participation</a>
     </nav>
 
     {% if tab == 'modules' %}
@@ -79,10 +72,6 @@
     {% else %}
     <div id="grades-root" data-class-id="{{ cls.id }}">
       <div class="topbar">
-        <div>
-          <h1 id="title">Class</h1>
-          <p class="sub" id="meta"></p>
-        </div>
         <div class="row-actions">
           <button type="button" class="secondary" id="sort-toggle">Sort: A–Z</button>
           <div class="view-toggle" role="group" aria-label="Lesson score view">
