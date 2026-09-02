@@ -197,6 +197,23 @@ button.danger {
   justify-content: flex-end;
 }
 
+.field-label {
+  display: block;
+  margin: 12px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.field-label select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  min-height: var(--tap);
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .error {
@@ -536,38 +553,18 @@ body.student-view table.roster td.prior { display: none; }
   font-weight: 600;
 }
 
-.team-board { margin-top: 4px; }
-
-.team-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 12px;
-}
-
-.team-tab {
-  background: #fff;
-  color: var(--ink);
-  border-color: var(--line);
-  box-shadow: inset 0 -3px 0 var(--team, var(--ink));
-}
-
-.team-tab.on {
-  background: color-mix(in srgb, var(--team) 22%, #fff);
-  border-color: var(--team, var(--ink));
-  font-weight: 700;
+.team-board {
+  margin-top: 4px;
+  min-width: 0;
 }
 
 .team-row {
   display: flex;
+  flex-wrap: nowrap;
   gap: 16px;
   align-items: stretch;
-  overflow: hidden;
-}
-
-.team-row.tabbed {
-  display: block;
-  overflow: visible;
+  overflow-x: auto;
+  padding-bottom: 8px;
 }
 
 .team-card {
@@ -575,13 +572,8 @@ body.student-view table.roster td.prior { display: none; }
   background: #fff;
   padding: 8px 10px;
   overflow-x: auto;
-  flex: 1 1 0;
+  flex: 1 1 18rem;
   min-width: 18rem;
-}
-
-.team-row.tabbed .team-card {
-  min-width: 0;
-  width: 100%;
 }
 
 table.roster {

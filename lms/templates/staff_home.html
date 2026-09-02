@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff · LLOVES</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker">LLOVES · staff</p>
+    <h1>Teacher Dashboard</h1>
+    <p class="sub" id="meta">Assigned courses inherit the IT semester.</p>
+    <p class="sub" id="access"></p>
+    <div id="error" class="error" hidden></div>
+    <section id="mode-pick" class="choices">
+      <button type="button" class="choice" id="btn-create">
+        <strong>Populate Class</strong><br>
+        <span class="hint">Codenames, live days, time. Year / semester / course come from IT.</span>
+      </button>
+      <button type="button" class="choice" id="btn-existing">
+        <strong>Start Existing Class</strong><br>
+        <span class="hint">Open Modules, Syllabus, and Grades.</span>
+      </button>
+    </section>
+    <section id="wizard" class="card hidden">
+      <p class="wizard-progress" id="wiz-progress"></p>
+      <h2 id="wiz-title">Populate Class</h2>
+      <div id="step-offering" class="hidden">
+        <label class="field" for="offering">Assigned course</label>
+        <select id="offering"></select>
+      </div>
+      <div id="step-codenames" class="hidden">
+        <label class="field" for="codenames">Codenames (one per line)</label>
+        <textarea id="codenames" rows="8" style="width:100%"></textarea>
+        <p class="hint" id="code-status">No Canvas CSV. Type one Codename per student.</p>
+      </div>
+      <div id="step-days" class="hidden">
+        <label class="field" for="days">Live-class days</label>
+        <select id="days">
+          <option value="M/W/F">M/W/F</option>
+          <option value="T/Th/F">T/Th/F</option>
+        </select>
+      </div>
+      <div id="step-time" class="hidden">
+        <label class="field" for="time">Start time (75 minutes implied)</label>
+        <select id="time"></select>
+      </div>
+      <div class="row-actions">
+        <button type="button" class="secondary" id="wiz-back">Back</button>
+        <button type="button" id="wiz-next">Next</button>
+      </div>
+    </section>
+    <section id="existing" class="card hidden">
+      <h2>Start Existing Class</h2>
+      <div id="class-list" class="class-list"></div>
+      <div class="row-actions">
+        <button type="button" class="secondary" id="exist-back">Back</button>
+      </div>
+    </section>
+    <p class="hint"><a href="/it">IT dashboard</a> · <a href="/logout">Log out</a></p>
+  </div>
+  <script type="module" src="/lms/staff-home.js"></script>
+</body>
+</html>

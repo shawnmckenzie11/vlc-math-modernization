@@ -83,6 +83,8 @@ export function hideError(selector) {
  * @param {"first"|"last"} sort
  */
 export function displayName(student, sort) {
+  const code = (student.codename || "").trim();
+  if (code) return code;
   const first = (student.first_name || "").trim();
   const last = (student.last_display || "").trim();
   if (sort === "first") {

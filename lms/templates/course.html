@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ cls.course_code }} · {{ school_name }}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .tabs { display: flex; gap: .4rem; margin: 0 0 1rem; }
+    .tabs a { padding: .45rem .9rem; border-radius: 999px; text-decoration: none;
+      background: #e7e0d4; color: inherit; }
+    .tabs a.on { background: #1f4d3a; color: #fff; }
+    .dash-frame { width: 100%; min-height: 70vh; border: 0; background: #fff; }
+    .mod-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; min-height: 60vh; }
+    .mod-nav { overflow: auto; max-height: 70vh; font-size: .9rem; }
+    .mod-nav button { display: block; width: 100%; text-align: left; margin: 0 0 .25rem; }
+    @media (max-width: 800px) { .mod-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap" style="max-width: none;">
+    <p class="kicker"><a href="/staff">Staff home</a></p>
+    <h1>{{ cls.course_code }}</h1>
+    <p class="sub">{{ cls.semester }} · {{ cls.days }} · {{ cls.time }}
+      {% if offering %} · student code <code>{{ offering.live_access_code }}</code>{% endif %}
+    </p>
+    <nav class="tabs">
+      <a href="?tab=modules" class="{{ 'on' if tab == 'modules' else '' }}">Modules</a>
+      <a href="?tab=syllabus" class="{{ 'on' if tab == 'syllabus' else '' }}">Syllabus</a>
+      <a href="?tab=grades" class="{{ 'on' if tab == 'grades' else '' }}">Grades</a>
+    </nav>
+    {% if tab == 'grades' %}
+    <iframe class="dash-frame" src="/class/{{ class_id }}" title="Grades"></iframe>
+    {% elif tab == 'syllabus' %}
+    <iframe class="dash-frame" src="/staff/classes/{{ class_id }}/syllabus" title="Syllabus"></iframe>
+    {% else %}
+    <div class="mod-layout">
+      <aside class="mod-nav card" id="mod-nav">Loading modules…</aside>
+      <iframe class="dash-frame" id="mod-frame" title="Module page"></iframe>
+    </div>
+    <script>
+      fetch("/staff/classes/{{ class_id }}/modules.json")
+        .then((r) => r.json())
+        .then((data) => {
+          const nav = document.getElementById("mod-nav");
+          nav.innerHTML = "";
+          if (!data.modules || !data.modules.length) {
+            nav.textContent = "No module pack for this course yet.";
+            return;
+          }
+          if (!data.ready) {
+            const p = document.createElement("p");
+            p.className = "hint";
+            p.textContent = "IMSCC is not unpacked on this machine (wiki pages unavailable). Quizzes stay placeholders.";
+            nav.appendChild(p);
+          }
+          for (const mod of data.modules) {
+            const h = document.createElement("strong");
+            h.textContent = mod.title;
+            nav.appendChild(h);
+            for (const item of mod.items || []) {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.textContent = item.title;
+              btn.addEventListener("click", () => {
+                const q = new URLSearchParams({
+                  href: item.href || "",
+                  title: item.title || "",
+                  type: item.content_type || "",
+                });
+                document.getElementById("mod-frame").src =
+                  "/staff/classes/{{ class_id }}/page?" + q.toString();
+              });
+              nav.appendChild(btn);
+            }
+          }
+        });
+    </script>
+    {% endif %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IT · {{ school_name }}</title>
+  <link rel="stylesheet" href="/static/lloves.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <p class="kicker">IT dashboard</p>
+        <h1>{{ school_name }}</h1>
+        <p class="sub">Signed in as {{ user.email }} · <a href="{{ url_for('staff_home') }}">Staff home</a> · <a href="{{ url_for('logout') }}">Log out</a></p>
+      </div>
+    </div>
+
+    <section class="card">
+      <h2>Semester</h2>
+      {% if active %}
+      <p>Active: <strong>{{ active.label }}</strong> · instructional {{ active.instructional_first }} → {{ active.instructional_last }}</p>
+      <p class="hint">Teachers inherit this calendar (intro days, review week, PD, holidays, exam window). They cannot pick a year.</p>
+      {% else %}
+      <p>No semester is active. Activate 2026–2027 S1 from the school calendar.</p>
+      {% endif %}
+      <form method="post" action="{{ url_for('it_activate_semester') }}" class="row-actions">
+        <button type="submit">Activate from school calendar (2026-2027 S1)</button>
+      </form>
+      {% if semesters %}
+      <form method="post" action="{{ url_for('it_activate_semester') }}" class="row-actions" style="margin-top:0.75rem">
+        <select name="semester_id">
+          {% for s in semesters %}
+          <option value="{{ s.id }}" {% if s.is_active %}selected{% endif %}>{{ s.label }}{% if s.is_active %} (active){% endif %}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="secondary">Switch active</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="card" style="margin-top:1rem">
+      <h2>Register staff</h2>
+      <p class="hint">Personal Google accounts only. They stay pending until first login + email code.</p>
+      <form method="post" action="{{ url_for('it_register_staff') }}">
+        <label class="field" for="email">Google email</label>
+        <input id="email" name="email" type="email" required>
+        <label class="field" for="display_name">Display name (optional)</label>
+        <input id="display_name" name="display_name">
+        <div class="row-actions" style="margin-top:0.75rem"><button type="submit">Add staff</button></div>
+      </form>
+      <table class="data" style="margin-top:1rem">
+        <thead><tr><th>Email</th><th>Role</th><th>Status</th><th>Courses</th></tr></thead>
+        <tbody>
+          {% for person in staff %}
+          <tr>
+            <td>{{ person.email }}</td>
+            <td>{{ person.role }}</td>
+            <td>{{ person.status }}</td>
+            <td>{{ person.assigned_codes or "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" style="margin-top:1rem">
+      <h2>Assign a course</h2>
+      <form method="post" action="{{ url_for('it_assign_course') }}">
+        <label class="field" for="teacher_user_id">Staff</label>
+        <select id="teacher_user_id" name="teacher_user_id" required>
+          {% for person in staff %}
+          <option value="{{ person.id }}">{{ person.email }} ({{ person.role }})</option>
+          {% endfor %}
+        </select>
+        <label class="field" for="ontario_code">Ontario course code</label>
+        <input id="ontario_code" name="ontario_code" list="course-codes" placeholder="MCF3M" required>
+        <datalist id="course-codes">
+          {% for c in courses %}
+          <option value="{{ c.code }}">{{ c.title }}</option>
+          {% endfor %}
+        </datalist>
+        <div class="row-actions" style="margin-top:0.75rem"><button type="submit">Assign</button></div>
+      </form>
+    </section>
+
+    <section class="card" style="margin-top:1rem">
+      <h2>Offerings</h2>
+      {% if not offerings %}
+      <p class="hint">No assignments in the active semester yet.</p>
+      {% else %}
+      <table class="data">
+        <thead><tr><th>Course</th><th>Teacher</th><th>Student code</th><th>Sections</th><th>Roster</th><th></th></tr></thead>
+        <tbody>
+          {% for o in offerings %}
+          <tr>
+            <td>{{ o.ontario_code }}{% if o.expectations_status != 'verified' %} <span class="hint">(expectations: {{ o.expectations_status }})</span>{% endif %}</td>
+            <td>{{ o.teacher_email }}</td>
+            <td><code class="live-code" style="font-size:1rem">{{ o.live_access_code }}</code></td>
+            <td>
+              {% for cl in o.classes %}{{ cl.days }} {{ cl.time }}{% if not loop.last %}; {% endif %}{% else %}—{% endfor %}
+            </td>
+            <td>{{ o.roster_size }}</td>
+            <td>
+              <form method="post" action="{{ url_for('it_rotate_code', offering_id=o.id) }}">
+                <button type="submit" class="secondary">Rotate code</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </section>
+  </div>
+</body>
+</html>

@@ -28,7 +28,6 @@ const RULES = [
 let lastStamp = "";
 let latestState = null;
 let pendingTeam = null;
-let activeTeamId = null;
 let roundEndsAtMs = 0;
 
 /**
@@ -196,8 +195,7 @@ function render(state) {
       </section>`;
     })
     .join("");
-  if (pendingTeam) activeTeamId = pendingTeam.id;
-  requestAnimationFrame(layoutTeams);
+  paintAddLateButton(state);
 }
 
 /**
@@ -245,46 +243,45 @@ function paintClock() {
 }
 
 /**
- * Show teams side by side, or as tabs when they do not fit the window.
+ * Roster students not marked present in this game.
+ * @param {any} state
+ * @returns {Array<any>}
  */
-function layoutTeams() {
-  const row = document.getElementById("teams");
-  const tabs = document.getElementById("team-tabs");
-  if (!row || !tabs) return;
-  const cards = [...row.querySelectorAll(".team-card")];
-  tabs.replaceChildren();
-  tabs.classList.add("hidden");
-  row.classList.remove("tabbed");
-  cards.forEach((card) => {
-    card.hidden = false;
-  });
-  if (!cards.length) return;
-  const overflow = row.scrollWidth > row.clientWidth + 4;
-  if (!overflow) {
-    activeTeamId = null;
-    return;
-  }
-  const ids = cards.map((card) => Number(card.dataset.teamId));
-  if (!ids.includes(activeTeamId)) activeTeamId = ids[0];
-  row.classList.add("tabbed");
-  tabs.classList.remove("hidden");
-  for (const card of cards) {
-    const id = Number(card.dataset.teamId);
-    const team = (latestState?.teams || []).find((t) => t.id === id);
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "team-tab" + (id === activeTeamId ? " on" : "");
-    btn.setAttribute("role", "tab");
-    btn.setAttribute("aria-selected", id === activeTeamId ? "true" : "false");
-    btn.textContent = team?.name || `Team`;
-    btn.style.setProperty("--team", team?.color || "#1c1914");
-    btn.addEventListener("click", () => {
-      activeTeamId = id;
-      layoutTeams();
-    });
-    tabs.appendChild(btn);
-    card.hidden = id !== activeTeamId;
-  }
+function absentStudents(state) {
+  return sortStudents(
+    (state?.students || []).filter((row) => !row.present),
+    nameSort
+  );
+}
+
+/**
+ * Enable Add Student only when someone is still absent.
+ * @param {any} state
+ */
+function paintAddLateButton(state) {
+  const btn = document.getElementById("add-late");
+  if (!btn) return;
+  btn.disabled = absentStudents(state).length === 0;
+}
+
+/**
+ * Fill the late-arrival dialog from the current live roster.
+ * @param {any} state
+ */
+function fillAddLateDialog(state) {
+  const studentSel = document.getElementById("late-student");
+  const teamSel = document.getElementById("late-team");
+  if (!studentSel || !teamSel) return;
+  const absents = absentStudents(state);
+  studentSel.innerHTML = absents
+    .map(
+      (row) =>
+        `<option value="${row.id}">${escapeHtml(displayName(row, nameSort))}</option>`
+    )
+    .join("");
+  teamSel.innerHTML = (state.teams || [])
+    .map((team) => `<option value="${team.id}">${escapeHtml(team.name)}</option>`)
+    .join("");
 }
 
 /**
@@ -363,6 +360,44 @@ document.getElementById("start-round").addEventListener("click", async () => {
   }
 });
 
+document.getElementById("add-late")?.addEventListener("click", () => {
+  hideError("#error");
+  if (!latestState) return;
+  if (!absentStudents(latestState).length) return;
+  fillAddLateDialog(latestState);
+  const dialog = document.getElementById("add-late-dialog");
+  if (dialog && typeof dialog.showModal === "function") dialog.showModal();
+});
+
+document.getElementById("add-late-cancel")?.addEventListener("click", () => {
+  document.getElementById("add-late-dialog")?.close();
+});
+
+document.getElementById("add-late-dialog")?.addEventListener("click", (event) => {
+  if (event.target === event.currentTarget) {
+    event.currentTarget.close();
+  }
+});
+
+document.getElementById("add-late-form")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const studentId = Number(document.getElementById("late-student")?.value);
+  const teamId = Number(document.getElementById("late-team")?.value);
+  if (!studentId || !teamId) return;
+  hideError("#error");
+  try {
+    const state = await api(`/api/classes/${classId}/game/add-student`, {
+      method: "POST",
+      body: JSON.stringify({ student_id: studentId, team_id: teamId }),
+    });
+    document.getElementById("add-late-dialog")?.close();
+    lastStamp = "";
+    render(state);
+  } catch (err) {
+    showError("#error", err);
+  }
+});
+
 document.getElementById("quit-game").addEventListener("click", async () => {
   hideError("#error");
   try {
@@ -416,4 +451,3 @@ async function tick() {
 tick();
 setInterval(tick, 400);
 setInterval(paintClock, 200);
-window.addEventListener("resize", layoutTeams);

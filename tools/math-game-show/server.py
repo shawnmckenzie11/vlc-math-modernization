@@ -356,6 +356,15 @@ class GameShowHandler(BaseHTTPRequestHandler):
             )
             self._send_json(200, {"ok": True, **state})
             return
+        late = re.match(r"^/api/classes/(\d+)/game/add-student$", path)
+        if late:
+            state = db.add_late_student(
+                int(late.group(1)),
+                int(body.get("student_id") or 0),
+                int(body.get("team_id") or 0),
+            )
+            self._send_json(200, {"ok": True, **state})
+            return
         end = re.match(r"^/api/classes/(\d+)/game/end$", path)
         if end:
             result = db.end_game(int(end.group(1)))
@@ -417,6 +426,15 @@ class GameShowHandler(BaseHTTPRequestHandler):
                 int(rename_sub.group(1)),
                 int(body.get("id") or 0),
                 str(body.get("name") or ""),
+                sort=str(body.get("sort") or "last"),
+            )
+            self._send_json(200, {"ok": True, **dash})
+            return
+        del_sub = re.match(r"^/api/classes/(\d+)/subtotals/delete$", path)
+        if del_sub:
+            dash = db.delete_subtotal(
+                int(del_sub.group(1)),
+                int(body.get("id") or 0),
                 sort=str(body.get("sort") or "last"),
             )
             self._send_json(200, {"ok": True, **dash})

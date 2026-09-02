@@ -1,16 +1,26 @@
-import { api, classIdFromPath, displayName, escapeHtml, formatPoints, hideError, showError } from "./common.js";
+import { api, escapeHtml, formatPoints, hideError, showError } from "/static/common.js";
 
-const classId = classIdFromPath();
-const sortKey = `mgs-sort-${classId}`;
+const root = document.getElementById("grades-root");
+const classId = Number(root?.dataset.classId || 0);
+const sortKey = `lloves-sort-${classId}`;
 const roundViewKey = `mgs-round-view-${classId}`;
 const ROUND_VIEWS = ["total", "r1", "r2", "r3", "all"];
 const STAT_WINDOWS = ["last_class", "last_week", "year"];
 const SLICE_KEYS = { total: "points", r1: "points_r1", r2: "points_r2", r3: "points_r3" };
 const STACK_LABELS = { r1: "Open", r2: "Challenge", r3: "Formative" };
 
-let sort = localStorage.getItem(sortKey) === "first" ? "first" : "last";
+let sort = localStorage.getItem(sortKey) === "za" ? "za" : "az";
 let roundView = loadRoundView(localStorage.getItem(roundViewKey));
 let latest = null;
+
+/**
+ * Roster label is the Codename only.
+ * @param {{codename?: string, first_name?: string}} student
+ * @returns {string}
+ */
+function displayName(student) {
+  return String(student?.codename || student?.first_name || "").trim();
+}
 
 /**
  * Restore the lesson-score view. Old Overall/By-round prefs still work.
@@ -50,16 +60,22 @@ function payloadStatWindow(data) {
 function paint(data) {
   latest = data;
   const cls = data.class;
-  document.getElementById("title").textContent = `${cls.course_code} · ${cls.year}`;
-  document.getElementById("meta").textContent =
-    `${cls.semester} · ${cls.days} · ${cls.time}`;
-  if (cls.offering_id) {
-    document.querySelectorAll('a[href="/"]').forEach((link) => {
-      link.setAttribute("href", "/staff");
-    });
+  const titleEl = document.getElementById("title");
+  if (titleEl) {
+    titleEl.textContent = `${cls.course_code} · ${cls.days} · ${cls.time}`;
   }
-  document.getElementById("sort-toggle").textContent =
-    sort === "first" ? "Sort: First Last" : "Sort: Last, First";
+  const metaEl = document.getElementById("meta");
+  if (metaEl) {
+    const bits = [
+      cls.semester_label || cls.semester,
+      cls.live_access_code ? `Student code ${cls.live_access_code}` : "",
+    ].filter(Boolean);
+    metaEl.textContent = bits.join(" · ");
+  }
+  const sortBtn = document.getElementById("sort-toggle");
+  if (sortBtn) {
+    sortBtn.textContent = sort === "za" ? "Sort: Z–A" : "Sort: A–Z";
+  }
   document.querySelectorAll("[data-round-view]").forEach((btn) => {
     const on = btn.dataset.roundView === roundView;
     btn.classList.toggle("on", on);
@@ -111,7 +127,7 @@ function renderSheet(data) {
   }
   html += "<th class='live-sub'>SUBTOTAL</th><th class='total'>TOTAL SCORE</th></tr></thead><tbody>";
   for (const student of students) {
-    html += `<tr><td class="name">${escapeHtml(displayName(student, sort))}
+    html += `<tr><td class="name">${escapeHtml(displayName(student))}
       <button type="button" class="icon-btn" data-del-student="${student.id}" title="Remove student">×</button>
     </td>`;
     for (const column of columns) {
@@ -305,8 +321,8 @@ async function mutate(url, extra) {
   paint(data);
 }
 
-document.getElementById("sort-toggle").addEventListener("click", () => {
-  sort = sort === "first" ? "last" : "first";
+document.getElementById("sort-toggle")?.addEventListener("click", () => {
+  sort = sort === "az" ? "za" : "az";
   localStorage.setItem(sortKey, sort);
   refresh().catch((err) => showError("#error", err));
 });
@@ -349,19 +365,18 @@ document.getElementById("begin").addEventListener("click", async () => {
   }
 });
 
-document.getElementById("add-student").addEventListener("submit", (event) => {
+document.getElementById("add-student")?.addEventListener("submit", (event) => {
   event.preventDefault();
-  const last = document.getElementById("new-last").value;
-  const first = document.getElementById("new-first").value;
   const codeEl = document.getElementById("new-codename");
-  const payload = codeEl && !codeEl.hidden && codeEl.value.trim()
+  const lastEl = document.getElementById("new-last");
+  const firstEl = document.getElementById("new-first");
+  const payload = codeEl
     ? { codename: codeEl.value }
-    : { first_name: first, last_display: last };
+    : { first_name: firstEl?.value || "", last_display: lastEl?.value || "" };
   mutate(`/api/classes/${classId}/students`, payload)
     .then(() => {
-      document.getElementById("new-last").value = "";
-      document.getElementById("new-first").value = "";
-      const codeEl = document.getElementById("new-codename");
+      if (lastEl) lastEl.value = "";
+      if (firstEl) firstEl.value = "";
       if (codeEl) codeEl.value = "";
     })
     .catch((err) => showError("#error", err));
@@ -412,7 +427,7 @@ document.getElementById("sheet").addEventListener("click", (event) => {
     event.preventDefault();
     const id = Number(delStudent.dataset.delStudent);
     const student = (latest?.students || []).find((s) => s.id === id);
-    const label = student ? displayName(student, sort) : "this student";
+    const label = student ? displayName(student) : "this student";
     askToDelete(`Delete student “${label}” from this class?\n\nThis cannot be undone.`).then(
       (ok) => {
         if (!ok) return;

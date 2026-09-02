@@ -379,6 +379,61 @@ def round_ends_at_ms(started_at: str | None, duration_sec: int | None) -> int | 
 # another. Scoring is teacher-only until then; keep the log `from` field.
 
 
+def normalize_codename(raw: str) -> str:
+    """Validate a LLOVES roster Codename.
+
+    Args:
+        raw: Teacher-entered display name.
+
+    Returns:
+        Stripped Codename.
+
+    Raises:
+        ValueError: If empty, too short/long, or contains a comma.
+    """
+    name = (raw or "").strip()
+    if not name:
+        raise ValueError("Codename is required")
+    if "," in name:
+        raise ValueError("Codenames cannot contain commas")
+    if len(name) < 2 or len(name) > 32:
+        raise ValueError("Codenames must be 2–32 characters")
+    return name
+
+
+def roster_from_codenames(codenames: list[str]) -> list[dict[str, str]]:
+    """Build student insert rows from teacher-typed Codenames.
+
+    Args:
+        codenames: One Codename per student (order preserved).
+
+    Returns:
+        Rows with ``canvas_id``, ``first_name``, ``last_display``, ``codename``.
+
+    Raises:
+        ValueError: If the list is empty or a Codename is invalid/duplicated.
+    """
+    seen: set[str] = set()
+    roster: list[dict[str, str]] = []
+    for raw in codenames:
+        name = normalize_codename(raw)
+        key = name.lower()
+        if key in seen:
+            raise ValueError(f"Duplicate Codename: {name}")
+        seen.add(key)
+        roster.append(
+            {
+                "canvas_id": f"codename:{key}",
+                "last_display": "",
+                "first_name": name,
+                "codename": name,
+            }
+        )
+    if not roster:
+        raise ValueError("Add at least one Codename")
+    return roster
+
+
 class GameShowDB:
     """Thread-safe SQLite access for classes, sessions, and live games."""
 
@@ -410,6 +465,8 @@ class GameShowDB:
 
         Existing local DBs keep their data; ``owns_session`` defaults to 0.
         Legacy ``session_scores.points`` become Round 1 totals.
+        LLOVES adds ``offering_id`` / ``teacher_user_id`` on classes and
+        ``codename`` on students (Canvas CSV columns stay for the local app).
         """
         game_cols = {
             row["name"]
@@ -430,6 +487,7 @@ class GameShowDB:
                 "ALTER TABLE sessions ADD COLUMN source TEXT NOT NULL DEFAULT 'game'"
             )
         self._migrate_rounds()
+        self._migrate_lloves_roster()
 
     def _migrate_rounds(self) -> None:
         """Add round/timer columns and copy legacy points into Round 1.
@@ -485,6 +543,34 @@ class GameShowDB:
             self.conn.execute(
                 'ALTER TABLE point_events ADD COLUMN "round" INTEGER NOT NULL DEFAULT 1'
             )
+
+    def _migrate_lloves_roster(self) -> None:
+        """Add offering/teacher links and a Codename roster column.
+
+        The standalone Math Game Show still uses Canvas CSV fields. LLOVES
+        stores the teacher-chosen Codename and leaves last/first blank.
+        """
+        class_cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(classes)").fetchall()
+        }
+        if "offering_id" not in class_cols:
+            self.conn.execute("ALTER TABLE classes ADD COLUMN offering_id INTEGER")
+        if "teacher_user_id" not in class_cols:
+            self.conn.execute("ALTER TABLE classes ADD COLUMN teacher_user_id INTEGER")
+        student_cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(students)").fetchall()
+        }
+        if "codename" not in student_cols:
+            self.conn.execute("ALTER TABLE students ADD COLUMN codename TEXT")
+        self.conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_students_class_codename
+            ON students(class_id, codename)
+            WHERE codename IS NOT NULL AND TRIM(codename) != ''
+            """
+        )
 
     def _ensure_real_points(self, table: str) -> None:
         """Rebuild a scores table if ``points`` still has INTEGER affinity.
@@ -565,6 +651,37 @@ class GameShowDB:
         """Return an ISO-8601 local timestamp."""
         return datetime.now().replace(microsecond=0).isoformat()
 
+    def _insert_student_row(
+        self,
+        class_id: int,
+        *,
+        canvas_id: str,
+        last_display: str,
+        first_name: str,
+        codename: str | None = None,
+    ) -> int:
+        """Insert one students row, including ``codename`` when migrated.
+
+        Args:
+            class_id: Parent class.
+            canvas_id: Unique-per-class key (Canvas SIS id or ``codename:…``).
+            last_display: Family name, or empty on the LLOVES path.
+            first_name: Given name, or the Codename on the LLOVES path.
+            codename: LLOVES roster name, or None for Canvas CSV imports.
+
+        Returns:
+            New student primary key.
+        """
+        self.conn.execute(
+            """
+            INSERT INTO students
+                (class_id, canvas_id, last_display, first_name, codename)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (class_id, canvas_id, last_display, first_name, codename),
+        )
+        return int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+
     def create_class(
         self,
         *,
@@ -573,10 +690,16 @@ class GameShowDB:
         course_code: str,
         days_preset: str,
         time_label: str,
-        csv_text: str,
+        csv_text: str | None = None,
+        codenames: list[str] | None = None,
+        offering_id: int | None = None,
+        teacher_user_id: int | None = None,
         today: date | None = None,
     ) -> dict[str, Any]:
         """Insert a class, roster, and the first template session column.
+
+        Pass either ``csv_text`` (standalone Math Game Show) or ``codenames``
+        (LLOVES Populate Class). Do not pass both.
 
         Args:
             year: Display year such as ``2026/27``.
@@ -584,7 +707,10 @@ class GameShowDB:
             course_code: e.g. ``MCF3M``.
             days_preset: ``M/W/F`` or ``T/Th/F``.
             time_label: One of the wizard times.
-            csv_text: Canvas gradebook CSV contents.
+            csv_text: Canvas gradebook CSV contents (legacy path).
+            codenames: Teacher-typed roster (LLOVES path).
+            offering_id: School ``course_offerings.id`` when created from LLOVES.
+            teacher_user_id: School ``users.id`` of the class teacher.
             today: Optional reference date for the first meeting.
 
         Returns:
@@ -594,7 +720,14 @@ class GameShowDB:
             raise ValueError("Year, semester, and course code are required")
         if time_label not in TIME_OPTIONS:
             raise ValueError(f"Time must be one of: {', '.join(TIME_OPTIONS)}")
-        roster = parse_canvas_grades_csv(csv_text)
+        if codenames is not None and csv_text:
+            raise ValueError("Provide a Canvas CSV or a Codename roster, not both")
+        if codenames is not None:
+            roster = roster_from_codenames(codenames)
+        elif csv_text:
+            roster = parse_canvas_grades_csv(csv_text)
+        else:
+            raise ValueError("Provide a Canvas CSV or a Codename roster")
         days = store_days(days_preset)
         meeting = next_meeting_datetime(days, time_label, today=today)
         header = format_header_label(meeting, time_label)
@@ -602,24 +735,31 @@ class GameShowDB:
         with self._lock:
             cur = self.conn.execute(
                 """
-                INSERT INTO classes (year, semester, course_code, days, time, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO classes (
+                    year, semester, course_code, days, time, created_at,
+                    offering_id, teacher_user_id
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (year.strip(), semester.strip(), course_code.strip(), days, time_label, created),
+                (
+                    year.strip(),
+                    semester.strip(),
+                    course_code.strip(),
+                    days,
+                    time_label,
+                    created,
+                    offering_id,
+                    teacher_user_id,
+                ),
             )
             class_id = int(cur.lastrowid)
             for student in roster:
-                self.conn.execute(
-                    """
-                    INSERT INTO students (class_id, canvas_id, last_display, first_name)
-                    VALUES (?, ?, ?, ?)
-                    """,
-                    (
-                        class_id,
-                        student["canvas_id"],
-                        student["last_display"],
-                        student["first_name"],
-                    ),
+                self._insert_student_row(
+                    class_id,
+                    canvas_id=str(student["canvas_id"]),
+                    last_display=str(student["last_display"]),
+                    first_name=str(student["first_name"]),
+                    codename=student.get("codename"),
                 )
             self.conn.execute(
                 """
@@ -643,8 +783,9 @@ class GameShowDB:
                     """,
                     (session_id, sid),
                 )
-            upload_path = self.uploads_dir / f"class-{class_id}.csv"
-            upload_path.write_text(csv_text, encoding="utf-8")
+            if csv_text:
+                upload_path = self.uploads_dir / f"class-{class_id}.csv"
+                upload_path.write_text(csv_text, encoding="utf-8")
             self._set_current_class(class_id)
             self.conn.commit()
         return self.get_class(class_id)
@@ -664,6 +805,68 @@ class GameShowDB:
                 ORDER BY created_at DESC, id DESC
                 """,
                 (year, semester),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def list_classes_for_teacher(
+        self,
+        teacher_user_id: int,
+        *,
+        offering_id: int | None = None,
+        year: str | None = None,
+        semester: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return classes owned by a LLOVES staff user.
+
+        Args:
+            teacher_user_id: School ``users.id``.
+            offering_id: Optional ``course_offerings.id`` filter.
+            year: Optional display year such as ``2026/27``.
+            semester: Optional ``Semester 1`` / ``Semester 2``.
+
+        Returns:
+            Class dicts newest first.
+        """
+        clauses = ["teacher_user_id = ?"]
+        args: list[Any] = [teacher_user_id]
+        if offering_id is not None:
+            clauses.append("offering_id = ?")
+            args.append(offering_id)
+        if year:
+            clauses.append("year = ?")
+            args.append(year)
+        if semester:
+            clauses.append("semester = ?")
+            args.append(semester)
+        sql = (
+            "SELECT * FROM classes WHERE "
+            + " AND ".join(clauses)
+            + " ORDER BY created_at DESC, id DESC"
+        )
+        with self._lock:
+            rows = self.conn.execute(sql, args).fetchall()
+        return [dict(row) for row in rows]
+
+    def live_games_for_offering(self, offering_id: int) -> list[dict[str, Any]]:
+        """Return non-ended games for every class on a course offering.
+
+        Args:
+            offering_id: School ``course_offerings.id``.
+
+        Returns:
+            Game rows plus class days/time.
+        """
+        with self._lock:
+            rows = self.conn.execute(
+                """
+                SELECT g.*, c.days AS class_days, c.time AS class_time,
+                       c.course_code AS course_code
+                FROM games g
+                JOIN classes c ON c.id = g.class_id
+                WHERE c.offering_id = ? AND g.status != 'ended'
+                ORDER BY g.id DESC
+                """,
+                (offering_id,),
             ).fetchall()
         return [dict(row) for row in rows]
 
@@ -730,7 +933,7 @@ class GameShowDB:
 
         Args:
             class_id: Classes primary key.
-            sort: ``first`` for First Last, ``last`` for Last, First.
+            sort: ``first`` / ``last`` (Canvas names) or ``az`` / ``za`` (Codename).
         """
         cls = self.get_class(class_id)
         self.set_current_class(class_id)
@@ -816,24 +1019,44 @@ class GameShowDB:
         for sess_id in live_ids:
             for sid, pts in per_session.get(sess_id, {}).items():
                 live_subtotals[sid] = as_points(live_subtotals.get(sid, 0) + pts)
-        if sort == "first":
+        sort_key = (sort or "last").strip().lower()
+        if sort_key in {"az", "codename"}:
             students.sort(
                 key=lambda s: (
-                    str(s["first_name"]).lower(),
+                    str(s.get("codename") or s.get("first_name") or "").lower(),
+                    int(s["id"]),
+                )
+            )
+            sort_out = "az"
+        elif sort_key in {"za", "codename_desc"}:
+            students.sort(
+                key=lambda s: (
+                    str(s.get("codename") or s.get("first_name") or "").lower(),
+                    int(s["id"]),
+                ),
+                reverse=True,
+            )
+            sort_out = "za"
+        elif sort_key == "first":
+            students.sort(
+                key=lambda s: (
+                    str(s.get("codename") or s["first_name"]).lower(),
                     str(s["last_display"]).lower(),
                 )
             )
+            sort_out = "first"
         else:
             students.sort(
                 key=lambda s: (
-                    str(s["last_display"]).lower(),
+                    str(s.get("codename") or s["last_display"] or s["first_name"]).lower(),
                     str(s["first_name"]).lower(),
                 )
             )
+            sort_out = "last"
         columns = self._sheet_columns(sessions, subtotals)
         return {
             "class": cls,
-            "sort": "first" if sort == "first" else "last",
+            "sort": sort_out,
             "students": students,
             "sessions": sessions,
             "columns": columns,
@@ -966,60 +1189,72 @@ class GameShowDB:
     def add_student(
         self,
         class_id: int,
-        first_name: str,
-        last_display: str,
+        first_name: str = "",
+        last_display: str = "",
         sort: str = "last",
+        codename: str | None = None,
     ) -> dict[str, Any]:
         """Append a roster row and zero cells on every existing column.
 
         Args:
             class_id: Classes primary key.
-            first_name: Given name.
+            first_name: Given name (Canvas/manual path).
             last_display: Family name as shown when sorting Last, First.
             sort: Dashboard name order to return.
+            codename: LLOVES roster name. When set, last/first are not used.
 
         Returns:
             Updated dashboard payload.
         """
-        first = first_name.strip()
-        last = last_display.strip()
-        if not first or not last:
-            raise ValueError("First name and last name are required")
-        self.get_class(class_id)
-        with self._lock:
+        if codename is not None and str(codename).strip():
+            name = normalize_codename(codename)
+            first = name
+            last = ""
+            canvas_id = f"codename:{name.lower()}"
+            stored_codename = name
+        else:
+            first = first_name.strip()
+            last = last_display.strip()
+            if not first or not last:
+                raise ValueError("First name and last name are required")
             canvas_id = f"manual-{class_id}-{int(time.time() * 1000)}"
-            self.conn.execute(
-                """
-                INSERT INTO students (class_id, canvas_id, last_display, first_name)
-                VALUES (?, ?, ?, ?)
-                """,
-                (class_id, canvas_id, last, first),
-            )
-            student_id = int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
-            session_ids = [
-                int(r["id"])
-                for r in self.conn.execute(
-                    "SELECT id FROM sessions WHERE class_id = ?", (class_id,)
+            stored_codename = None
+        self.get_class(class_id)
+        try:
+            with self._lock:
+                student_id = self._insert_student_row(
+                    class_id,
+                    canvas_id=canvas_id,
+                    last_display=last,
+                    first_name=first,
+                    codename=stored_codename,
                 )
-            ]
-            for session_id in session_ids:
-                self.conn.execute(
-                    """
-                    INSERT OR IGNORE INTO session_scores
-                        (session_id, student_id, present, points)
-                    VALUES (?, ?, 0, 0)
-                    """,
-                    (session_id, student_id),
-                )
-            sub_ids = [
-                int(r["id"])
-                for r in self.conn.execute(
-                    "SELECT id FROM subtotals WHERE class_id = ?", (class_id,)
-                )
-            ]
-            for sub_id in sub_ids:
-                self._ensure_subtotal_scores(sub_id, class_id)
-            self.conn.commit()
+                session_ids = [
+                    int(r["id"])
+                    for r in self.conn.execute(
+                        "SELECT id FROM sessions WHERE class_id = ?", (class_id,)
+                    )
+                ]
+                for session_id in session_ids:
+                    self.conn.execute(
+                        """
+                        INSERT OR IGNORE INTO session_scores
+                            (session_id, student_id, present, points)
+                        VALUES (?, ?, 0, 0)
+                        """,
+                        (session_id, student_id),
+                    )
+                sub_ids = [
+                    int(r["id"])
+                    for r in self.conn.execute(
+                        "SELECT id FROM subtotals WHERE class_id = ?", (class_id,)
+                    )
+                ]
+                for sub_id in sub_ids:
+                    self._ensure_subtotal_scores(sub_id, class_id)
+                self.conn.commit()
+        except sqlite3.IntegrityError as exc:
+            raise ValueError("That Codename is already on this roster") from exc
         return self.dashboard(class_id, sort)
 
     def delete_student(self, class_id: int, student_id: int, sort: str = "last") -> dict[str, Any]:
@@ -1231,6 +1466,36 @@ class GameShowDB:
             )
             if cur.rowcount != 1:
                 raise KeyError(f"subtotal {subtotal_id}")
+            self.conn.commit()
+        return self.dashboard(class_id, sort)
+
+    def delete_subtotal(
+        self,
+        class_id: int,
+        subtotal_id: int,
+        sort: str = "last",
+    ) -> dict[str, Any]:
+        """Remove a frozen SUBTOTAL column from the class sheet.
+
+        Session scores stay put. Live SUBTOTAL then follows the latest
+        remaining freeze, or every class column if none are left.
+
+        Args:
+            class_id: Classes primary key.
+            subtotal_id: Subtotals primary key.
+            sort: Dashboard name order to return.
+
+        Returns:
+            Updated dashboard payload.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT id FROM subtotals WHERE id = ? AND class_id = ?",
+                (subtotal_id, class_id),
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"subtotal {subtotal_id}")
+            self.conn.execute("DELETE FROM subtotals WHERE id = ?", (subtotal_id,))
             self.conn.commit()
         return self.dashboard(class_id, sort)
 
@@ -1864,6 +2129,91 @@ class GameShowDB:
             self.conn.commit()
         return self.game_state(class_id)
 
+    def add_late_student(
+        self,
+        class_id: int,
+        student_id: int,
+        team_id: int,
+    ) -> dict[str, Any]:
+        """Put an absent roster student on a live team at zero points.
+
+        Marks them present for this lesson and inserts a membership.
+        Does not change the ESPN team-only bucket or other students.
+
+        Args:
+            class_id: Classes primary key.
+            student_id: Students primary key on this roster.
+            team_id: Existing team in the live game.
+
+        Returns:
+            Updated game state.
+        """
+        with self._lock:
+            game = self._game_row(class_id)
+            if game["status"] != "live":
+                raise ValueError("Add a late student during a live game")
+            student = self.conn.execute(
+                "SELECT id FROM students WHERE id = ? AND class_id = ?",
+                (student_id, class_id),
+            ).fetchone()
+            if student is None:
+                raise KeyError(f"student {student_id}")
+            team = self.conn.execute(
+                "SELECT id FROM game_teams WHERE id = ? AND game_id = ?",
+                (team_id, int(game["id"])),
+            ).fetchone()
+            if team is None:
+                raise KeyError(f"team {team_id}")
+            already = self.conn.execute(
+                """
+                SELECT student_id FROM game_memberships
+                WHERE game_id = ? AND student_id = ?
+                """,
+                (int(game["id"]), student_id),
+            ).fetchone()
+            if already:
+                raise ValueError("That student is already on a team")
+            session_id = int(game["session_id"])
+            score = self.conn.execute(
+                """
+                SELECT present FROM session_scores
+                WHERE session_id = ? AND student_id = ?
+                """,
+                (session_id, student_id),
+            ).fetchone()
+            if score is not None and int(score["present"] or 0):
+                raise ValueError("That student is already marked present")
+            if score is None:
+                self.conn.execute(
+                    """
+                    INSERT INTO session_scores (
+                        session_id, student_id, present,
+                        points, points_r1, points_r2, points_r3
+                    )
+                    VALUES (?, ?, 1, 0, 0, 0, 0)
+                    """,
+                    (session_id, student_id),
+                )
+            else:
+                self.conn.execute(
+                    """
+                    UPDATE session_scores
+                    SET present = 1, points = 0,
+                        points_r1 = 0, points_r2 = 0, points_r3 = 0
+                    WHERE session_id = ? AND student_id = ?
+                    """,
+                    (session_id, student_id),
+                )
+            self.conn.execute(
+                """
+                INSERT INTO game_memberships (game_id, team_id, student_id)
+                VALUES (?, ?, ?)
+                """,
+                (int(game["id"]), team_id, student_id),
+            )
+            self.conn.commit()
+        return self.game_state(class_id)
+
     def start_round(self, class_id: int, round_number: int) -> dict[str, Any]:
         """Advance the live game to Round 2 or Round 3.
 
@@ -2427,10 +2777,10 @@ class GameShowDB:
         different class dashboard leaves leftover boards hidden.
 
         Args:
-            class_id: Unused; kept so existing callers still compile.
+            class_id: When set (LLOVES student join), pin the board to that
+                class instead of the teacher's current-class pointer.
         """
-        del class_id
-        current_id = self._current_class_id()
+        current_id = class_id if class_id is not None else self._current_class_id()
         window = (
             self._get_stat_window(current_id)
             if current_id is not None

@@ -36,6 +36,7 @@ from db import (  # noqa: E402
     member_round_points,
     normalize_stat_window,
     points_label,
+    roster_from_codenames,
     round_ends_at_ms,
     round_remaining_sec,
     split_amount,
@@ -323,6 +324,29 @@ class GamePersistTests(unittest.TestCase):
         )
         kinds = [c["kind"] for c in dash["columns"]]
         self.assertEqual(kinds, ["session", "subtotal", "session"])
+
+    def test_delete_subtotal_column_restores_live_window(self) -> None:
+        """Removing a freeze drops the snapshot; live SUBTOTAL recounts those lessons."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        present = [s["id"] for s in state["students"][:4]]
+        scorer = present[0]
+        self.db.save_attendance(class_id, present)
+        self.db.assign_teams(class_id, 2, "random")
+        teams = self.db.game_state(class_id)["teams"]
+        self.db.rename_teams(class_id, [{"id": t["id"], "name": t["name"]} for t in teams])
+        self.db.award_points(class_id, kind="student", target_id=scorer, amount=10)
+        self.db.end_game(class_id)
+        dash = self.db.freeze_subtotal(class_id, name="Term 1")
+        frozen = next(c for c in dash["columns"] if c["kind"] == "subtotal")
+        self.assertEqual(dash["live_subtotals"][str(scorer)], 0)
+        dash = self.db.delete_subtotal(class_id, frozen["id"])
+        self.assertFalse(any(c["kind"] == "subtotal" for c in dash["columns"]))
+        self.assertNotIn(f"sub:{frozen['id']}:{scorer}", dash["cells"])
+        self.assertEqual(dash["live_subtotals"][str(scorer)], 10)
+        self.assertEqual(dash["totals"][str(scorer)], 10)
+        with self.assertRaises(KeyError):
+            self.db.delete_subtotal(class_id, frozen["id"])
 
     def test_new_game_after_freeze_stays_right_of_subtotal(self) -> None:
         """A new game column sits after a freeze even if its calendar date is earlier."""
@@ -758,6 +782,43 @@ class GamePersistTests(unittest.TestCase):
         self.assertEqual(board["round"], 1)
         self.assertEqual(board["round_title"], "Open Question Round")
         self.assertGreaterEqual(board["round_remaining_sec"], 1190)
+
+    def test_add_late_student_to_live_team(self) -> None:
+        """An absent roster student can join a live team at zero points."""
+        state = self._go_live(n_present=4)
+        class_id = self.cls["id"]
+        absent = next(s for s in state["students"] if not s["present"])
+        team = state["teams"][0]
+        before = team["score"]
+        before_n = len(team["members"])
+        updated = self.db.add_late_student(class_id, absent["id"], team["id"])
+        self.assertIn(absent["id"], updated["present_ids"])
+        joined = next(t for t in updated["teams"] if t["id"] == team["id"])
+        late = next(m for m in joined["members"] if m["id"] == absent["id"])
+        self.assertEqual(len(joined["members"]), before_n + 1)
+        self.assertEqual(late["session_points"], 0)
+        self.assertEqual(late["points_r1"], 0)
+        self.assertEqual(late["points_r2"], 0)
+        self.assertEqual(late["points_r3"], 0)
+        self.assertEqual(joined["score"], before)
+        scored = self.db.award_points(
+            class_id, kind="student", target_id=absent["id"], amount=1
+        )
+        after = next(t for t in scored["teams"] if t["id"] == team["id"])
+        self.assertEqual(after["score"], before + 1)
+        with self.assertRaises(ValueError):
+            self.db.add_late_student(class_id, absent["id"], team["id"])
+        already = state["teams"][0]["members"][0]["id"]
+        with self.assertRaises(ValueError):
+            self.db.add_late_student(class_id, already, state["teams"][1]["id"])
+
+    def test_cannot_add_late_student_before_live(self) -> None:
+        """Late add is only for the Teacher Game Dashboard (live)."""
+        class_id = self.cls["id"]
+        state = self.db.begin_game(class_id, today=date(2026, 8, 31))
+        absent = next(s for s in state["students"] if not s.get("present"))
+        with self.assertRaises(ValueError):
+            self.db.add_late_student(class_id, absent["id"], 1)
 
     def test_cannot_skip_to_round_3(self) -> None:
         """Only the next round can be started."""
@@ -1486,6 +1547,121 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(saved["stat_window"], "year")
         again = _http_json(self.base, f"/api/classes/{class_id}/dashboard")
         self.assertEqual(again["stat_window"], "year")
+
+    def test_add_late_student_and_delete_subtotal(self) -> None:
+        """HTTP add-student on a live game and delete a frozen SUBTOTAL column."""
+        created = _http_json(
+            self.base,
+            "/api/classes",
+            {
+                "year": "2026/27",
+                "semester": "Semester 1",
+                "course_code": "MCF3M",
+                "days": "T/Th/F",
+                "time": "2:00pm",
+                "csv_text": FIXTURE_CSV.read_text(encoding="utf-8"),
+            },
+        )
+        class_id = created["class"]["id"]
+        begin = _http_json(self.base, f"/api/classes/{class_id}/begin", {})
+        present = [s["id"] for s in begin["students"][:4]]
+        late = next(s for s in begin["students"] if s["id"] not in present)
+        _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/attendance",
+            {"present_ids": present},
+        )
+        assigned = _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/assign",
+            {"n_teams": 2, "mode": "random"},
+        )
+        _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/rename",
+            {"teams": [{"id": t["id"], "name": t["name"]} for t in assigned["teams"]]},
+        )
+        team_id = assigned["teams"][0]["id"]
+        added = _http_json(
+            self.base,
+            f"/api/classes/{class_id}/game/add-student",
+            {"student_id": late["id"], "team_id": team_id},
+        )
+        self.assertIn(late["id"], added["present_ids"])
+        joined = next(t for t in added["teams"] if t["id"] == team_id)
+        self.assertTrue(any(m["id"] == late["id"] for m in joined["members"]))
+        _http_json(self.base, f"/api/classes/{class_id}/game/end", {})
+        frozen = _http_json(self.base, f"/api/classes/{class_id}/subtotals", {"name": "Term 1"})
+        sub = next(c for c in frozen["columns"] if c["kind"] == "subtotal")
+        deleted = _http_json(
+            self.base,
+            f"/api/classes/{class_id}/subtotals/delete",
+            {"id": sub["id"]},
+        )
+        self.assertFalse(any(c["kind"] == "subtotal" for c in deleted["columns"]))
+
+
+class LlovesCodenameRosterTests(unittest.TestCase):
+    """LLOVES Populate Class uses Codenames instead of a Canvas CSV."""
+
+    def setUp(self) -> None:
+        """Temp database for Codename-only class creation."""
+        self.tmp = tempfile.TemporaryDirectory()
+        data_dir = Path(self.tmp.name)
+        self.db = GameShowDB(data_dir / "app.sqlite", data_dir)
+
+    def tearDown(self) -> None:
+        """Close sqlite and drop the temp dir."""
+        self.db.close()
+        self.tmp.cleanup()
+
+    def test_create_class_from_codenames(self) -> None:
+        """Roster stores Codenames; first_name matches for the ticker."""
+        created = self.db.create_class(
+            year="2026/27",
+            semester="Semester 1",
+            course_code="MCF3M",
+            days_preset="M/W/F",
+            time_label="2:00pm",
+            codenames=["Maple", "Cedar"],
+            today=date(2026, 8, 31),
+        )
+        dash = self.db.dashboard(created["id"], sort="az")
+        names = [s["codename"] for s in dash["students"]]
+        self.assertEqual(names, ["Cedar", "Maple"])
+        self.assertEqual(dash["students"][0]["first_name"], "Cedar")
+
+    def test_reject_csv_and_codenames_together(self) -> None:
+        """LLOVES path cannot also ingest a Canvas CSV."""
+        with self.assertRaises(ValueError):
+            self.db.create_class(
+                year="2026/27",
+                semester="Semester 1",
+                course_code="MCF3M",
+                days_preset="M/W/F",
+                time_label="2:00pm",
+                csv_text="Student,ID\nA,1\n",
+                codenames=["Maple"],
+            )
+
+    def test_roster_from_codenames_rejects_comma(self) -> None:
+        """Commas would split the Grades column."""
+        with self.assertRaises(ValueError):
+            roster_from_codenames(["Maple, Syrup"])
+
+    def test_dashboard_sorts_codenames_za(self) -> None:
+        """Sort toggle is A–Z / Z–A on Codename."""
+        created = self.db.create_class(
+            year="2026/27",
+            semester="Semester 1",
+            course_code="MCF3M",
+            days_preset="T/Th/F",
+            time_label="2:00pm",
+            codenames=["Maple", "Cedar", "Birch"],
+            today=date(2026, 8, 31),
+        )
+        za = self.db.dashboard(created["id"], sort="za")
+        self.assertEqual([s["codename"] for s in za["students"]], ["Maple", "Cedar", "Birch"])
 
 
 if __name__ == "__main__":

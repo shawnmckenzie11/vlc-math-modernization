@@ -134,6 +134,7 @@ If you want **students** to see the overlay, share **that** overlay window on Zo
 | **−5** on a team | Team penalty only; student spreadsheet cells do not change |
 | **+1 / +5 / +10 / −1** on a student | That student’s score (and the team bar) |
 | **Student View** (beside the title) | Hides prior “strength” totals; click **Show strength** to bring them back |
+| **Add Student** | Late arrival from the roster who is not marked present. Pick a team; they start at 0 |
 | **End Game** | Saves this class’s scores into the date column and shows **FINAL SCORE** on the scoreboard |
 | **Quit Game** | Throws away this game. Nothing is saved. Use if you started by mistake |
 
@@ -151,7 +152,7 @@ If you want **students** to see the overlay, share **that** overlay window on Zo
 2. **Start Existing Class**.
 3. **Begin a New Game** again.
 
-A second game on the same day/time is labeled `_2`, `_3`, … Next to Sort, **Total · Open Question · Team Challenge · Formative · All** shows one slice per lesson or stacked rounds (older scores sit in Open Question). **SUBTOTAL** and **TOTAL SCORE** follow the selected slice. A frozen **SUBTOTAL** column (Log TOTAL as Subtotal) is still an overall snapshot; new games still go to the right.
+A second game on the same day/time is labeled `_2`, `_3`, … Next to Sort, **Total · Open Question · Team Challenge · Formative · All** shows one slice per lesson or stacked rounds (older scores sit in Open Question). **SUBTOTAL** and **TOTAL SCORE** follow the selected slice. A frozen **SUBTOTAL** column (Log TOTAL as Subtotal) is still an overall snapshot; new games still go to the right. The × on a freeze deletes that snapshot only; class scores stay and live **SUBTOTAL** recounts from any remaining freeze.
 
 Next to that slice group, **Last class · Last week · This year** chooses which scored classes the Zoom scoreboard **Leaders** ticker uses. Last week means the last two scored classes. This year is every scored class on this spreadsheet. The sheet cells stay the same.
 

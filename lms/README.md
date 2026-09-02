@@ -1,0 +1,38 @@
+# LLOVES LMS
+
+Learning Live Online Virtually & Explicitly School. This app is **not** a rename of ELC; it mounts existing MCF3M tools (IMSCC modules, click-to-place syllabus, Math Game Show grades).
+
+## Run locally
+
+```bash
+python3 -m pip install flask requests python-dotenv
+python3 lms/app.py
+```
+
+Landing page: **http://127.0.0.1:8787/**
+
+Without `GOOGLE_CLIENT_ID`, Staff/IT login uses a mock Google email form. First login shows a 6-digit code on the verify page (email is not sent until SMTP is configured).
+
+Bootstrap IT account: `solutions@mckenzian.com`
+
+## Google OAuth (production)
+
+Set in `lms/.env`:
+
+- `FLASK_SECRET_KEY`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI` — `http://127.0.0.1:8787/auth/google/callback` locally, plus the Fly.io HTTPS callback
+- `IT_EMAIL` / `IT_EMAILS` (optional extras)
+
+Authorized JavaScript origins and redirect URIs must include both localhost and the hosted hostname.
+
+## Fly.io
+
+See `lms/fly.toml`. Needs a persistent volume for `lms/data/` (sqlite + unpacked IMSCC).
+
+## Tests
+
+```bash
+python3 -m unittest lms.test_auth lms.test_it lms.test_roster
+```

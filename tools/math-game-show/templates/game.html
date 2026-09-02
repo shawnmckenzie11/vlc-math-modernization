@@ -23,6 +23,7 @@
         <button type="button" id="start-round" hidden>Start Round 2</button>
       </div>
       <div class="row-actions">
+        <button type="button" class="secondary" id="add-late">Add Student</button>
         <button type="button" class="secondary" id="quit-game">Quit Game</button>
         <button type="button" class="danger" id="end-game">End Game</button>
       </div>
@@ -30,11 +31,26 @@
     <div id="error" class="error" hidden></div>
     <!-- Future TODO: students awarding points to one another. Teacher-only +/- for now. -->
     <div class="team-board">
-      <div id="team-tabs" class="team-tabs hidden" role="tablist"></div>
       <div id="teams" class="team-row"></div>
     </div>
     <p class="later">Later: students awarding points to one another. Scoring is teacher-only for now.</p>
   </div>
+  <dialog id="add-late-dialog" class="confirm-dialog">
+    <form id="add-late-form">
+      <p class="confirm-title">Add Student</p>
+      <p class="confirm-message">Pick someone not marked present and the team they join. They start at 0.</p>
+      <label class="field-label">Student
+        <select id="late-student" required></select>
+      </label>
+      <label class="field-label">Team
+        <select id="late-team" required></select>
+      </label>
+      <div class="row-actions">
+        <button type="button" class="secondary" id="add-late-cancel">Cancel</button>
+        <button type="submit">Add to team</button>
+      </div>
+    </form>
+  </dialog>
   <script type="module" src="/static/game.js"></script>
 </body>
 </html>

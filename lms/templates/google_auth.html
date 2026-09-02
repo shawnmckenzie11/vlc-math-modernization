@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in with Google · LLOVES</title>
+  <link rel="stylesheet" href="/static/lloves.css">
+</head>
+<body>
+  <div class="wrap" style="max-width:28rem">
+    <p class="kicker">Mock Google · {{ portal }} portal</p>
+    <h1>Simulated Google Sign-In</h1>
+    <p class="sub">GOOGLE_CLIENT_ID is not set. Enter an allowlisted personal Google email.</p>
+    <form method="get" action="{{ url_for('auth_google_callback') }}">
+      <input type="hidden" name="portal" value="{{ portal }}">
+      <label class="field" for="email">Google email</label>
+      <input id="email" name="email" type="email" required>
+      <label class="field" for="name">Display name (optional)</label>
+      <input id="name" name="name">
+      <div class="row-actions" style="margin-top:1rem">
+        <button type="submit">Continue</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>
