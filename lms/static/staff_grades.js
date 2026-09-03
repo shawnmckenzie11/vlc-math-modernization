@@ -72,15 +72,6 @@ function paint(data) {
     btn.setAttribute("aria-pressed", on ? "true" : "false");
   });
   renderSheet(data);
-  const lloves = Boolean(cls.offering_id) || (data.students || []).some((s) => s.codename);
-  const last = document.getElementById("new-last");
-  const first = document.getElementById("new-first");
-  const code = document.getElementById("new-codename");
-  if (last && first && code) {
-    last.hidden = lloves;
-    first.hidden = lloves;
-    code.hidden = !lloves;
-  }
 }
 
 /**
@@ -112,9 +103,7 @@ function renderSheet(data) {
   }
   html += "<th class='live-sub'>SUBTOTAL</th><th class='total'>TOTAL SCORE</th></tr></thead><tbody>";
   for (const student of students) {
-    html += `<tr><td class="name">${escapeHtml(displayName(student))}
-      <button type="button" class="icon-btn" data-del-student="${student.id}" title="Remove student">×</button>
-    </td>`;
+    html += `<tr><td class="name">${escapeHtml(displayName(student))}</td>`;
     for (const column of columns) {
       if (column.kind === "subtotal") {
         const frozen = data.cells[`sub:${column.id}:${student.id}`] || { points: 0 };
@@ -348,23 +337,6 @@ document.getElementById("begin").addEventListener("click", async () => {
   }
 });
 
-document.getElementById("add-student")?.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const codeEl = document.getElementById("new-codename");
-  const lastEl = document.getElementById("new-last");
-  const firstEl = document.getElementById("new-first");
-  const payload = codeEl
-    ? { codename: codeEl.value }
-    : { first_name: firstEl?.value || "", last_display: lastEl?.value || "" };
-  mutate(`/api/classes/${classId}/students`, payload)
-    .then(() => {
-      if (lastEl) lastEl.value = "";
-      if (firstEl) firstEl.value = "";
-      if (codeEl) codeEl.value = "";
-    })
-    .catch((err) => showError("#error", err));
-});
-
 document.getElementById("freeze-sub").addEventListener("submit", (event) => {
   event.preventDefault();
   const name = document.getElementById("sub-name").value;
@@ -410,22 +382,6 @@ document.getElementById("sheet").addEventListener("click", (event) => {
     sort = sort === "az" ? "za" : "az";
     localStorage.setItem(sortKey, sort);
     refresh().catch((err) => showError("#error", err));
-    return;
-  }
-  const delStudent = target.closest("[data-del-student]");
-  if (delStudent) {
-    event.preventDefault();
-    const id = Number(delStudent.dataset.delStudent);
-    const student = (latest?.students || []).find((s) => s.id === id);
-    const label = student ? displayName(student) : "this student";
-    askToDelete(`Delete student “${label}” from this class?\n\nThis cannot be undone.`).then(
-      (ok) => {
-        if (!ok) return;
-        mutate(`/api/classes/${classId}/students/delete`, { student_id: id }).catch((err) =>
-          showError("#error", err)
-        );
-      }
-    );
     return;
   }
   const delSession = target.closest("[data-del-session]");

@@ -3,13 +3,23 @@
  */
 
 const form = document.getElementById("module-pack-form");
-const fileInput = document.getElementById("module_pack");
+const fileInput =
+  document.getElementById("attach_module_pack") ||
+  document.getElementById("module_pack");
 const submitBtn = document.getElementById("module-pack-submit");
 const progressWrap = document.getElementById("pack-progress");
 const progressBar = document.getElementById("pack-progress-bar");
 const progressDetail = document.getElementById("pack-progress-detail");
 const classId = Number(form?.dataset.classId || 0);
 const POLL_MS = 700;
+
+/**
+ * Status URL for the current form (IT library upload or leftover staff path).
+ * @returns {string}
+ */
+function statusEndpoint() {
+  return form?.dataset.statusUrl || (classId ? `/staff/class/${classId}/module-pack/status` : "");
+}
 
 let pollTimer = 0;
 
@@ -67,7 +77,7 @@ function stopPoll() {
  * @returns {Promise<{stage?: string, detail?: string, error?: string|null, busy?: boolean, ok?: boolean}>}
  */
 async function fetchStatus() {
-  const response = await fetch(`/staff/class/${classId}/module-pack/status`, {
+  const response = await fetch(statusEndpoint(), {
     headers: { Accept: "application/json" },
   });
   if (!response.ok) {
@@ -175,7 +185,8 @@ function uploadPack(body) {
 }
 
 form?.addEventListener("submit", (event) => {
-  if (!classId || !fileInput?.files?.length) return;
+  if (!fileInput?.files?.length) return;
+  if (!statusEndpoint() && !classId) return;
   event.preventDefault();
   const body = new FormData(form);
   if (submitBtn) submitBtn.disabled = true;
@@ -189,7 +200,7 @@ form?.addEventListener("submit", (event) => {
  * Resume the progress UI if a previous install is still running.
  */
 async function resumeIfBusy() {
-  if (!form || !classId) return;
+  if (!form || (!statusEndpoint() && !classId)) return;
   try {
     const status = await fetchStatus();
     if (status.stage === "error" && status.error) {

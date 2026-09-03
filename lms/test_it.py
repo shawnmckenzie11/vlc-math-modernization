@@ -92,6 +92,18 @@ class ItTests(unittest.TestCase):
         )
         self.assertEqual(first["live_access_code"], second["live_access_code"])
         self.assertNotEqual(first["id"], second["id"])
+        first_root = Path(self.school.data_dir) / str(first["instance_relpath"])
+        second_root = Path(self.school.data_dir) / str(second["instance_relpath"])
+        self.assertTrue(first_root.is_dir())
+        self.assertTrue(second_root.is_dir())
+        self.assertNotEqual(first_root, second_root)
+        self.assertTrue(first_root.name.startswith("t"))
+        self.assertNotEqual(first.get("copied_from_offering_id"), second["id"])
+        self.assertIsNotNone(first.get("library_id"))
+        self.assertEqual(first["library_id"], second["library_id"])
+        self.assertFalse((first_root / "pack" / "course.imscc").exists())
+        self.assertFalse((second_root / "pack" / "course.imscc").exists())
+        self.assertEqual(list(Path(self.school.data_dir).rglob("*.imscc")), [])
 
     def test_staff_without_offering_cannot_populate(self) -> None:
         """Populate Class is forbidden until IT assigns a course."""
@@ -121,6 +133,23 @@ class ItTests(unittest.TestCase):
         active = self.school.get_active_semester()
         self.assertIsNotNone(active)
         self.assertEqual(active["label"], "2026-2027 S1")
+
+    def test_it_assign_form_owns_upload_input(self) -> None:
+        """Assign page for a staff member is multipart and accepts a .imscc."""
+        self.school.activate_from_semester_json()
+        self._login_it()
+        staff = self.school.register_staff("teacher@example.com")
+        staff_id = int(staff["id"])
+        rv = self.client.get(f"/it/staff/{staff_id}/assign")
+        self.assertEqual(rv.status_code, 200)
+        html = rv.get_data(as_text=True)
+        self.assertIn('enctype="multipart/form-data"', html)
+        self.assertIn('name="module_pack"', html)
+        self.assertIn("Module pack", html)
+        # dashboard still links to the assign page
+        rv2 = self.client.get("/it")
+        self.assertEqual(rv2.status_code, 200)
+        self.assertIn(f"/it/staff/{staff_id}/assign", rv2.get_data(as_text=True))
 
     def test_syllabus_editor_needs_imscc_gracefully(self) -> None:
         """Editor route does not crash when the teacher has a class."""
@@ -232,6 +261,63 @@ class ItTests(unittest.TestCase):
         self.assertEqual(search.status_code, 200)
         codes = {row["code"] for row in search.get_json()["courses"]}
         self.assertIn(picked["code"], codes)
+
+
+    def test_it_instances_lists_priors(self) -> None:
+        """GET /it/instances?code= lists prior offerings for the base picker."""
+        self.school.activate_from_semester_json()
+        teacher = self.school.register_staff("prior@gmail.com")
+        offering = self.school.assign_course(
+            teacher_user_id=int(teacher["id"]), ontario_code="MCF3M"
+        )
+        self._login_it()
+        rv = self.client.get("/it/instances?code=MCF3M")
+        self.assertEqual(rv.status_code, 200)
+        body = rv.get_json()
+        self.assertTrue(body.get("ok"))
+        ids = {row["offering_id"] for row in body["instances"]}
+        self.assertIn(int(offering["id"]), ids)
+        row = next(r for r in body["instances"] if r["offering_id"] == int(offering["id"]))
+        self.assertEqual(row["year"], "2026-2027")
+        self.assertEqual(row["term"], "S1")
+        self.assertEqual(row["teacher_email"], "prior@gmail.com")
+        self.assertIn("has_pack", row)
+
+    def test_it_assign_with_base_sets_copied_from(self) -> None:
+        """POST /it/offerings with a base forks that offering's pack."""
+        self.school.activate_from_semester_json()
+        first_teacher = self.school.register_staff("base@gmail.com")
+        second_teacher = self.school.register_staff("fork@gmail.com")
+        first = self.school.assign_course(
+            teacher_user_id=int(first_teacher["id"]), ontario_code="MCF3M"
+        )
+        self._login_it()
+        rv = self.client.post(
+            "/it/offerings",
+            data={
+                "teacher_user_id": str(second_teacher["id"]),
+                "ontario_code": "MCF3M",
+                "copied_from_offering_id": str(first["id"]),
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(rv.status_code, 302)
+        second = self.school.get_offering_for(
+            int(first["semester_id"]), "MCF3M", int(second_teacher["id"])
+        )
+        assert second is not None
+        self.assertEqual(int(second["copied_from_offering_id"]), int(first["id"]))
+        self.assertNotEqual(second["instance_relpath"], first["instance_relpath"])
+        self.assertEqual(first["live_access_code"], second["live_access_code"])
+        self.assertIsNotNone(first.get("library_id"))
+        first_root = Path(self.school.data_dir) / first["instance_relpath"]
+        second_root = Path(self.school.data_dir) / second["instance_relpath"]
+        self.assertTrue((first_root / "manifest.json").is_file())
+        self.assertTrue((second_root / "manifest.json").is_file())
+        self.assertFalse((first_root / "pack" / "course.imscc").exists())
+        self.assertFalse((second_root / "pack" / "course.imscc").exists())
+        self.assertEqual(first["library_id"], second["library_id"])
+        self.assertEqual(list(Path(self.school.data_dir).rglob("*.imscc")), [])
 
 
 if __name__ == "__main__":

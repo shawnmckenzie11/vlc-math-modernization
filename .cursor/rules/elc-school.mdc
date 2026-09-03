@@ -14,6 +14,10 @@ Shawn teaches **online** at **ELC** (Ontario). Shared facts live in `frameworks/
 - Friday: **75-minute** flexible office-hours Zoom
 - Curriculum: Ontario Math Gr 11/12; active build is **MCF3M**
 - Semester state: read `frameworks/semester.json` before pacing
+- Semester is **20 weeks** (first instructional day through the exam window); do **not** assume 20 × 5 = 100 school days
+- **First 2 instructional days** = intro / course overview only (no module work)
+- **Last instructional week before exams** = review (no new module)
+- Due dates **only on school days** (never weekends, holidays, or PD days from `frameworks/semester.json`)
 
 ## Before planning lessons or pacing
 

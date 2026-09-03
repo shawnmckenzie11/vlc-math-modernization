@@ -152,3 +152,52 @@ body.staff-shell .pack-progress-detail {
   font-size: 0.88rem;
   color: #3d4f63;
 }
+body.staff-shell.course-modules {
+  height: 100vh;
+  overflow: hidden;
+}
+body.staff-shell.course-modules .wrap.course-shell {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0.75rem;
+}
+body.staff-shell.course-modules .tabs {
+  flex-shrink: 0;
+}
+body.staff-shell .layout#modules-root {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+}
+body.staff-shell .module-nav-pane {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+body.staff-shell #module-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+body.staff-shell .layout#modules-root iframe.module-frame {
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+}
+@media (max-width: 900px) {
+  body.staff-shell.course-modules {
+    height: auto;
+    overflow: auto;
+  }
+  body.staff-shell .module-nav-pane {
+    max-height: 40vh;
+  }
+  body.staff-shell .layout#modules-root iframe.module-frame {
+    min-height: 50vh;
+  }
+}

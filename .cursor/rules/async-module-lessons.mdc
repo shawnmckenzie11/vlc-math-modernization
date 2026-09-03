@@ -41,6 +41,7 @@ Use when drafting or regenerating **Canvas async module pages** under `courses/*
 - Render each item as a **question card** with curriculum expectation footnotes (codes + short titles from the course curriculum DB).
 - Every item has a stable **smart ID** seeded explicitly (e.g. `M1-S2-E01` = Module · Section · E/F/P · number). IDs must survive regenerations.
 - Also generate a front-facing **question bank browse page** (search/filter by ID, section, type, expectation) with links/anchors back to cards on the lesson page.
+- **Textbook reference banks** (Nelson, etc.) are a separate corpus — see `frameworks/textbook-question-bank.md` and `.cursor/rules/nelson-question-bank.mdc`. Do not treat `nelson_*.sqlite` as this live lesson bank; promote via enrichment maps + rewrite.
 
 ## Practice accordion
 
@@ -51,6 +52,12 @@ Use when drafting or regenerating **Canvas async module pages** under `courses/*
 ## Solution toggles (AU)
 
 - On example and practice solution `<details>` toggles, use the label **“Show solution”** (not “Show worked solution,” “Reveal full solution,” or similar).
+
+## Solution media thrift (AU)
+
+- When rendering bank items on lesson pages, **do not repeat** a stem table/figure/image in the solution unless the solution version was **added to or modified** (filled values, annotations, highlights, different crop).
+- Identical unmodified copies waste space and look like padding — strip them in the build pipeline (`thrift_solution_media` in the module build script).
+- Keep solution media when it differs from the stem (completed difference table, marked-up diagram, etc.).
 
 ## Formative accordion (AU)
 
@@ -80,20 +87,68 @@ Use when drafting or regenerating **Canvas async module pages** under `courses/*
 - Tailor steps to that specific activity (blank calculator vs saved graph with sliders, table work vs transformations, etc.).
 - Question cards that ask students to use Desmos (examples/practice) should also spell out interaction steps in the stem, not only “open Desmos.”
 
+## Section titles with module.section index (AU)
+
+- Student-facing section titles use **Title Case** and a clear numeric index:
+  `{moduleNumber}.{sectionNumber} Title` (e.g. `1.1 Relationships We Can Trust`).
+- Shawn shorthand: **S1.1**, **S1.2**, … = Module · section from `sort_order` (not from legacy smart-ID `S{n}` tokens).
+- Apply the indexed Title Case string in nav, section `<h2>`, and browse filters.
+- Keep stable question smart IDs (`M1-S*-*`) unless an explicit renumber is required. Map display **S{m}.{n}** ↔ `section_key` / `sort_order`; do not break IDs when section order drifts from historical `S{n}` codes.
+- Module 1 mapping lives in that module’s `README.md` (display index vs `section_key` vs smart-ID family).
+
+## Mandatory section sequence (AU — hard requirement)
+
+Every section of every module must follow this spine (render blocks that exist; **Summary: Need to Know** is always present — placeholder OK until filled):
+
+1. **Minds-On** — intro prose + any brainstorming/hook activity **before** Explore; lightbulb icon (`assets/icon-lightbulb.svg` or equivalent Canvas-safe `img`)
+2. **Explore**
+3. **Examples**
+4. **Formative** (Formative checks)
+5. **Practice**
+6. **Summary: Need to Know**
+
+- Wrap existing section `intro_html` (+ hook/brainstorm) as **Minds-On**; do not leave bare intro without the process header.
+- Process-header colour treatment extends to **Minds-On** and **Summary** (`process-heading-minds-on` / `process-heading-summary`); keep `styles.css` and canvasify (`m1_canvasify_html.py` CLASS_STYLES) in sync.
+- Subsectioned sections: Minds-On + Summary bookend the section; Explore → Examples → Formative → Practice may repeat per subsection in that order.
+- End-of-section **Section Glossary** (if any) comes after Summary.
+- Filling Summary bullets from a textbook (e.g. Nelson “In Summary”) is a **QU** content task — the Summary *slot* is AU.
+- **Nelson provenance (AU note for QU):** Nelson In Summary boxes contain **Key Ideas** and **Need to Know**. Module **Summary: Need to Know** bullets must come from **Need to Know only** — never Key Ideas. Index as `{lesson}.{n}` (see Module 1 `questions/NELSON_SUMMARY_GAP.md`).
+
 ## Title / type hierarchy (AU)
 
 - Use a clear typographic scale in module CSS — not flat same-size headers:
   - **Page title** (`h1` / hero): largest
-  - **Section** (`h2`): next
-  - **Explore / block** (`h3`): clearly smaller than section
-  - **Card titles** (`h4` / accordion summaries): smaller still, purposeful weight
+  - **Section** (`h2`): next (indexed Title Case, e.g. `1.1 …`)
+  - **Process blocks** (Minds-On / Explore / Examples / Formative checks / Practice / Summary: Need to Know): elevated `h3` with colour — see below
+  - **Card titles**: smaller still, purposeful weight
 - Prefer the established type scale in `async/styles.css`; do not invent one-off sizes per section.
+
+## Question card titles (AU)
+
+- On lesson question cards, show the **thumbnail title** (seed `title`, e.g. “Area grows with a square”) at the top of the card.
+- Do **not** surface PROCESS / CONCEPTUAL / APPLICATION (or `Example · process`) subtype labels on student HTML — subtype may stay in the DB for authoring.
+- Smart-id badge stays; title replaces the old uppercase type label.
+
+## Process block headers (AU)
+
+- **Minds-On**, **Explore**, **Examples**, **Formative checks**, **Practice**, and **Summary: Need to Know** are distinctive process beats — headers must pop (stronger size/weight than quiet body `h3`s).
+- Use intuitive, tasteful colour + light container backgrounds (Module 1 language: gold Minds-On, blue Explore, amber Examples, green Formative, slate Practice, teal Summary). Avoid purple-glow / garish defaults.
+- Markup: `process-heading process-heading-{minds-on|explore|examples|formative|practice|summary}` on the `h3`, plus container classes (`minds-on-block`, `explore-block`, `examples-block`, `formative-block`, `practice-block`, `summary-block`).
+- **Canvas portability:** `scripts/m1_canvasify_html.py` must inline equivalent styles on these headers/containers (Canvas strips `<style>`). Keep local CSS and canvasify in sync.
 
 ## Expectation footnotes
 
 - Keep footnotes **quiet**: small muted codes (hover/`title` may carry the full statement).
 - Stay **Canvas-portable**: put codes on `data-expectations` (on the card and/or footnote) plus a subtle visible fallback so import does not drop the data.
 - Do **not** use loud “Curriculum expectations” list blocks on student cards.
+
+## In-context glossary (AU)
+
+- First-use **tap-to-define** for sequenced mathematical terms: build-time embed from the course glossary DB into inline `<span class="gterm">` (checkbox + label + popover def) so the term **stays in the sentence** — never `<details>` mid-paragraph (browsers force line breaks).
+- Per-section **allowlists** only (no ahead-of-schedule terms). Aliases OK when definitions match Module 1 meaning.
+- End-of-section collapsed **“Section Glossary”** review for terms actually linked (student-facing label; not “Words from this section”).
+- **Canvas IMSCC survival:** definitions are baked into HTML; also inline glossary/module CSS via `python3 scripts/m1_export_canvas_page.py` before packing wiki pages so styles are not lost when `styles.css` is not a course file.
+- **Canvas export packs (AU):** regenerate into `courses/<CODE>/canvas/exports/<module-slug>/` (MCF3M Module 1: `m1-change-and-transformation/`) including lesson, question bank, glossary/Nelson companions, and `assets/` so local serve matches authoring UX; `canvas-page.html` is the inlined wiki body.
 
 ## Difference tables
 

@@ -1,0 +1,62 @@
+---
+description: Textbook/Nelson reference question-bank conventions and pipeline (AU)
+globs:
+  - courses/**/questions/nelson*
+  - courses/**/questions/**/nelson*
+  - courses/**/questions/curation/**
+  - courses/**/questions/*NELSON*
+  - courses/**/async/nelson-*
+  - courses/**/sources/nelson/**
+  - scripts/*nelson*
+  - scripts/m1_build_nelson*
+  - agents/nelson-question-bank.md
+  - frameworks/textbook-question-bank.md
+alwaysApply: false
+---
+
+# Textbook / Nelson question bank (AU)
+
+Conventions for **reference** textbook exercise banks (Nelson Functions 11 on MCF3M today). Same rules apply when cloning the pipeline for later modules or other courses.
+
+Framework: [`frameworks/textbook-question-bank.md`](../../frameworks/textbook-question-bank.md)  
+Agent brief: [`agents/nelson-question-bank.md`](../../agents/nelson-question-bank.md)
+
+## Scope
+
+- Reference bank under `courses/<CODE>/modules/<module>/questions/` — **not** live lesson seeds (`m*_questions.sqlite`).
+- Promotion into Canvas async requires rewrite + live smart IDs (async-module-lessons).
+- Printed Nelson page ≈ PDF page − 10 (verify against page headers when unsure).
+
+## Stem HTML
+
+- **No leading question number** in `stem_html` (IDs / card chrome carry `Q#`). Start with the prompt prose or part `(a)`.
+- **Stand-alone stems** — do not write “in question 4” / “your answers to part (c)” without duplicating the needed context (table, equations, prior ask).
+- **Math only in KaTeX** — wrap equations in `\(...\)` or `\[...\]`. Never leave currency `$…$` or prose inside `$` delimiters (browse disables single-`$` delimiters; still prefer `\$` / `&#36;` for dollar amounts in prose).
+- Prefer HTML `<table>` for textbook tables when text is recoverable.
+
+## Figures
+
+- **Inline with the part** they belong to — embed `<figure class="nelson-figure"><img …></figure>` in `stem_html` immediately under that part. Do not say “see figure below” / “first figure below”.
+- Keep `image_paths_json` as the asset inventory (same relative paths); the browse UI must **not** re-append images already present in the stem.
+- **No redundant media** — if the stem has an HTML table (or full text), do not also attach the table crop.
+- **Crops must include labels** — part letters `(a)`, axis titles (`Cost ($)`, `Distance (km)`), tick labels, and diagram edge values must not be clipped.
+
+## Verification & curation
+
+- `verified_inclusion = 1` only when the stem is human-readable, answerable without the PDF, and math agrees with the answers key (or is an intentional open task).
+- After raw extract, run deep curation before treating the bank as teachable.
+- Archive reproducible edits under `questions/curation/*.json`; prefer apply-patches over silent one-off sqlite edits when doing section passes.
+- Intentional stubs/duplicates may stay unverified or be deleted via the browse API.
+
+## Browse / mutations
+
+- Regenerate UI: `python3 scripts/build_nelson_browse.py --module <slug>` (Module 1 default also via `m1_build_nelson_browse.py`).
+- **Deletes and other DB writes** require `python3 scripts/nelson_browse_server.py --module <slug>`. Plain `python3 -m http.server` is read-only.
+- Verified checkboxes may also persist in the browser; bank flags remain source of truth after “Reset toggles to bank flags”.
+
+## Multi-module / multi-course
+
+- Keep the two-DB split and AU stem rules.
+- MCF3M chapter map: `courses/MCF3M/sources/nelson/CHAPTER_MODULE_MAP.md`.
+- New modules: `extract_nelson_chapter.py --chapter N` into that module’s `questions/`; deep-curate before `verified_inclusion=1`.
+- New courses: copy path layout from the framework; generalize scripts with flags rather than inventing a second process.

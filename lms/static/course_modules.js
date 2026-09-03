@@ -6,7 +6,7 @@ const nav = document.getElementById("module-nav");
 const frame = document.getElementById("module-frame");
 
 /**
- * Load the IMSCC module tree and bind the left nav.
+ * Load the stored module outline and bind the left nav.
  */
 async function loadNav() {
   hideError("#error");
@@ -20,14 +20,13 @@ async function loadNav() {
   for (const mod of data.modules || []) {
     html += `<li class="mod">${escapeText(mod.title)}</li>`;
     for (const item of mod.items || []) {
-      const params = new URLSearchParams({
-        kind: item.kind,
-        title: item.title,
-        href: item.href || "",
-        type: item.content_type || "",
-      });
+      if (item.kind === "header") {
+        html += `<li class="sub-header">${escapeText(item.title)}</li>`;
+        continue;
+      }
+      const params = new URLSearchParams({ item: String(item.id) });
       const url = `/staff/class/${classId}/module-item?${params}`;
-      html += `<li><button type="button" data-url="${escapeText(url)}">${escapeText(item.title)}</button></li>`;
+      html += `<li><button type="button" data-kind="${escapeText(item.component_type)}" data-url="${escapeText(url)}">${escapeText(item.title)}</button></li>`;
     }
   }
   html += "</ul>";

@@ -8,9 +8,19 @@
 </head>
 <body>
   <div class="wrap" style="max-width:28rem">
-    <p class="kicker">Test mock · {{ portal }} portal</p>
+    <p class="kicker">Local dev login · {{ portal }} portal</p>
     <h1>Simulated Google Sign-In</h1>
-    <p class="sub">Flask TESTING is on. Unit tests use this form. For a real browser login, set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in lms/.env (see GOOGLE.md) and restart without TESTING.</p>
+    <p class="sub">This offline picker is on because <code>LOCAL_DEV_LOGIN=1</code> is set in <code>lms/.env</code> (or Flask TESTING is on). It avoids bouncing to the live site's OAuth callback. Remove the flag to use real Google accounts; production never sets it.</p>
+
+    {% if known_accounts %}
+    <p class="sub">Existing accounts in this local database:</p>
+    <div class="row-actions" style="flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">
+      {% for account in known_accounts %}
+      <a class="btn secondary" href="{{ url_for('auth_google_callback', portal=portal, email=account.email, name=account.display_name) }}">{{ account.display_name or account.email }} <small>({{ account.role }})</small></a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <form method="get" action="{{ url_for('auth_google_callback') }}">
       <input type="hidden" name="portal" value="{{ portal }}">
       <label class="field" for="email">Google email</label>

@@ -1,6 +1,7 @@
 import { api, hideError, showError } from "/static/common.js";
 
-const STEPS = ["roster", "days", "time"];
+const POPULATE_STEPS = ["roster", "days", "time"];
+const EDIT_STEPS = ["roster"];
 const TITLES = {
   offering: "Assigned course",
   roster: "Codenames",
@@ -9,6 +10,8 @@ const TITLES = {
 };
 
 let step = 0;
+let steps = POPULATE_STEPS;
+let editingClassId = 0;
 const names = [];
 
 const $ = (id) => document.getElementById(id);
@@ -74,14 +77,18 @@ function addNames(raw) {
 function showPicker() {
   $("course-dash")?.classList.remove("hidden");
   $("wizard")?.classList.add("hidden");
+  editingClassId = 0;
+  steps = POPULATE_STEPS;
   hideError("#error");
 }
 
 /**
- * Start the roster wizard for one IT-assigned course.
- * @param {string} offeringId
+ * Open the wizard for an offering (populate or edit existing roster).
+ * @param {HTMLElement} btn
  */
-function startPopulate(offeringId) {
+async function startWizard(btn) {
+  const offeringId = btn.getAttribute("data-offering-id") || "";
+  const classId = Number(btn.getAttribute("data-class-id") || 0);
   const select = $("offering");
   if (select) select.value = String(offeringId);
   const label = select?.selectedOptions?.[0]?.textContent || "";
@@ -91,6 +98,21 @@ function startPopulate(offeringId) {
   $("wizard")?.classList.remove("hidden");
   step = 0;
   names.length = 0;
+  editingClassId = classId;
+  steps = classId ? EDIT_STEPS : POPULATE_STEPS;
+  if (classId) {
+    try {
+      const data = await api(`/api/classes/${classId}/dashboard?sort=az`);
+      for (const student of data.students || []) {
+        const name = String(student.codename || student.first_name || "").trim();
+        if (name) names.push(name);
+      }
+    } catch (err) {
+      showError("#error", err);
+      showPicker();
+      return;
+    }
+  }
   renderRoster();
   renderStep();
 }
@@ -99,16 +121,24 @@ function startPopulate(offeringId) {
  * Show one wizard step.
  */
 function renderStep() {
-  const key = STEPS[step];
-  $("wiz-progress").textContent = `Step ${step + 1} of ${STEPS.length}`;
-  $("wiz-title").textContent = TITLES[key] || "Populate Class";
+  const key = steps[step];
+  $("wiz-progress").textContent = `Step ${step + 1} of ${steps.length}`;
+  if (editingClassId) {
+    $("wiz-title").textContent = "Edit Class";
+  } else {
+    $("wiz-title").textContent = TITLES[key] || "Populate Class";
+  }
   for (const name of ["offering", "roster", "days", "time"]) {
     const el = $(`step-${name}`);
     if (!el) continue;
     el.classList.toggle("hidden", name !== key);
   }
   $("wiz-back").textContent = step === 0 ? "Cancel" : "Back";
-  $("wiz-next").textContent = step === STEPS.length - 1 ? "Populate class" : "Next";
+  if (step !== steps.length - 1) {
+    $("wiz-next").textContent = "Next";
+  } else {
+    $("wiz-next").textContent = editingClassId ? "Save roster" : "Populate class";
+  }
 }
 
 /**
@@ -117,7 +147,7 @@ function renderStep() {
  */
 function validateStep() {
   hideError("#error");
-  const key = STEPS[step];
+  const key = steps[step];
   if (key === "offering" && !$("offering")?.value) {
     showError("#error", "Choose an assigned course.");
     return false;
@@ -130,7 +160,7 @@ function validateStep() {
 }
 
 /**
- * POST the class and open the course dashboard.
+ * Create a new class (Populate Class).
  */
 async function submitClass() {
   const offering = $("offering");
@@ -147,9 +177,20 @@ async function submitClass() {
   location.href = `/staff/class/${data.class.id}`;
 }
 
+/**
+ * Update an existing class roster without creating a new section.
+ */
+async function submitRosterEdit() {
+  const data = await api(`/api/staff/classes/${editingClassId}/roster`, {
+    method: "PUT",
+    body: JSON.stringify({ codenames: names }),
+  });
+  location.href = `/staff/class/${data.class.id}`;
+}
+
 document.querySelectorAll(".btn-populate").forEach((btn) => {
   btn.addEventListener("click", () => {
-    startPopulate(btn.getAttribute("data-offering-id") || "");
+    startWizard(btn).catch((err) => showError("#error", err));
   });
 });
 
@@ -164,9 +205,13 @@ $("wiz-back")?.addEventListener("click", () => {
 
 $("wiz-next")?.addEventListener("click", async () => {
   if (!validateStep()) return;
-  if (step === STEPS.length - 1) {
+  if (step === steps.length - 1) {
     try {
-      await submitClass();
+      if (editingClassId) {
+        await submitRosterEdit();
+      } else {
+        await submitClass();
+      }
     } catch (err) {
       showError("#error", err);
     }

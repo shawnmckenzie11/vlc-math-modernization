@@ -9,17 +9,18 @@ alwaysApply: true
 frameworks/           # shared ELC constants (inherit these)
 courses/<CODE>/       # one folder per course code (MCF3M, …)
   AGENTS.md           # course agent notes (inherits frameworks/)
-  sources/            # PDFs, IMSCC, immutable inputs
+  sources/            # PDFs, IMSCC, immutable inputs (+ textbook extracts)
   curriculum/         # expectations DB + markdown
   canvas/             # IMSCC inventory + gitignored unpacked/
   live-lessons/       # SMART Notebook sync materials + inventory
-  modules/            # lesson/module drafts
+  modules/            # lesson/module drafts (async + reference banks)
 agents/               # cross-cutting agent prompts
 scripts/              # tooling
 ```
 
 - New courses copy the `courses/MCF3M/` shape and inherit `frameworks/` + root `AGENTS.md`.
-- Harness specialized agents for trickle-down work (curriculum, semester, Canvas IMSCC, SMART Notebook) — see root `AGENTS.md`.
+- Harness specialized agents for trickle-down work (curriculum, semester, Canvas IMSCC, SMART Notebook, async lessons, textbook/Nelson banks) — see root `AGENTS.md`.
+- Textbook reference banks live under `modules/<module>/questions/` (see `frameworks/textbook-question-bank.md`); do not conflate with live lesson sqlite.
 - Course module/lesson inventories are baselines for rebuilds, not frozen IA; preserve source archives when restructuring.
 - Put shared school rules only under `frameworks/` or `.cursor/rules/`, not duplicated per course.
 - Teaching content > app scaffolding. Docstrings required on new functions/methods.

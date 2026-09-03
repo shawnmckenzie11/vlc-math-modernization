@@ -36,13 +36,54 @@ def google_client_secret() -> str:
     return (os.getenv("GOOGLE_CLIENT_SECRET") or "").strip()
 
 
+def mock_login_enabled() -> bool:
+    """True when the offline account picker replaces real Google OAuth.
+
+    Two cases use it: Flask ``TESTING`` (so unit tests stay offline) and
+    ``LOCAL_DEV_LOGIN=1`` in ``lms/.env`` (so a laptop can sign in without
+    registering ``127.0.0.1`` as a Google redirect URI). Production never sets
+    the flag, so the live site always uses real OAuth.
+    """
+    if current_app.config.get("TESTING"):
+        return True
+    return (os.getenv("LOCAL_DEV_LOGIN") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
+def _local_dev_accounts(portal: str) -> list[dict[str, Any]]:
+    """List existing users for one-click local sign-in.
+
+    Args:
+        portal: ``it`` or ``staff`` — filters to accounts that can enter it.
+
+    Returns:
+        User dicts, or an empty list if the database is unavailable.
+    """
+    try:
+        users = school_db().list_staff()
+    except Exception:  # noqa: BLE001 - picker must never break the login page
+        return []
+    allowed = it_emails()
+    out = []
+    for user in users:
+        email = str(user.get("email") or "").lower()
+        is_it = user.get("role") == "it" or email in allowed
+        if portal == "it" and not is_it:
+            continue
+        out.append(user)
+    return out
+
+
 def google_oauth_ready() -> bool:
     """True when this process should redirect to real Google accounts.
 
-    Flask ``TESTING`` always uses the mock picker so unit tests stay offline
-    even if ``lms/.env`` has production credentials.
+    Flask ``TESTING`` and local dev login always use the mock picker, even
+    when ``lms/.env`` carries production credentials.
     """
-    if current_app.config.get("TESTING"):
+    if mock_login_enabled():
         return False
     return bool(google_client_id() and google_client_secret())
 
@@ -135,6 +176,9 @@ def current_user() -> dict[str, Any] | None:
     if not user:
         session.clear()
         return None
+    if user.get("archived_at"):
+        session.clear()
+        return None
     return user
 
 
@@ -168,10 +212,10 @@ def staff_required(f: Callable) -> Callable:
             return f(*args, **kwargs)
         if portal != "staff" and user["role"] != "it":
             if request.path.startswith("/api/"):
-                return {"ok": False, "error": "Ask IT to grant access."}, 403
+                return {"ok": False, "error": "Ask Admin to grant access."}, 403
             return render_template(
                 "forbidden.html",
-                message="Ask IT to grant access.",
+                message="Ask Admin to grant access.",
             ), 403
         return f(*args, **kwargs)
 
@@ -192,7 +236,7 @@ def it_required(f: Callable) -> Callable:
         if user["role"] != "it" and email not in it_emails():
             return render_template(
                 "forbidden.html",
-                message="Ask IT to grant access.",
+                message="Ask Admin to grant access.",
             ), 403
         return f(*args, **kwargs)
 
@@ -290,6 +334,9 @@ def _finish_google_identity(
             "forbidden.html",
             message="This Google account is not registered. Ask IT.",
         ), 403
+    if user.get("archived_at"):
+        session.clear()
+        return redirect(url_for("landing"))
     if google_sub and user.get("google_sub") != google_sub:
         user = db.link_google(int(user["id"]), google_sub, name)
     elif name and not user.get("display_name"):
@@ -302,7 +349,7 @@ def _finish_google_identity(
     if portal_key == "it" and not is_it:
         return render_template(
             "forbidden.html",
-            message="Ask IT to grant access.",
+            message="Ask Admin to grant access.",
         ), 403
     if portal_key == "staff" and user["role"] not in {"staff", "it"} and not is_it:
         return render_template(
@@ -355,12 +402,15 @@ def register_auth_routes(app: Flask) -> None:
                 return redirect(url_for("staff_home"))
 
         if not google_oauth_ready():
-            if current_app.config.get("TESTING"):
+            if mock_login_enabled():
                 app.logger.warning(
-                    "TESTING=1; using mock Google login instead of OAuth."
+                    "Local dev login is on; using the offline account picker."
                 )
                 return render_template(
-                    "google_auth.html", portal=portal, school=SCHOOL_SHORT
+                    "google_auth.html",
+                    portal=portal,
+                    school=SCHOOL_SHORT,
+                    known_accounts=_local_dev_accounts(portal),
                 )
             app.logger.warning(
                 "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set; OAuth is off."
@@ -418,7 +468,7 @@ def register_auth_routes(app: Flask) -> None:
             )
 
         if not oauth_ready:
-            if not current_app.config.get("TESTING"):
+            if not mock_login_enabled():
                 return redirect(url_for("auth_google", portal=portal))
             email = request.args.get("email")
             name = request.args.get("name") or (email.split("@")[0] if email else None)

@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS users (
     verified_at TEXT,
     verification_code TEXT,
     created_at TEXT NOT NULL,
-    last_login_at TEXT
+    last_login_at TEXT,
+    archived_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS semesters (
@@ -84,11 +85,27 @@ CREATE TABLE IF NOT EXISTS course_offerings (
     expectations_status TEXT NOT NULL DEFAULT 'unverified',
     student_options_json TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL,
-    UNIQUE(semester_id, ontario_code, teacher_user_id)
+    copied_from_offering_id INTEGER,
+    instance_relpath TEXT,
+    section_index INTEGER NOT NULL DEFAULT 1,
+    archived_at TEXT,
+    UNIQUE(semester_id, ontario_code, teacher_user_id, section_index)
 );
 
 CREATE INDEX IF NOT EXISTS idx_live_access_code
     ON course_offerings(live_access_code);
+
+CREATE TABLE IF NOT EXISTS content_libraries (
+    id INTEGER PRIMARY KEY,
+    ontario_code TEXT NOT NULL,
+    origin TEXT NOT NULL,
+    source_path TEXT,
+    source_sha256 TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_content_libraries_code
+    ON content_libraries(ontario_code);
 
 CREATE TABLE IF NOT EXISTS student_code_attempts (
     id INTEGER PRIMARY KEY,
@@ -126,6 +143,29 @@ def parse_semester_label(semester: str) -> tuple[str, str]:
     return year_display, "Semester 1"
 
 
+def section_code(ontario_code: str, section_index: Any = 1) -> str:
+    """Return the teacher-facing code for one section of a course.
+
+    The first section a teacher holds of a code keeps the plain Ontario code
+    so existing courses read unchanged; later sections get ``-2``, ``-3``, ….
+
+    Args:
+        ontario_code: Catalog course code (``MCF3M``).
+        section_index: 1-based occurrence for this (teacher, code, term).
+
+    Returns:
+        ``MCF3M`` for section 1, ``MCF3M-2`` for section 2, and so on.
+    """
+    code = (ontario_code or "").strip().upper()
+    try:
+        index = int(section_index or 1)
+    except (TypeError, ValueError):
+        index = 1
+    if index <= 1:
+        return code
+    return f"{code}-{index}"
+
+
 class LovesDB:
     """School-level sqlite (users, semesters, offerings) on the shared LMS file."""
 
@@ -145,6 +185,11 @@ class LovesDB:
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.execute("PRAGMA journal_mode = WAL")
         self.conn.executescript(SCHEMA)
+        self._ensure_offering_columns()
+        self._ensure_offering_sections()
+        self._ensure_offering_archived_column()
+        self._ensure_library_schema()
+        self._ensure_archived_column()
         self._seed()
         self.conn.commit()
 
@@ -152,6 +197,268 @@ class LovesDB:
         """Close the sqlite connection."""
         with self._lock:
             self.conn.close()
+
+    def _ensure_offering_columns(self) -> None:
+        """Add instance columns on live DBs created before this schema.
+
+        ``CREATE TABLE IF NOT EXISTS`` will not ALTER existing Fly sqlite files.
+        """
+        cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(course_offerings)")
+        }
+        if "copied_from_offering_id" not in cols:
+            self.conn.execute(
+                "ALTER TABLE course_offerings ADD COLUMN copied_from_offering_id INTEGER"
+            )
+        if "instance_relpath" not in cols:
+            self.conn.execute(
+                "ALTER TABLE course_offerings ADD COLUMN instance_relpath TEXT"
+            )
+        if "library_id" not in cols:
+            self.conn.execute(
+                "ALTER TABLE course_offerings ADD COLUMN library_id INTEGER"
+            )
+        if "section_index" not in cols:
+            self.conn.execute(
+                "ALTER TABLE course_offerings "
+                "ADD COLUMN section_index INTEGER NOT NULL DEFAULT 1"
+            )
+
+    def _legacy_offering_unique_index(self) -> str | None:
+        """Return the pre-section UNIQUE index name on ``course_offerings``.
+
+        Databases created before section support carry a table-level
+        ``UNIQUE(semester_id, ontario_code, teacher_user_id)``, which blocks a
+        second section for the same teacher. SQLite cannot drop a table
+        constraint in place, so the caller rebuilds the table.
+
+        Returns:
+            The auto-index name, or None when the schema already allows sections.
+        """
+        wanted = {"semester_id", "ontario_code", "teacher_user_id"}
+        for index in self.conn.execute("PRAGMA index_list(course_offerings)"):
+            if not int(index["unique"]) or str(index["origin"]) != "u":
+                continue
+            name = str(index["name"]).replace('"', '""')
+            cols = {
+                str(row["name"])
+                for row in self.conn.execute(f'PRAGMA index_info("{name}")')
+            }
+            if cols == wanted:
+                return str(index["name"])
+        return None
+
+    def _ensure_offering_sections(self) -> None:
+        """Backfill ``section_index`` and widen the offering uniqueness key.
+
+        Every pre-existing row becomes section 1 (the old constraint made more
+        than one impossible), so live Fly databases migrate without changing a
+        single displayed course label.
+        """
+        self.conn.execute(
+            "UPDATE course_offerings SET section_index = 1 WHERE section_index IS NULL"
+        )
+        if self._legacy_offering_unique_index() is None:
+            return
+        self.conn.commit()
+        self.conn.execute("PRAGMA foreign_keys = OFF")
+        try:
+            self.conn.executescript(
+                """
+                BEGIN;
+                CREATE TABLE course_offerings_sections (
+                    id INTEGER PRIMARY KEY,
+                    semester_id INTEGER NOT NULL REFERENCES semesters(id),
+                    ontario_code TEXT NOT NULL REFERENCES ontario_courses(code),
+                    teacher_user_id INTEGER NOT NULL REFERENCES users(id),
+                    live_access_code TEXT NOT NULL,
+                    imscc_path TEXT,
+                    expectations_status TEXT NOT NULL DEFAULT 'unverified',
+                    student_options_json TEXT NOT NULL DEFAULT '[]',
+                    created_at TEXT NOT NULL,
+                    copied_from_offering_id INTEGER,
+                    instance_relpath TEXT,
+                    library_id INTEGER,
+                    section_index INTEGER NOT NULL DEFAULT 1,
+                    UNIQUE(semester_id, ontario_code, teacher_user_id, section_index)
+                );
+                INSERT INTO course_offerings_sections (
+                    id, semester_id, ontario_code, teacher_user_id,
+                    live_access_code, imscc_path, expectations_status,
+                    student_options_json, created_at, copied_from_offering_id,
+                    instance_relpath, library_id, section_index
+                )
+                SELECT id, semester_id, ontario_code, teacher_user_id,
+                       live_access_code, imscc_path, expectations_status,
+                       student_options_json, created_at, copied_from_offering_id,
+                       instance_relpath, library_id, COALESCE(section_index, 1)
+                FROM course_offerings;
+                DROP TABLE course_offerings;
+                ALTER TABLE course_offerings_sections RENAME TO course_offerings;
+                CREATE INDEX IF NOT EXISTS idx_live_access_code
+                    ON course_offerings(live_access_code);
+                COMMIT;
+                """
+            )
+        finally:
+            self.conn.execute("PRAGMA foreign_keys = ON")
+
+    def _ensure_library_schema(self) -> None:
+        """Create shared-library and normalized component tables."""
+        self.conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS content_libraries (
+                id INTEGER PRIMARY KEY,
+                ontario_code TEXT NOT NULL,
+                origin TEXT NOT NULL,
+                source_path TEXT,
+                source_sha256 TEXT,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_content_libraries_code
+                ON content_libraries(ontario_code);
+
+            CREATE TABLE IF NOT EXISTS blobs (
+                sha256 TEXT PRIMARY KEY,
+                bytes INTEGER NOT NULL,
+                mime TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS library_files (
+                id INTEGER PRIMARY KEY,
+                library_id INTEGER NOT NULL
+                    REFERENCES content_libraries(id) ON DELETE CASCADE,
+                relpath TEXT NOT NULL,
+                blob_sha TEXT NOT NULL REFERENCES blobs(sha256),
+                created_at TEXT NOT NULL,
+                UNIQUE(library_id, relpath)
+            );
+            CREATE INDEX IF NOT EXISTS idx_library_files_library
+                ON library_files(library_id);
+
+            CREATE TABLE IF NOT EXISTS pages (
+                id INTEGER PRIMARY KEY,
+                library_id INTEGER NOT NULL
+                    REFERENCES content_libraries(id) ON DELETE CASCADE,
+                import_key TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                title TEXT NOT NULL,
+                html_text TEXT,
+                blob_sha TEXT REFERENCES blobs(sha256),
+                url TEXT,
+                created_at TEXT NOT NULL,
+                UNIQUE(library_id, import_key)
+            );
+
+            CREATE TABLE IF NOT EXISTS assignments (
+                id INTEGER PRIMARY KEY,
+                library_id INTEGER NOT NULL
+                    REFERENCES content_libraries(id) ON DELETE CASCADE,
+                import_key TEXT NOT NULL,
+                title TEXT NOT NULL,
+                body_html TEXT,
+                blob_sha TEXT REFERENCES blobs(sha256),
+                points REAL,
+                settings_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                UNIQUE(library_id, import_key)
+            );
+
+            CREATE TABLE IF NOT EXISTS quizzes (
+                id INTEGER PRIMARY KEY,
+                library_id INTEGER NOT NULL
+                    REFERENCES content_libraries(id) ON DELETE CASCADE,
+                import_key TEXT NOT NULL,
+                title TEXT NOT NULL,
+                settings_json TEXT NOT NULL DEFAULT '{}',
+                qti_blob_sha TEXT REFERENCES blobs(sha256),
+                created_at TEXT NOT NULL,
+                UNIQUE(library_id, import_key)
+            );
+
+            CREATE TABLE IF NOT EXISTS question_banks (
+                id INTEGER PRIMARY KEY,
+                library_id INTEGER NOT NULL
+                    REFERENCES content_libraries(id) ON DELETE CASCADE,
+                import_key TEXT NOT NULL,
+                title TEXT NOT NULL,
+                settings_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                UNIQUE(library_id, import_key)
+            );
+
+            CREATE TABLE IF NOT EXISTS questions (
+                id INTEGER PRIMARY KEY,
+                bank_id INTEGER NOT NULL
+                    REFERENCES question_banks(id) ON DELETE CASCADE,
+                import_key TEXT NOT NULL,
+                item_type TEXT NOT NULL DEFAULT '',
+                title TEXT NOT NULL DEFAULT '',
+                payload_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                UNIQUE(bank_id, import_key)
+            );
+
+            CREATE TABLE IF NOT EXISTS module_outlines (
+                id INTEGER PRIMARY KEY,
+                library_id INTEGER NOT NULL
+                    REFERENCES content_libraries(id) ON DELETE CASCADE,
+                import_key TEXT NOT NULL,
+                title TEXT NOT NULL,
+                position INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                UNIQUE(library_id, import_key)
+            );
+
+            CREATE TABLE IF NOT EXISTS module_items (
+                id INTEGER PRIMARY KEY,
+                outline_id INTEGER NOT NULL
+                    REFERENCES module_outlines(id) ON DELETE CASCADE,
+                import_key TEXT NOT NULL,
+                title TEXT NOT NULL,
+                position INTEGER NOT NULL DEFAULT 0,
+                component_type TEXT NOT NULL,
+                component_id INTEGER,
+                source_type TEXT NOT NULL DEFAULT '',
+                source_href TEXT,
+                created_at TEXT NOT NULL,
+                UNIQUE(outline_id, import_key)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_pages_library
+                ON pages(library_id);
+            CREATE INDEX IF NOT EXISTS idx_assignments_library
+                ON assignments(library_id);
+            CREATE INDEX IF NOT EXISTS idx_quizzes_library
+                ON quizzes(library_id);
+            CREATE INDEX IF NOT EXISTS idx_question_banks_library
+                ON question_banks(library_id);
+            CREATE INDEX IF NOT EXISTS idx_module_outlines_library
+                ON module_outlines(library_id, position);
+            CREATE INDEX IF NOT EXISTS idx_module_items_outline
+                ON module_items(outline_id, position);
+            """
+        )
+
+    def _ensure_archived_column(self) -> None:
+        """Add users.archived_at if the column does not yet exist (live migration).
+
+        Uses the same pattern as ``_ensure_offering_columns`` so that existing
+        Fly sqlite files are altered without recreating the table.
+        """
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(users)")}
+        if "archived_at" not in cols:
+            self.conn.execute("ALTER TABLE users ADD COLUMN archived_at TEXT")
+
+    def _ensure_offering_archived_column(self) -> None:
+        """Add course_offerings.archived_at if absent (live migration)."""
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(course_offerings)")}
+        if "archived_at" not in cols:
+            self.conn.execute(
+                "ALTER TABLE course_offerings ADD COLUMN archived_at TEXT"
+            )
 
     def _seed(self) -> None:
         """Insert IT user, curriculum catalog, MCF3M expectations, default semester."""
@@ -336,13 +643,104 @@ class LovesDB:
             user_id = int(cur.lastrowid)
         return self.get_user(user_id) or {}
 
-    def list_staff(self) -> list[dict[str, Any]]:
-        """Return IT and staff users."""
+    def list_staff(self, *, include_archived: bool = False) -> list[dict[str, Any]]:
+        """Return IT and staff users ordered by role then email.
+
+        Args:
+            include_archived: When False (default), users whose ``archived_at``
+                is non-NULL are excluded.
+
+        Returns:
+            List of user dicts. Each dict contains all ``users`` columns.
+        """
         with self._lock:
-            rows = self.conn.execute(
-                "SELECT * FROM users ORDER BY role, email"
-            ).fetchall()
+            if include_archived:
+                rows = self.conn.execute(
+                    "SELECT * FROM users ORDER BY role, email"
+                ).fetchall()
+            else:
+                rows = self.conn.execute(
+                    "SELECT * FROM users WHERE archived_at IS NULL ORDER BY role, email"
+                ).fetchall()
         return [dict(row) for row in rows]
+
+    def deactivate_staff(self, user_id: int, by_user_id: int) -> dict[str, Any]:
+        """Soft-deactivate a staff user by setting archived_at.
+
+        Args:
+            user_id: Primary key of the user to deactivate.
+            by_user_id: Primary key of the requesting user (cannot equal user_id).
+
+        Returns:
+            Updated user dict.
+
+        Raises:
+            ValueError: If user_id == by_user_id (cannot self-deactivate), if the
+                target user has the IT role (bootstrap IT is untouchable), or if
+                the user does not exist.
+        """
+        if user_id == by_user_id:
+            raise ValueError("You cannot deactivate your own account.")
+        target = self.get_user(user_id)
+        if target is None:
+            raise ValueError(f"User {user_id} not found.")
+        if target.get("role") == "it":
+            raise ValueError("IT accounts cannot be deactivated.")
+        with self._lock:
+            self.conn.execute(
+                "UPDATE users SET archived_at = ? WHERE id = ?",
+                (_now(), user_id),
+            )
+            self.conn.commit()
+        return self.get_user(user_id) or {}
+
+    def reactivate_staff(self, user_id: int) -> dict[str, Any]:
+        """Clear archived_at, restoring login access for a deactivated user.
+
+        Args:
+            user_id: Primary key of the user to reactivate.
+
+        Returns:
+            Updated user dict.
+
+        Raises:
+            ValueError: If the user does not exist.
+        """
+        if self.get_user(user_id) is None:
+            raise ValueError(f"User {user_id} not found.")
+        with self._lock:
+            self.conn.execute(
+                "UPDATE users SET archived_at = NULL WHERE id = ?",
+                (user_id,),
+            )
+            self.conn.commit()
+        return self.get_user(user_id) or {}
+
+    def rename_staff(self, user_id: int, display_name: str) -> dict[str, Any]:
+        """Update display_name for any non-IT user.
+
+        Args:
+            user_id: Primary key of the user to rename.
+            display_name: New display name; must be non-blank after stripping.
+
+        Returns:
+            Updated user dict.
+
+        Raises:
+            ValueError: If display_name is blank after strip, or user not found.
+        """
+        name = (display_name or "").strip()
+        if not name:
+            raise ValueError("Display name cannot be blank.")
+        if self.get_user(user_id) is None:
+            raise ValueError(f"User {user_id} not found.")
+        with self._lock:
+            self.conn.execute(
+                "UPDATE users SET display_name = ? WHERE id = ?",
+                (name, user_id),
+            )
+            self.conn.commit()
+        return self.get_user(user_id) or {}
 
     def link_google(
         self, user_id: int, google_sub: str, display_name: str | None = None
@@ -454,8 +852,38 @@ class LovesDB:
             ).fetchone()
         return str(row["live_access_code"]) if row else None
 
+    def next_section_index(
+        self, semester_id: int, ontario_code: str, teacher_user_id: int
+    ) -> int:
+        """Return the section number a new offering for this teacher should take.
+
+        Uses ``MAX(section_index) + 1`` rather than a row count so deleting a
+        section never re-labels the ones that remain.
+
+        Args:
+            semester_id: Semester the offering belongs to.
+            ontario_code: Catalog course code.
+            teacher_user_id: Staff or IT user id.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                """
+                SELECT MAX(COALESCE(section_index, 1)) AS top
+                FROM course_offerings
+                WHERE semester_id = ? AND ontario_code = ? AND teacher_user_id = ?
+                """,
+                (semester_id, (ontario_code or "").strip().upper(), teacher_user_id),
+            ).fetchone()
+        top = int(row["top"] or 0) if row else 0
+        return max(top, 0) + 1
+
     def assign_course(
-        self, *, semester_id: int, ontario_code: str, teacher_user_id: int
+        self,
+        *,
+        semester_id: int,
+        ontario_code: str,
+        teacher_user_id: int,
+        new_section: bool = False,
     ) -> dict[str, Any]:
         """Assign an Ontario course to a teacher for a semester.
 
@@ -466,6 +894,9 @@ class LovesDB:
             semester_id: Active or chosen semester.
             ontario_code: Catalog course code.
             teacher_user_id: Staff or IT user id.
+            new_section: When True and the teacher already holds this code,
+                create an additional section (``MCF3M-2``) instead of
+                returning the existing offering.
 
         Returns:
             Offering dict.
@@ -482,8 +913,9 @@ class LovesDB:
         if teacher is None:
             raise KeyError(f"user {teacher_user_id}")
         existing = self.get_offering_for(semester_id, code, teacher_user_id)
-        if existing:
+        if existing and not new_section:
             return existing
+        index = self.next_section_index(semester_id, code, teacher_user_id)
         shared = self._code_for_semester_course(semester_id, code)
         live_code = shared or generate_live_access_code()
         if shared is None:
@@ -491,29 +923,27 @@ class LovesDB:
                 live_code = generate_live_access_code()
         expects = self.expectations_for(code)
         status = "verified" if expects else "unverified"
-        imscc = None
-        if code == "MCF3M":
-            from paths import MCF3M_IMSCC
-
-            if MCF3M_IMSCC.is_file():
-                imscc = str(MCF3M_IMSCC)
         with self._lock:
             cur = self.conn.execute(
                 """
                 INSERT INTO course_offerings (
                     semester_id, ontario_code, teacher_user_id, live_access_code,
-                    imscc_path, expectations_status, created_at
+                    imscc_path, expectations_status, created_at,
+                    copied_from_offering_id, instance_relpath, section_index
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     semester_id,
                     code,
                     teacher_user_id,
                     live_code,
-                    imscc,
+                    None,
                     status,
                     _now(),
+                    None,
+                    None,
+                    int(index),
                 ),
             )
             self.conn.commit()
@@ -538,17 +968,83 @@ class LovesDB:
             ).fetchone()
         if row is None:
             raise KeyError(f"offering {offering_id}")
-        return dict(row)
+        return self._offering_dict(row)
+
+    def _offering_dict(self, row: sqlite3.Row) -> dict[str, Any]:
+        """Attach the section number and its display code to an offering row.
+
+        Args:
+            row: Joined ``course_offerings`` row.
+
+        Returns:
+            Offering dict with ``section_index`` and ``section_code``.
+        """
+        data = dict(row)
+        index = int(data.get("section_index") or 1)
+        data["section_index"] = index
+        data["section_code"] = section_code(str(data.get("ontario_code") or ""), index)
+        return data
+
+    def archive_offering(self, offering_id: int) -> dict[str, Any]:
+        """Soft-archive a course offering (sets archived_at).
+
+        Archived offerings are hidden from the teacher's staff dashboard.
+        The offering row and all associated student data remain intact.
+
+        Args:
+            offering_id: Primary key of the offering to archive.
+
+        Returns:
+            Updated offering dict.
+
+        Raises:
+            KeyError: If offering_id does not exist.
+        """
+        self.get_offering(offering_id)  # raises KeyError if missing
+        with self._lock:
+            self.conn.execute(
+                "UPDATE course_offerings SET archived_at = ? WHERE id = ?",
+                (_now(), offering_id),
+            )
+            self.conn.commit()
+        return self.get_offering(offering_id)
+
+    def unarchive_offering(self, offering_id: int) -> dict[str, Any]:
+        """Clear archived_at on a course offering, restoring it to the teacher dashboard.
+
+        Args:
+            offering_id: Primary key of the offering to restore.
+
+        Returns:
+            Updated offering dict.
+
+        Raises:
+            KeyError: If offering_id does not exist.
+        """
+        self.get_offering(offering_id)  # raises KeyError if missing
+        with self._lock:
+            self.conn.execute(
+                "UPDATE course_offerings SET archived_at = NULL WHERE id = ?",
+                (offering_id,),
+            )
+            self.conn.commit()
+        return self.get_offering(offering_id)
 
     def get_offering_for(
         self, semester_id: int, ontario_code: str, teacher_user_id: int
     ) -> dict[str, Any] | None:
-        """Return the offering for this teacher/course/semester if present."""
+        """Return this teacher's first section of a course/semester, if present.
+
+        Later sections (``MCF3M-2``) exist as their own rows; callers that need
+        every section use ``list_offerings``.
+        """
         with self._lock:
             row = self.conn.execute(
                 """
                 SELECT id FROM course_offerings
                 WHERE semester_id = ? AND ontario_code = ? AND teacher_user_id = ?
+                ORDER BY COALESCE(section_index, 1), id
+                LIMIT 1
                 """,
                 (semester_id, (ontario_code or "").strip().upper(), teacher_user_id),
             ).fetchone()
@@ -575,8 +1071,16 @@ class LovesDB:
         *,
         semester_id: int | None = None,
         teacher_user_id: int | None = None,
+        include_archived: bool = True,
     ) -> list[dict[str, Any]]:
-        """List offerings, optionally filtered."""
+        """List offerings, optionally filtered.
+
+        Args:
+            semester_id: Restrict to one semester.
+            teacher_user_id: Restrict to one teacher.
+            include_archived: When False, rows with a non-NULL ``archived_at``
+                are excluded (used by the staff dashboard).
+        """
         clauses: list[str] = []
         args: list[Any] = []
         if semester_id is not None:
@@ -585,6 +1089,8 @@ class LovesDB:
         if teacher_user_id is not None:
             clauses.append("o.teacher_user_id = ?")
             args.append(teacher_user_id)
+        if not include_archived:
+            clauses.append("o.archived_at IS NULL")
         where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
         sql = f"""
             SELECT o.*, u.email AS teacher_email, u.display_name AS teacher_name,
@@ -595,11 +1101,11 @@ class LovesDB:
             JOIN semesters s ON s.id = o.semester_id
             JOIN ontario_courses c ON c.code = o.ontario_code
             {where}
-            ORDER BY o.ontario_code, u.email
+            ORDER BY o.ontario_code, u.email, COALESCE(o.section_index, 1), o.id
         """
         with self._lock:
             rows = self.conn.execute(sql, args).fetchall()
-        return [dict(row) for row in rows]
+        return [self._offering_dict(row) for row in rows]
 
     def list_curriculum_documents(self) -> list[dict[str, Any]]:
         """Return registered Ontario curriculum source documents."""
@@ -635,6 +1141,198 @@ class LovesDB:
             )
             self.conn.commit()
         return self.count_recent_code_attempts(ip, seconds=600)
+
+    def get_library(self, library_id: int) -> dict[str, Any] | None:
+        """Return one ``content_libraries`` row, or None.
+
+        Args:
+            library_id: ``content_libraries.id``.
+        """
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT * FROM content_libraries WHERE id = ?",
+                (int(library_id),),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def get_template_library(self, ontario_code: str) -> dict[str, Any] | None:
+        """Return the shared template library for a course code, if created.
+
+        Args:
+            ontario_code: Catalog course code.
+        """
+        code = (ontario_code or "").strip().upper()
+        with self._lock:
+            row = self.conn.execute(
+                """
+                SELECT * FROM content_libraries
+                WHERE ontario_code = ? AND origin = 'template'
+                ORDER BY id
+                LIMIT 1
+                """,
+                (code,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def latest_library_for_code(self, ontario_code: str) -> dict[str, Any] | None:
+        """Return the newest library row for a course code (any origin).
+
+        Used when a code has no git template so a later teacher shares an
+        IT upload. Args:
+            ontario_code: Catalog course code.
+        """
+        code = (ontario_code or "").strip().upper()
+        with self._lock:
+            row = self.conn.execute(
+                """
+                SELECT * FROM content_libraries
+                WHERE ontario_code = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (code,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def create_library(
+        self,
+        ontario_code: str,
+        *,
+        origin: str,
+        source_path: str | None = None,
+        source_sha256: str | None = None,
+    ) -> dict[str, Any]:
+        """Insert a shared content-library pointer.
+
+        Args:
+            ontario_code: Catalog course code this pack belongs to.
+            origin: ``template``, ``upload``, or ``legacy``.
+            source_path: IMSCC path (git template or ``libraries/<id>/``).
+            source_sha256: Optional content hash (filled on upload).
+
+        Returns:
+            The new library row.
+        """
+        code = (ontario_code or "").strip().upper()
+        with self._lock:
+            cur = self.conn.execute(
+                """
+                INSERT INTO content_libraries (
+                    ontario_code, origin, source_path, source_sha256, created_at
+                )
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (code, origin, source_path, source_sha256, _now()),
+            )
+            self.conn.commit()
+            library_id = int(cur.lastrowid)
+        row = self.get_library(library_id)
+        assert row is not None
+        return row
+
+    def set_library_source(
+        self,
+        library_id: int,
+        source_path: str,
+        *,
+        source_sha256: str | None = None,
+    ) -> dict[str, Any]:
+        """Update the IMSCC pointer on a library after the file is stored.
+
+        Args:
+            library_id: ``content_libraries.id``.
+            source_path: Absolute path to the cartridge.
+            source_sha256: Optional content hash.
+        """
+        with self._lock:
+            self.conn.execute(
+                """
+                UPDATE content_libraries
+                SET source_path = ?, source_sha256 = COALESCE(?, source_sha256)
+                WHERE id = ?
+                """,
+                (source_path, source_sha256, int(library_id)),
+            )
+            self.conn.commit()
+        row = self.get_library(int(library_id))
+        assert row is not None
+        return row
+
+    def register_blob(
+        self, sha256: str, byte_count: int, mime: str
+    ) -> dict[str, Any]:
+        """Record content-addressed blob metadata idempotently.
+
+        Args:
+            sha256: Lowercase SHA-256 digest.
+            byte_count: Stored payload size in bytes.
+            mime: Detected or supplied media type.
+
+        Returns:
+            The stable ``blobs`` row.
+        """
+        digest = str(sha256).strip().lower()
+        if len(digest) != 64:
+            raise ValueError("sha256 must be a 64-character digest")
+        with self._lock:
+            self.conn.execute(
+                """
+                INSERT INTO blobs (sha256, bytes, mime, created_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(sha256) DO UPDATE SET
+                    bytes = excluded.bytes,
+                    mime = CASE
+                        WHEN blobs.mime = 'application/octet-stream'
+                        THEN excluded.mime
+                        ELSE blobs.mime
+                    END
+                """,
+                (digest, int(byte_count), str(mime), _now()),
+            )
+            self.conn.commit()
+            row = self.conn.execute(
+                "SELECT * FROM blobs WHERE sha256 = ?", (digest,)
+            ).fetchone()
+        assert row is not None
+        return dict(row)
+
+    def base_layer_available(self, ontario_code: str) -> bool:
+        """Return True if a module pack is available for this course code.
+
+        A pack is considered available when either:
+        - a ``content_libraries`` row exists for this code (any origin), or
+        - ``ontario_courses.content_root`` is set for this code (git template).
+
+        Args:
+            ontario_code: Catalog course code to check.
+
+        Returns:
+            True when at least one pack source exists.
+        """
+        code = (ontario_code or "").strip().upper()
+        with self._lock:
+            lib_row = self.conn.execute(
+                "SELECT id FROM content_libraries WHERE ontario_code = ? LIMIT 1",
+                (code,),
+            ).fetchone()
+            if lib_row is not None:
+                return True
+            course_row = self.conn.execute(
+                "SELECT content_root FROM ontario_courses WHERE code = ?",
+                (code,),
+            ).fetchone()
+        if course_row and course_row["content_root"]:
+            return True
+        return False
+
+    def get_blob(self, sha256: str) -> dict[str, Any] | None:
+        """Return blob metadata without touching the stored file."""
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT * FROM blobs WHERE sha256 = ?",
+                (str(sha256).strip().lower(),),
+            ).fetchone()
+        return dict(row) if row else None
 
 
 class SchoolDB(LovesDB):
@@ -705,15 +1403,43 @@ class SchoolDB(LovesDB):
         """Alias for ``expectations_for``."""
         return self.expectations_for(course_code)
 
-    def list_staff(self) -> list[dict[str, Any]]:
-        """Staff list with pending/active status and assigned codes."""
-        people = super().list_staff()
+    def list_staff(self, *, include_archived: bool = False) -> list[dict[str, Any]]:
+        """Staff list with pending/active/archived status and assigned codes.
+
+        Args:
+            include_archived: When False (default), archived users are excluded.
+
+        Returns:
+            List of enriched user dicts each with ``status``, ``assigned_codes``,
+            and ``last_login_at`` keys populated.
+        """
+        active_sem = self.get_active_semester()
+        people = super().list_staff(include_archived=include_archived)
         out = []
         for person in people:
             item = dict(person)
-            item["status"] = "active" if item.get("verified_at") else "pending"
-            offs = self.list_offerings(teacher_user_id=int(item["id"]))
-            item["assigned_codes"] = ", ".join(o["ontario_code"] for o in offs) or None
+            if item.get("archived_at"):
+                item["status"] = "archived"
+            elif item.get("verified_at"):
+                item["status"] = "active"
+            else:
+                item["status"] = "pending"
+            if active_sem:
+                offs = self.list_offerings(
+                    teacher_user_id=int(item["id"]),
+                    semester_id=int(active_sem["id"]),
+                )
+            else:
+                offs = self.list_offerings(teacher_user_id=int(item["id"]))
+            item["assigned_codes"] = (
+                ", ".join(
+                    o.get("section_code")
+                    or section_code(str(o["ontario_code"]), o.get("section_index"))
+                    for o in offs
+                )
+                or None
+            )
+            item["last_login_at"] = item.get("last_login_at")
             out.append(item)
         return out
 
@@ -724,8 +1450,35 @@ class SchoolDB(LovesDB):
         ontario_code: str,
         semester_id: int | None = None,
         imscc_path: str | None = None,
+        copied_from_offering_id: int | None = None,
+        library_id: int | None = None,
+        new_section: bool = False,
     ) -> dict[str, Any]:
-        """Assign a course using the active semester when ``semester_id`` is omitted."""
+        """Assign a course using the active semester when ``semester_id`` is omitted.
+
+        Creates a thin instance (manifest + syllabus). Teachers of the same
+        code share one ``library_id`` unless IT attaches a new upload — and so
+        do extra sections held by one teacher. Live-access codes stay per
+        (semester, course).
+
+        Args:
+            teacher_user_id: Staff or IT user id.
+            ontario_code: Catalog course code.
+            semester_id: Defaults to the active semester.
+            imscc_path: Optional override after attach (tests/uploads).
+            copied_from_offering_id: Prior offering to copy syllabus from
+                and share that offering's library.
+            library_id: Explicit library to attach (IT upload). None =
+                shared template, or the newest library for this code.
+            new_section: When True and this teacher already holds the code,
+                add another section (``MCF3M-2``) instead of returning the
+                offering they already have.
+        """
+        try:
+            from instances import materialize_instance
+        except ImportError:
+            from lms.instances import materialize_instance
+
         semester = (
             self.get_semester(semester_id)
             if semester_id is not None
@@ -738,23 +1491,327 @@ class SchoolDB(LovesDB):
                 f"Unknown Ontario course code {ontario_code}. "
                 "Ask IT to add a curriculum source."
             )
+        existing = self.get_offering_for(
+            int(semester["id"]), ontario_code, teacher_user_id
+        )
+        if existing and not new_section:
+            return self.ensure_offering_instance(existing)
         offering = super().assign_course(
             semester_id=int(semester["id"]),
             ontario_code=ontario_code,
             teacher_user_id=teacher_user_id,
+            new_section=new_section,
         )
-        if imscc_path:
-            with self._lock:
-                self.conn.execute(
-                    "UPDATE course_offerings SET imscc_path = ? WHERE id = ?",
-                    (imscc_path, int(offering["id"])),
-                )
-                self.conn.commit()
-            offering = self.get_offering(int(offering["id"]))
-        return offering
+        base = None
+        if copied_from_offering_id:
+            base = self.get_offering(int(copied_from_offering_id))
+            if str(base["ontario_code"]).upper() != str(offering["ontario_code"]).upper():
+                raise ValueError("Base instance must be the same Ontario course")
+            base = self.ensure_offering_instance(base)
+        course = self.get_course(str(offering["ontario_code"]))
+        teacher = self.get_user(int(offering["teacher_user_id"])) or {}
+        calendar = semester.get("raw_json") or semester.get("payload")
+        attached = self._library_for_assign(
+            str(offering["ontario_code"]),
+            content_root=(course or {}).get("content_root"),
+            base_offering=base,
+            library_id=library_id,
+        )
+        result = materialize_instance(
+            self.data_dir,
+            offering,
+            semester_label=str(semester["label"]),
+            teacher_name=str(teacher.get("display_name") or teacher.get("email") or ""),
+            content_root=(course or {}).get("content_root"),
+            base_offering=base,
+            calendar=calendar,
+            library_id=int(attached["id"]) if attached else None,
+        )
+        stored_imscc = imscc_path
+        if stored_imscc is None and attached:
+            stored_imscc = attached.get("source_path")
+        self._save_offering_instance(
+            int(offering["id"]),
+            instance_relpath=str(result["instance_relpath"]),
+            copied_from_offering_id=(
+                int(copied_from_offering_id) if copied_from_offering_id else None
+            ),
+            imscc_path=stored_imscc,
+            library_id=int(attached["id"]) if attached else None,
+        )
+        return self.get_offering(int(offering["id"]))
+
+    def _save_offering_instance(
+        self,
+        offering_id: int,
+        *,
+        instance_relpath: str,
+        copied_from_offering_id: int | None = None,
+        imscc_path: str | None = None,
+        library_id: int | None = None,
+    ) -> None:
+        """Persist instance path / library pointer on ``course_offerings``.
+
+        Args:
+            offering_id: ``course_offerings.id``.
+            instance_relpath: Volume-relative instance folder.
+            copied_from_offering_id: Base offering, or None for the shared library.
+            imscc_path: Shared cartridge pointer (template or ``libraries/<id>/``).
+            library_id: Shared ``content_libraries.id``.
+        """
+        with self._lock:
+            self.conn.execute(
+                """
+                UPDATE course_offerings
+                SET instance_relpath = ?, copied_from_offering_id = ?,
+                    imscc_path = ?, library_id = ?
+                WHERE id = ?
+                """,
+                (
+                    instance_relpath,
+                    copied_from_offering_id,
+                    imscc_path,
+                    library_id,
+                    int(offering_id),
+                ),
+            )
+            self.conn.commit()
+
+    def ensure_template_library(
+        self, ontario_code: str, content_root: str | None = None
+    ) -> dict[str, Any] | None:
+        """Create the shared template library once for a code that has an IMSCC.
+
+        Args:
+            ontario_code: Catalog course code.
+            content_root: Catalog ``content_root`` (repo-relative).
+
+        Returns:
+            Existing or new ``origin=template`` row, or None if no git pack.
+        """
+        try:
+            from instances import template_pack_paths
+        except ImportError:
+            from lms.instances import template_pack_paths
+
+        existing = self.get_template_library(ontario_code)
+        if existing:
+            return existing
+        tmpl = template_pack_paths(ontario_code, content_root)
+        if tmpl.imscc is None or not tmpl.imscc.is_file():
+            return None
+        return self.create_library(
+            ontario_code,
+            origin="template",
+            source_path=str(tmpl.imscc.resolve()),
+        )
+
+    def _library_for_assign(
+        self,
+        ontario_code: str,
+        *,
+        content_root: str | None,
+        base_offering: dict[str, Any] | None,
+        library_id: int | None,
+    ) -> dict[str, Any] | None:
+        """Pick the shared library a new offering should point at.
+
+        Explicit ``library_id`` (IT upload) wins. Else share the base
+        offering's library. Else the git template for this code. Else the
+        newest library already stored for this code (typically an upload).
+
+        Args:
+            ontario_code: Catalog course code.
+            content_root: Catalog template pointer.
+            base_offering: Prior offering when IT chose a base layer.
+            library_id: Caller-supplied library (new upload).
+        """
+        if library_id:
+            return self.get_library(int(library_id))
+        if base_offering and base_offering.get("library_id"):
+            return self.get_library(int(base_offering["library_id"]))
+        tmpl = self.ensure_template_library(ontario_code, content_root)
+        if tmpl:
+            return tmpl
+        return self.latest_library_for_code(ontario_code)
+
+    def attach_library(
+        self, offering_id: int, library_id: int | None
+    ) -> dict[str, Any]:
+        """Point an offering at a shared library (or clear the pointer).
+
+        Args:
+            offering_id: ``course_offerings.id``.
+            library_id: ``content_libraries.id``, or None.
+        """
+        source = None
+        if library_id:
+            lib = self.get_library(int(library_id))
+            if lib:
+                source = lib.get("source_path")
+        with self._lock:
+            self.conn.execute(
+                "UPDATE course_offerings SET library_id = ?, imscc_path = ? WHERE id = ?",
+                (library_id, source, int(offering_id)),
+            )
+            self.conn.commit()
+        return self.get_offering(int(offering_id))
+
+    def _attach_leftover_or_template(
+        self, offering: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Build a library pointer from a leftover pack or the git template.
+
+        Does not delete leftover ``pack/`` or ``module_packs/<id>/`` copies.
+
+        Args:
+            offering: Offering that may already have a leftover IMSCC.
+        """
+        try:
+            from instances import leftover_pack_imscc
+        except ImportError:
+            from lms.instances import leftover_pack_imscc
+
+        if offering.get("library_id"):
+            return self.get_library(int(offering["library_id"]))
+        leftover = leftover_pack_imscc(self.data_dir, offering)
+        if leftover is not None:
+            return self.create_library(
+                str(offering["ontario_code"]),
+                origin="legacy",
+                source_path=str(leftover.resolve()),
+            )
+        course = self.get_course(str(offering["ontario_code"]))
+        return self.ensure_template_library(
+            str(offering["ontario_code"]),
+            (course or {}).get("content_root"),
+        )
+
+    def ensure_offering_instance(self, offering: dict[str, Any]) -> dict[str, Any]:
+        """Create a thin instance and attach a shared library if missing.
+
+        Leftover ``pack/`` / ``module_packs/<id>/`` trees are left on disk
+        and become a ``legacy`` library pointer. New assigns do not fork them.
+
+        Args:
+            offering: Offering row.
+
+        Returns:
+            Offering dict with ``instance_relpath`` and ``library_id``.
+        """
+        try:
+            from instances import migrate_legacy_pack, migrate_legacy_syllabus
+        except ImportError:
+            from lms.instances import migrate_legacy_pack, migrate_legacy_syllabus
+
+        offering_id = int(offering["id"])
+        semester = self.get_semester(int(offering["semester_id"]))
+        rel = offering.get("instance_relpath")
+        if rel:
+            library = self._attach_leftover_or_template(offering)
+            if library and not offering.get("library_id"):
+                offering = self.attach_library(offering_id, int(library["id"]))
+            peers_after = [
+                row
+                for row in super().list_offerings(semester_id=int(offering["semester_id"]))
+                if str(row["ontario_code"]) == str(offering["ontario_code"])
+            ]
+            migrate_legacy_syllabus(
+                self.data_dir,
+                offering,
+                semester_label=str(semester["label"]),
+                peer_count=len(peers_after),
+                all_peers_have_instance=all(p.get("instance_relpath") for p in peers_after),
+            )
+            return self.get_offering(offering_id)
+        course = self.get_course(str(offering["ontario_code"]))
+        teacher = self.get_user(int(offering["teacher_user_id"])) or {}
+        calendar = semester.get("raw_json") or semester.get("payload")
+        library = self._attach_leftover_or_template(offering)
+        result = migrate_legacy_pack(
+            self.data_dir,
+            offering,
+            semester_label=str(semester["label"]),
+            teacher_name=str(teacher.get("display_name") or teacher.get("email") or ""),
+            content_root=(course or {}).get("content_root"),
+            calendar=calendar,
+            library_id=int(library["id"]) if library else None,
+        )
+        peers = [
+            row
+            for row in super().list_offerings(semester_id=int(offering["semester_id"]))
+            if str(row["ontario_code"]) == str(offering["ontario_code"])
+        ]
+        stored_imscc = (library or {}).get("source_path") or result.get("imscc_path")
+        self._save_offering_instance(
+            offering_id,
+            instance_relpath=str(result["instance_relpath"]),
+            copied_from_offering_id=(
+                int(offering["copied_from_offering_id"])
+                if offering.get("copied_from_offering_id")
+                else None
+            ),
+            imscc_path=stored_imscc,
+            library_id=int(library["id"]) if library else None,
+        )
+        updated = self.get_offering(offering_id)
+        peers_after = [
+            row
+            for row in super().list_offerings(semester_id=int(offering["semester_id"]))
+            if str(row["ontario_code"]) == str(offering["ontario_code"])
+        ]
+        migrate_legacy_syllabus(
+            self.data_dir,
+            updated,
+            semester_label=str(semester["label"]),
+            peer_count=len(peers),
+            all_peers_have_instance=all(p.get("instance_relpath") for p in peers_after),
+        )
+        return updated
+
+    def list_prior_instances(self, ontario_code: str) -> list[dict[str, Any]]:
+        """Offerings of this code (any semester, any teacher) for the IT picker.
+
+        Args:
+            ontario_code: Catalog course code.
+        """
+        try:
+            from instances import offering_has_pack, year_term_from_label
+        except ImportError:
+            from lms.instances import offering_has_pack, year_term_from_label
+
+        code = (ontario_code or "").strip().upper()
+        out: list[dict[str, Any]] = []
+        for item in super().list_offerings():
+            if str(item["ontario_code"]).upper() != code:
+                continue
+            year, term = year_term_from_label(str(item.get("semester_label") or ""))
+            out.append(
+                {
+                    "offering_id": int(item["id"]),
+                    "ontario_code": code,
+                    "section_index": int(item.get("section_index") or 1),
+                    "section_code": item.get("section_code")
+                    or section_code(code, item.get("section_index")),
+                    "year": year,
+                    "term": term,
+                    "semester_label": item.get("semester_label"),
+                    "teacher_email": item.get("teacher_email"),
+                    "teacher_name": item.get("teacher_name"),
+                    "teacher_user_id": item.get("teacher_user_id"),
+                    "has_pack": bool(item.get("library_id"))
+                    or offering_has_pack(self.data_dir, item),
+                    "library_id": item.get("library_id"),
+                    "instance_relpath": item.get("instance_relpath"),
+                }
+            )
+        return out
 
     def set_offering_imscc(self, offering_id: int, imscc_path: str) -> dict[str, Any]:
-        """Store a staff-uploaded Common Cartridge path on the offering.
+        """Store a cartridge pointer on the offering (legacy column).
+
+        Prefer ``attach_library``. Kept so leftover upload jobs still write
+        ``imscc_path`` after unpack.
 
         Args:
             offering_id: ``course_offerings.id``.
@@ -771,6 +1828,54 @@ class SchoolDB(LovesDB):
             )
             self.conn.commit()
         return self.get_offering(int(offering["id"]))
+
+    def store_upload_library(
+        self,
+        ontario_code: str,
+        file_storage: Any,
+        *,
+        offering_id: int | None = None,
+    ) -> dict[str, Any]:
+        """Validate an IT IMSCC upload into a new shared library folder.
+
+        Stores the zip once under ``libraries/<id>/``. Does not copy into
+        any teacher instance. Callers unpack into the same folder.
+
+        Args:
+            ontario_code: Catalog course code the pack belongs to.
+            file_storage: Werkzeug ``FileStorage``.
+            offering_id: If set, attach the new library to that offering.
+
+        Returns:
+            Dict with ``library``, ``stored`` (Path), ``dest_root``.
+        """
+        import shutil
+        import uuid
+
+        try:
+            from instances import library_root
+            from modules import store_uploaded_module_pack
+        except ImportError:
+            from lms.instances import library_root
+            from lms.modules import store_uploaded_module_pack
+
+        incoming = Path(self.data_dir) / "libraries" / "_incoming" / uuid.uuid4().hex
+        try:
+            stored = store_uploaded_module_pack(file_storage, incoming)
+        except Exception:
+            shutil.rmtree(incoming, ignore_errors=True)
+            raise
+        library = self.create_library(ontario_code, origin="upload")
+        dest = library_root(self.data_dir, int(library["id"]))
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.move(str(incoming), str(dest))
+        stored = dest / stored.name
+        library = self.set_library_source(int(library["id"]), str(stored))
+        if offering_id is not None:
+            self.attach_library(int(offering_id), int(library["id"]))
+        return {"library": library, "stored": stored, "dest_root": dest}
 
     def rotate_live_access_code(self, offering_id: int) -> dict[str, Any]:
         """Mint a new shared key for this (semester, course) pair."""
@@ -799,10 +1904,20 @@ class SchoolDB(LovesDB):
         *,
         teacher_user_id: int | None = None,
         semester_id: int | None = None,
+        include_archived: bool = True,
     ) -> list[dict[str, Any]]:
-        """Offerings with class sections and roster sizes."""
+        """Offerings with class sections and roster sizes.
+
+        Args:
+            teacher_user_id: Restrict to one teacher.
+            semester_id: Restrict to one semester.
+            include_archived: Pass False to hide archived offerings (used by
+                the staff dashboard so archived courses disappear for the teacher).
+        """
         rows = super().list_offerings(
-            semester_id=semester_id, teacher_user_id=teacher_user_id
+            semester_id=semester_id,
+            teacher_user_id=teacher_user_id,
+            include_archived=include_archived,
         )
         out = []
         for item in rows:
@@ -843,18 +1958,24 @@ class SchoolDB(LovesDB):
             rows = self.game.conn.execute(
                 """
                 SELECT cl.*, o.live_access_code, o.ontario_code AS offering_code,
+                       o.section_index AS section_index,
                        s.label AS semester_label
                 FROM classes cl
                 JOIN course_offerings o ON o.id = cl.offering_id
                 JOIN semesters s ON s.id = o.semester_id
                 WHERE cl.teacher_user_id = ? AND o.semester_id = ?
-                ORDER BY cl.course_code, cl.days, cl.time
+                ORDER BY cl.course_code, o.section_index, cl.days, cl.time
                 """,
                 (int(teacher_user_id), int(semester["id"])),
             ).fetchall()
         out = []
         for row in rows:
             item = dict(row)
+            item["section_index"] = int(item.get("section_index") or 1)
+            item["section_code"] = section_code(
+                str(item.get("offering_code") or item.get("course_code") or ""),
+                item["section_index"],
+            )
             item["student_count"] = self.game._student_count(int(item["id"]))
             out.append(item)
         return out
@@ -952,8 +2073,14 @@ class SchoolDB(LovesDB):
         class_payload["live_access_code"] = offering["live_access_code"]
         class_payload["semester_label"] = (semester or {}).get("label")
         class_payload["ontario_code"] = offering["ontario_code"]
+        class_payload["section_index"] = int(offering.get("section_index") or 1)
+        class_payload["section_code"] = offering.get("section_code") or section_code(
+            str(offering["ontario_code"]), offering.get("section_index")
+        )
         class_payload["expectations_status"] = offering.get("expectations_status")
         class_payload["imscc_path"] = offering.get("imscc_path")
+        class_payload["instance_relpath"] = offering.get("instance_relpath")
+        class_payload["copied_from_offering_id"] = offering.get("copied_from_offering_id")
         return class_payload
 
     def upsert_document(self, **fields: Any) -> int:

@@ -21,10 +21,19 @@ Keep all planning **semester-aware**: phase, instructional dates, PD days, holid
 
 ## Pacing rules
 
-- Do not schedule required student work on holidays/PD days listed in `semester.json`
-- Leave buffer before the exam window for review
+School-wide (all courses, all semesters) — also in [`frameworks/class-structure.md`](../frameworks/class-structure.md):
+
+- Semester is **20 weeks** (first instructional day through the exam window). Count real school days from `semester.json`; do **not** assume 20 × 5 = 100 days.
+- **First 2 instructional days** = intro / course overview only (no module work).
+- **Last instructional week before exams** = review (no new module). Any leftover instructional day after that week stays review/flex.
+- **Due dates only on school days** — never weekends, holidays, or PD days listed in `semester.json`.
+
+Also:
+
 - In `preparing`, prioritize course structure, modules, and Canvas readiness over “this week’s homework”
 - Live-class count must fit remaining instructional weeks (2×75 min/week)
+
+**2026–27 S1:** instructional **2026-09-08 → 2027-01-25**; exam window **2027-01-26 → 2027-02-01**. Intro = Sep 8–9. Review week = Jan 18–22; Jan 25 = review/flex.
 
 ## Updating semester state
 

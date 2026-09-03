@@ -84,7 +84,7 @@ class AuthTests(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
         body = rv.get_data(as_text=True)
         self.assertIn("Staff Login", body)
-        self.assertIn("IT Login", body)
+        self.assertIn("Admin Login", body)
         self.assertIn("Student Code", body)
         self.assertIn("Learning Live Online Virtually", body)
         self.assertNotIn(">ELC<", body)
@@ -110,7 +110,7 @@ class AuthTests(unittest.TestCase):
         self.school.register_staff("teacher@gmail.com")
         rv = self._callback("teacher@gmail.com", "it")
         self.assertEqual(rv.status_code, 403)
-        self.assertIn("Ask IT", rv.get_data(as_text=True))
+        self.assertIn("Ask Admin", rv.get_data(as_text=True))
 
     def test_first_login_requires_email_code_second_skips(self) -> None:
         """First LLOVES login is 2SV; later Google logins skip the email code."""

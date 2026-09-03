@@ -10,7 +10,7 @@
   <div class="wrap">
     <p class="kicker">{{ school_short }} · Ontario secondary courses</p>
     <h1>{{ school_name|safe }}</h1>
-    <p class="sub">Staff and IT sign in with a personal Google account. Students enter the shared course code for the live lesson game.</p>
+    <p class="sub">Staff and Admin sign in with a personal Google account. Students enter the shared course code for the live lesson game.</p>
     {% if student_error %}<div class="error" id="error">{{ student_error }}</div>{% endif %}
     <div class="cards">
       <a class="choice" href="{{ url_for('auth_google', portal='staff') }}">
@@ -18,7 +18,7 @@
         <span class="hint">Teachers — populate class, modules, syllabus, and grades.</span>
       </a>
       <a class="choice" href="{{ url_for('auth_google', portal='it') }}">
-        <strong>IT Login</strong>
+        <strong>Admin Login</strong>
         <span class="hint">Activate the semester, register staff, assign Ontario courses.</span>
       </a>
       <form class="choice" method="post" action="{{ url_for('auth_student_code') }}">

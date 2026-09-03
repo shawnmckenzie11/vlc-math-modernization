@@ -32,6 +32,7 @@ python3 scripts/canvas_pack.py
 
 - `agents/canvas-course-updater.md`
 - `courses/MCF3M/canvas/`
+- `courses/MCF3M/canvas/exports/` — regenerated lesson packs (AU; Module 1 via `scripts/m1_export_canvas_page.py`)
 - `scripts/canvas_unpack.py`
 - `scripts/canvas_inventory.py`
 - `scripts/canvas_add_module.py`

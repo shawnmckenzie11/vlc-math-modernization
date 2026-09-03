@@ -9,12 +9,13 @@ alwaysApply: false
 - Full name: Functions and Applications, Grade 11, University/College Preparation
 - Inherits all `frameworks/` ELC constants
 - Curriculum DB: `courses/MCF3M/curriculum/mcf3m.sqlite`
-- Sources: curriculum PDF + Canvas `.imscc` in `courses/MCF3M/sources/`
+- Sources: curriculum PDF + Nelson textbook + Canvas `.imscc` in `courses/MCF3M/sources/`
 - Canvas inventory: `courses/MCF3M/canvas/INVENTORY.md` (unpack under `canvas/unpacked/`)
 - Live lessons: SMART Notebook under `courses/MCF3M/live-lessons/` (see inventory)
 - Strands: A Quadratic Functions, B Exponential Functions, C Trigonometric Functions
 - Query via `python3 scripts/query_expectations.py` — do not invent expectations
 - Canvas structure: `agents/canvas-course-updater.md` / `python3 scripts/canvas_*.py`
+- Textbook → reference bank: `frameworks/textbook-question-bank.md` · `agents/nelson-question-bank.md` (Nelson PDF under `sources/`; curated banks under `modules/*/questions/`)
 - Read `courses/MCF3M/AGENTS.md` for course agent notes
 - **Target IA:** `courses/MCF3M/course-plan.md` (M0 intro + M1–5 themed modules @ 3 weeks each + culminating/buffer) — legacy Canvas/Notebook trees are baseline archive only
 - Rebuild posture: remove/add/merge toward `course-plan.md`; preserve `.imscc` and `live-lessons/archives/`

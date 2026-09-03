@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Staff Upload Module Pack: IMSCC store, Modules nav, syllabus editor."""
+"""Shared library attach: IT upload, thin instances, no staff upload UI."""
 
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def _minimal_imscc_bytes() -> bytes:
 
 
 class ModulePackTests(unittest.TestCase):
-    """Upload Module Pack vs preloaded MCF3M cartridge."""
+    """IT-owned library upload vs preloaded template; staff has no upload card."""
 
     def setUp(self) -> None:
         """Isolated sqlite, one empty-course class, one MCF3M class."""
@@ -125,42 +125,73 @@ class ModulePackTests(unittest.TestCase):
         self.school.close()
         self.tmp.cleanup()
 
-    def test_mcf3m_hides_upload_module_pack(self) -> None:
-        """Preloaded MCF3M cartridge does not ask staff to upload an IMSCC."""
-        from paths import MCF3M_IMSCC
-
-        if not MCF3M_IMSCC.is_file():
-            self.skipTest("MCF3M IMSCC is not on this machine")
-        rv = self.client.get(f"/staff/class/{self.mcf_class['id']}")
-        self.assertEqual(rv.status_code, 200)
-        self.assertNotIn("Upload Module Pack", rv.get_data(as_text=True))
-
-    def test_empty_course_shows_upload_and_installs_pack(self) -> None:
-        """SBI3U (no preloaded IMSCC) can upload a cartridge for Modules + Syllabus."""
-        dash = self.client.get(f"/staff/class/{self.eng_class['id']}")
-        self.assertEqual(dash.status_code, 200)
-        html = dash.get_data(as_text=True)
-        self.assertIn("Upload Module Pack", html)
-        self.assertIn("pack-progress", html)
-        self.assertIn("/static/module_pack_upload.js", html)
-        empty_nav = self.client.get(
-            f"/api/staff/class/{self.eng_class['id']}/modules"
+    def _login_it(self) -> None:
+        """Switch the test client to the bootstrap IT user."""
+        self.client.get("/auth/google?portal=it")
+        self.client.get(
+            "/auth/google/callback?email=solutions@mckenzian.com&name=Shawn"
         )
-        self.assertTrue(empty_nav.get_json().get("empty"))
+        user = self.school.get_user_by_email("solutions@mckenzian.com")
+        assert user is not None
+        self.client.post("/verify-email", data={"code": user["verification_code"]})
 
+    def test_staff_course_has_no_upload_card(self) -> None:
+        """Staff course UI never shows Upload Module Pack (any course code)."""
+        for class_id in (self.mcf_class["id"], self.eng_class["id"]):
+            rv = self.client.get(f"/staff/class/{class_id}")
+            self.assertEqual(rv.status_code, 200)
+            html = rv.get_data(as_text=True)
+            self.assertNotIn("Upload Module Pack", html)
+            self.assertNotIn("module-pack-form", html)
+
+    def test_staff_cannot_upload_module_pack(self) -> None:
+        """Staff POST to the leftover upload route is rejected."""
         payload = _minimal_imscc_bytes()
         rv = self.client.post(
             f"/staff/class/{self.eng_class['id']}/module-pack",
             data={"module_pack": (io.BytesIO(payload), "english.imscc")},
             follow_redirects=False,
         )
+        self.assertEqual(rv.status_code, 403)
+        self.assertIn("Ask Admin to attach a module pack", rv.get_data(as_text=True))
+        offering = self.school.get_offering(int(self.eng_offering["id"]))
+        self.assertFalse(offering.get("imscc_path"))
+
+    def test_it_upload_installs_shared_library(self) -> None:
+        """IT upload on SBI3U creates one library; Modules + Syllabus load."""
+        empty_nav = self.client.get(
+            f"/api/staff/class/{self.eng_class['id']}/modules"
+        )
+        body = empty_nav.get_json()
+        self.assertTrue(body.get("empty"))
+        self.assertIn("Ask Admin to attach a module pack", body.get("message") or "")
+
+        self._login_it()
+        payload = _minimal_imscc_bytes()
+        rv = self.client.post(
+            f"/it/offerings/{self.eng_offering['id']}/module-pack",
+            data={"module_pack": (io.BytesIO(payload), "english.imscc")},
+            follow_redirects=False,
+        )
         self.assertEqual(rv.status_code, 302)
         offering = self.school.get_offering(int(self.eng_offering["id"]))
+        self.assertTrue(offering.get("library_id"))
         self.assertTrue(offering.get("imscc_path"))
-        self.assertTrue(Path(offering["imscc_path"]).is_file())
+        stored = Path(offering["imscc_path"])
+        self.assertTrue(stored.is_file())
+        self.assertIn("libraries", stored.parts)
+        self.assertEqual(stored.name, "course.imscc")
+        inst = Path(self.tmp.name) / offering["instance_relpath"]
+        self.assertFalse((inst / "pack" / "course.imscc").exists())
 
-        after = self.client.get(f"/staff/class/{self.eng_class['id']}")
-        self.assertNotIn("Upload Module Pack", after.get_data(as_text=True))
+        self.client.get("/auth/google?portal=staff")
+        self.client.get("/auth/google/callback?email=teacher@gmail.com&name=T")
+        user = self.school.get_user_by_email("teacher@gmail.com")
+        assert user is not None
+        self.client.post("/verify-email", data={"code": user["verification_code"]})
+
+        dash = self.client.get(f"/staff/class/{self.eng_class['id']}")
+        self.assertNotIn("Upload Module Pack", dash.get_data(as_text=True))
 
         nav = self.client.get(f"/api/staff/class/{self.eng_class['id']}/modules")
         body = nav.get_json()
@@ -168,9 +199,10 @@ class ModulePackTests(unittest.TestCase):
         self.assertFalse(body.get("empty"))
         self.assertEqual(body["modules"][0]["title"], "Module 1: Start")
 
+        first = body["modules"][0]["items"][0]
+        self.assertEqual(first["component_type"], "page")
         item = self.client.get(
-            f"/staff/class/{self.eng_class['id']}/module-item"
-            "?kind=page&title=Lesson%201&href=wiki_content/lesson-1.html"
+            f"/staff/class/{self.eng_class['id']}/module-item?item={first['id']}"
         )
         self.assertEqual(item.status_code, 200)
         self.assertIn("Uploaded pack body", item.get_data(as_text=True))
@@ -180,43 +212,70 @@ class ModulePackTests(unittest.TestCase):
         )
         self.assertEqual(editor.status_code, 200)
         html_out = editor.get_data(as_text=True)
-        self.assertNotIn("No module pack for this course yet", html_out)
+        self.assertNotIn("Ask Admin to attach a module pack", html_out)
         self.assertIn("Lesson 1", html_out)
 
+    def test_two_teachers_share_uploaded_library(self) -> None:
+        """Second teacher of a no-template code shares the IT-uploaded library."""
+        self._login_it()
+        payload = _minimal_imscc_bytes()
+        self.client.post(
+            f"/it/offerings/{self.eng_offering['id']}/module-pack",
+            data={"module_pack": (io.BytesIO(payload), "english.imscc")},
+        )
+        first = self.school.get_offering(int(self.eng_offering["id"]))
+        other = self.school.register_staff("other@gmail.com")
+        second = self.school.assign_course(
+            teacher_user_id=int(other["id"]), ontario_code="SBI3U"
+        )
+        self.assertEqual(first["library_id"], second["library_id"])
+        first_root = Path(self.tmp.name) / first["instance_relpath"]
+        second_root = Path(self.tmp.name) / second["instance_relpath"]
+        self.assertNotEqual(first_root, second_root)
+        self.assertFalse((first_root / "pack" / "course.imscc").exists())
+        self.assertFalse((second_root / "pack" / "course.imscc").exists())
+        imsccs = list(Path(self.tmp.name).rglob("*.imscc"))
+        self.assertEqual(len(imsccs), 1)
+        self.assertIn("libraries", imsccs[0].parts)
+
     def test_rejects_non_imscc_upload(self) -> None:
-        """A random text file is not stored as a module pack."""
+        """A random text file is not stored as a library."""
+        self._login_it()
         rv = self.client.post(
-            f"/staff/class/{self.eng_class['id']}/module-pack",
+            f"/it/offerings/{self.eng_offering['id']}/module-pack",
             data={"module_pack": (io.BytesIO(b"not a zip"), "notes.txt")},
             follow_redirects=True,
         )
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 400)
         self.assertIn("Module pack must be a .imscc", rv.get_data(as_text=True))
         offering = self.school.get_offering(int(self.eng_offering["id"]))
         self.assertFalse(offering.get("imscc_path"))
+        self.assertFalse(offering.get("library_id"))
 
-    def test_module_pack_status_idle_then_unpacking(self) -> None:
-        """Status starts idle and reflects a written install_status.json."""
-        from modules import module_pack_root, read_pack_status, write_pack_status
+    def test_it_module_pack_status_idle_then_unpacking(self) -> None:
+        """IT status starts idle and reflects a written install_status.json."""
+        from instances import library_root
+        from modules import read_pack_status, write_pack_status
 
+        self._login_it()
         rv = self.client.get(
-            f"/staff/class/{self.eng_class['id']}/module-pack/status"
+            f"/it/offerings/{self.eng_offering['id']}/module-pack/status"
         )
         self.assertEqual(rv.status_code, 200)
         idle = rv.get_json()
         self.assertEqual(idle["stage"], "idle")
         self.assertFalse(idle["busy"])
 
-        dest = module_pack_root(
-            Path(self.tmp.name), int(self.eng_offering["id"])
-        )
+        created = self.school.create_library("SBI3U", origin="upload")
+        self.school.attach_library(int(self.eng_offering["id"]), int(created["id"]))
+        dest = library_root(Path(self.tmp.name), int(created["id"]))
         write_pack_status(
             dest,
             stage="unpacking",
             detail="Unpacking Common Cartridge… this can take a few minutes",
         )
         busy = self.client.get(
-            f"/staff/class/{self.eng_class['id']}/module-pack/status"
+            f"/it/offerings/{self.eng_offering['id']}/module-pack/status"
         ).get_json()
         self.assertEqual(busy["stage"], "unpacking")
         self.assertTrue(busy["busy"])
@@ -225,10 +284,11 @@ class ModulePackTests(unittest.TestCase):
         self.assertEqual(disk["stage"], "unpacking")
 
     def test_json_upload_installs_and_reports_redirect(self) -> None:
-        """XHR upload (tests run install synchronously) returns JSON + installed pack."""
+        """XHR IT upload (tests run install synchronously) returns JSON."""
+        self._login_it()
         payload = _minimal_imscc_bytes()
         rv = self.client.post(
-            f"/staff/class/{self.eng_class['id']}/module-pack",
+            f"/it/offerings/{self.eng_offering['id']}/module-pack",
             data={"module_pack": (io.BytesIO(payload), "english.imscc")},
             headers={
                 "X-Requested-With": "XMLHttpRequest",
@@ -241,11 +301,79 @@ class ModulePackTests(unittest.TestCase):
         self.assertFalse(body.get("installing"))
         self.assertIn("pack=ok", body.get("redirect") or "")
         offering = self.school.get_offering(int(self.eng_offering["id"]))
-        self.assertTrue(offering.get("imscc_path"))
+        self.assertTrue(offering.get("library_id"))
         status = self.client.get(
-            f"/staff/class/{self.eng_class['id']}/module-pack/status"
+            f"/it/offerings/{self.eng_offering['id']}/module-pack/status"
         ).get_json()
         self.assertEqual(status["stage"], "done")
+
+    def test_mcf3m_assign_does_not_write_git_or_instance_pack(self) -> None:
+        """Template assign points at a shared library; no git write, no pack fork."""
+        from paths import MCF3M, MCF3M_IMSCC
+
+        offering = self.school.get_offering(int(self.mcf_offering["id"]))
+        rel = offering.get("instance_relpath")
+        self.assertTrue(rel)
+        inst = Path(self.tmp.name) / rel
+        self.assertTrue(inst.is_dir())
+        self.assertTrue((inst / "manifest.json").is_file())
+        self.assertFalse((inst / "pack" / "course.imscc").exists())
+        self.assertIsNotNone(offering.get("library_id"))
+        if offering.get("imscc_path") and MCF3M_IMSCC.is_file():
+            stored = Path(offering["imscc_path"])
+            self.assertTrue(is_template_or_library(stored))
+            self.assertNotIn("instances", stored.parts)
+        unpacked = MCF3M / "canvas" / "unpacked"
+        live = inst / "pack" / "unpacked"
+        if live.is_dir() and unpacked.is_dir():
+            self.assertNotEqual(live.resolve(), unpacked.resolve())
+
+    def test_legacy_module_packs_still_resolves_without_delete(self) -> None:
+        """Leftover ``module_packs/<id>`` still resolves; ensure does not delete it."""
+        from instances import legacy_module_pack_root
+        from modules import resolve_module_pack
+
+        oid = int(self.eng_offering["id"])
+        rel = self.eng_offering.get("instance_relpath")
+        legacy = legacy_module_pack_root(Path(self.tmp.name), oid)
+        legacy.mkdir(parents=True, exist_ok=True)
+        payload = _minimal_imscc_bytes()
+        (legacy / "course.imscc").write_bytes(payload)
+        pack = resolve_module_pack(
+            "SBI3U",
+            str(legacy / "course.imscc"),
+            data_dir=Path(self.tmp.name),
+            offering_id=oid,
+            instance_relpath=None,
+        )
+        self.assertIsNotNone(pack.imscc)
+        self.assertEqual(pack.imscc, legacy / "course.imscc")
+
+        with self.school._lock:
+            self.school.conn.execute(
+                """
+                UPDATE course_offerings
+                SET instance_relpath = NULL, imscc_path = ?, library_id = NULL
+                WHERE id = ?
+                """,
+                (str(legacy / "course.imscc"), oid),
+            )
+            self.school.conn.commit()
+        updated = self.school.ensure_offering_instance(self.school.get_offering(oid))
+        self.assertTrue(updated.get("instance_relpath"))
+        self.assertTrue(updated.get("library_id"))
+        self.assertTrue(legacy.exists())
+        dest = Path(self.tmp.name) / updated["instance_relpath"] / "pack" / "course.imscc"
+        self.assertFalse(dest.exists())
+        if rel:
+            leftover_inst = Path(self.tmp.name) / rel
+            self.assertTrue(leftover_inst.exists() or updated["instance_relpath"] == rel)
+
+
+def is_template_or_library(path: Path) -> bool:
+    """True when a stored IMSCC is a git template or a shared library file."""
+    parts = path.parts
+    return "courses" in parts or "libraries" in parts
 
 
 if __name__ == "__main__":

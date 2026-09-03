@@ -13,3 +13,4 @@ alwaysApply: false
 - Key files: `imsmanifest.xml`, `course_settings/module_meta.xml`, `wiki_content/*.html`
 - Never invent expectation codes; query `courses/MCF3M/curriculum/mcf3m.sqlite`
 - Pack to a **new** `.imscc` via `python3 scripts/canvas_pack.py` — do not overwrite the source archive
+- **Canvas lesson export packs (AU):** `courses/MCF3M/canvas/exports/<module-slug>/` — portable preview + `canvas-page.html`. Module 1 folder: `python3 scripts/m1_export_canvas_page.py`. **Importable `.imscc`:** `python3 scripts/m1_pack_canvas_imscc.py` → `canvas/exports/m1-change-and-transformation.imscc` (Settings → Import Course Content → Common Cartridge → All Content). Not the same as `unpacked/`.
