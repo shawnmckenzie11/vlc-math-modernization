@@ -1257,6 +1257,57 @@ class GameShowDB:
             raise ValueError("That Codename is already on this roster") from exc
         return self.dashboard(class_id, sort)
 
+    def replace_codename_roster(
+        self, class_id: int, codenames: list[str], sort: str = "az"
+    ) -> dict[str, Any]:
+        """Sync this class roster to ``codenames`` without recreating the class.
+
+        Students whose Codename remains keep their id and scores. New names
+        are added; omitted names are deleted (blocked if they are on a live
+        game team).
+
+        Args:
+            class_id: Classes primary key.
+            codenames: Desired roster order (unique, 2–32 characters).
+            sort: Dashboard sort to return.
+
+        Returns:
+            Updated dashboard payload.
+        """
+        wanted: list[str] = []
+        seen: set[str] = set()
+        for raw in codenames:
+            name = normalize_codename(raw)
+            key = name.lower()
+            if key in seen:
+                raise ValueError(f"Duplicate Codename: {name}")
+            seen.add(key)
+            wanted.append(name)
+        if not wanted:
+            raise ValueError("Add at least one Codename")
+        self.get_class(class_id)
+        with self._lock:
+            rows = self.conn.execute(
+                """
+                SELECT id, codename, first_name FROM students WHERE class_id = ?
+                """,
+                (class_id,),
+            ).fetchall()
+        current: dict[str, int] = {}
+        for row in rows:
+            label = str(row["codename"] or row["first_name"] or "").strip()
+            if label:
+                current[label.lower()] = int(row["id"])
+        wanted_keys = {name.lower() for name in wanted}
+        for key, student_id in list(current.items()):
+            if key not in wanted_keys:
+                self.delete_student(class_id, student_id, sort=sort)
+                current.pop(key, None)
+        for name in wanted:
+            if name.lower() not in current:
+                self.add_student(class_id, codename=name, sort=sort)
+        return self.dashboard(class_id, sort)
+
     def delete_student(self, class_id: int, student_id: int, sort: str = "last") -> dict[str, Any]:
         """Remove a roster row unless they are on a live game team.
 

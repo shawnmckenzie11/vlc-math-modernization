@@ -16,12 +16,28 @@ from typing import Any
 from urllib.parse import unquote
 
 from paths import (
-    MCF3M_IMSCC,
-    MCF3M_INVENTORY,
-    MCF3M_UNPACKED,
     REPO_ROOT,
     SCRIPTS_DIR,
 )
+
+try:
+    from instances import (
+        is_template_imscc,
+        imscc_in_pack,
+        legacy_module_pack_root,
+        library_root,
+        pack_looks_present,
+        template_pack_paths,
+    )
+except ImportError:  # package import
+    from lms.instances import (
+        is_template_imscc,
+        imscc_in_pack,
+        legacy_module_pack_root,
+        library_root,
+        pack_looks_present,
+        template_pack_paths,
+    )
 
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
@@ -58,21 +74,33 @@ class ModulePackPaths:
     preloaded: bool
 
 
-def module_pack_root(data_dir: Path, offering_id: int) -> Path:
-    """Volume-local folder for a staff-uploaded Common Cartridge.
+def module_pack_root(
+    data_dir: Path,
+    offering_id: int,
+    *,
+    instance_relpath: str | None = None,
+) -> Path:
+    """Volume folder for this offering's Common Cartridge.
+
+    Prefers ``{data_dir}/{instance_relpath}/pack`` when the offering has an
+    instance tree. Falls back to ``module_packs/<id>`` so leftover Fly uploads
+    still resolve during migration.
 
     Args:
         data_dir: LMS data directory (``/data`` on Fly, ``lms/data`` locally).
         offering_id: ``course_offerings.id``.
+        instance_relpath: Stored instance folder, if any.
     """
-    return Path(data_dir) / "module_packs" / str(int(offering_id))
+    if instance_relpath:
+        return Path(data_dir) / str(instance_relpath) / "pack"
+    return legacy_module_pack_root(data_dir, int(offering_id))
 
 
 def pack_status_path(dest_root: Path) -> Path:
     """Return the install-status JSON path for an offering pack folder.
 
     Args:
-        dest_root: Offering ``module_packs/<id>/`` folder.
+        dest_root: Offering pack folder (instance ``pack/`` or legacy ``module_packs/<id>/``).
     """
     return Path(dest_root) / PACK_STATUS_NAME
 
@@ -87,7 +115,7 @@ def write_pack_status(
     """Atomically write pack install progress for the staff upload UI to poll.
 
     Args:
-        dest_root: Offering ``module_packs/<id>/`` folder.
+        dest_root: Offering pack folder (instance ``pack/`` or legacy ``module_packs/<id>/``).
         stage: Machine-readable step (``saving``, ``unpacking``, ``done``, …).
         detail: Short teacher-facing sentence.
         error: Failure message when ``stage`` is ``error``.
@@ -120,7 +148,7 @@ def read_pack_status(dest_root: Path) -> dict[str, Any]:
     """Load install status, or an idle payload when none has been written.
 
     Args:
-        dest_root: Offering ``module_packs/<id>/`` folder.
+        dest_root: Offering pack folder (instance ``pack/`` or legacy ``module_packs/<id>/``).
     """
     idle = {
         "ok": True,
@@ -156,62 +184,106 @@ def resolve_module_pack(
     *,
     data_dir: Path | None = None,
     offering_id: int | None = None,
+    instance_relpath: str | None = None,
+    library_id: int | None = None,
+    library_source: str | None = None,
 ) -> ModulePackPaths:
-    """Resolve IMSCC / unpacked / inventory paths for a course offering.
+    """Resolve IMSCC / unpacked / inventory for one offering.
 
-    MCF3M uses the repo preloaded cartridge. Staff uploads live under
-    ``data_dir/module_packs/<offering_id>/``.
+    Order: leftover instance ``pack/`` if present → leftover
+    ``module_packs/<id>`` → shared ``libraries/<id>/`` (unpack lands here,
+    never in git ``courses/``). New assigns have no instance pack.
 
     Args:
         ontario_code: Assigned Ontario course code.
         offering_imscc: Path stored on the offering, if any.
-        data_dir: LMS data directory (upload destination).
-        offering_id: Offering primary key (upload destination).
+        data_dir: LMS data directory.
+        offering_id: Offering primary key (legacy pack fallback).
+        instance_relpath: Volume-relative instance folder.
+        library_id: Shared ``content_libraries.id``.
+        library_source: Library ``source_path`` (template IMSCC or upload).
     """
     code = (ontario_code or "").strip().upper()
     stored: Path | None = None
     if offering_imscc:
         raw = Path(offering_imscc)
         stored = raw if raw.is_absolute() else (REPO_ROOT / raw)
+        if stored and is_template_imscc(stored):
+            stored = None
 
-    mcf_default = code == "MCF3M" and MCF3M_IMSCC.is_file()
-    if stored and stored.is_file():
-        try:
-            is_mcf_file = stored.resolve() == MCF3M_IMSCC.resolve()
-        except OSError:
-            is_mcf_file = False
-        if mcf_default and is_mcf_file:
+    if data_dir is not None and instance_relpath:
+        root = Path(data_dir) / str(instance_relpath) / "pack"
+        if pack_looks_present(root):
+            imscc = imscc_in_pack(root, str(stored) if stored else offering_imscc)
+            if imscc is None and stored is not None and stored.is_file():
+                imscc = stored
             return ModulePackPaths(
-                MCF3M_IMSCC, MCF3M_UNPACKED, MCF3M_INVENTORY, True
+                imscc, root / "unpacked", root / "inventory.json", False
             )
+
+    if stored is not None and stored.is_file() and data_dir is None:
         root = stored.parent
         return ModulePackPaths(
             stored, root / "unpacked", root / "inventory.json", False
         )
-    if mcf_default:
-        return ModulePackPaths(MCF3M_IMSCC, MCF3M_UNPACKED, MCF3M_INVENTORY, True)
+
     if data_dir is not None and offering_id is not None:
-        root = module_pack_root(data_dir, int(offering_id))
-        return ModulePackPaths(None, root / "unpacked", root / "inventory.json", False)
-    return ModulePackPaths(
-        None,
-        unpacked_dir_for_code(code),
-        inventory_path_for_code(code),
-        False,
-    )
+        legacy = module_pack_root(data_dir, int(offering_id))
+        if pack_looks_present(legacy):
+            imscc = imscc_in_pack(legacy, offering_imscc)
+            return ModulePackPaths(
+                imscc, legacy / "unpacked", legacy / "inventory.json", False
+            )
+
+    if data_dir is not None and library_id:
+        lib_root = library_root(data_dir, int(library_id))
+        imscc: Path | None = None
+        if library_source:
+            src = Path(library_source)
+            if src.is_file():
+                imscc = src
+        if imscc is None:
+            imscc = imscc_in_pack(lib_root, offering_imscc)
+        return ModulePackPaths(
+            imscc, lib_root / "unpacked", lib_root / "inventory.json", False
+        )
+
+    empty = Path("/nonexistent-instance-pack") / (code or "none")
+    return ModulePackPaths(None, empty / "unpacked", empty / "inventory.json", False)
 
 
-def imscc_path_for_code(ontario_code: str, offering_imscc: str | None) -> Path | None:
-    """Resolve a cartridge path from the offering or the MCF3M default.
+def imscc_path_for_code(
+    ontario_code: str,
+    offering_imscc: str | None,
+    *,
+    data_dir: Path | None = None,
+    offering_id: int | None = None,
+    instance_relpath: str | None = None,
+    library_id: int | None = None,
+    library_source: str | None = None,
+) -> Path | None:
+    """Resolve a cartridge path from the instance pack (not the git template).
 
     Args:
         ontario_code: Assigned course code.
         offering_imscc: Relative or absolute path stored on the offering.
+        data_dir: LMS data volume.
+        offering_id: Offering primary key.
+        instance_relpath: Stored instance folder.
 
     Returns:
         Path if the file exists, else None.
     """
-    return resolve_module_pack(ontario_code, offering_imscc).imscc
+    pack = resolve_module_pack(
+        ontario_code,
+        offering_imscc,
+        data_dir=data_dir,
+        offering_id=offering_id,
+        instance_relpath=instance_relpath,
+        library_id=library_id,
+        library_source=library_source,
+    )
+    return pack.imscc if pack.imscc is not None and pack.imscc.is_file() else None
 
 
 def offering_has_imscc(
@@ -220,6 +292,9 @@ def offering_has_imscc(
     *,
     data_dir: Path | None = None,
     offering_id: int | None = None,
+    instance_relpath: str | None = None,
+    library_id: int | None = None,
+    library_source: str | None = None,
 ) -> bool:
     """Return True when Modules/Syllabus already have a readable .imscc."""
     pack = resolve_module_pack(
@@ -227,26 +302,35 @@ def offering_has_imscc(
         offering_imscc,
         data_dir=data_dir,
         offering_id=offering_id,
+        instance_relpath=instance_relpath,
+        library_id=library_id,
+        library_source=library_source,
     )
     return pack.imscc is not None and pack.imscc.is_file()
 
 
-def unpacked_dir_for_code(ontario_code: str) -> Path:
-    """Working tree for wiki_content / web_resources.
+def unpacked_dir_for_code(
+    ontario_code: str, *, content_root: str | None = None
+) -> Path:
+    """Template unpacked tree (read-only). Not a live write target.
 
     Args:
         ontario_code: Course code.
+        content_root: Catalog ``content_root`` when known.
     """
-    if ontario_code.upper() == "MCF3M":
-        return MCF3M_UNPACKED
-    return REPO_ROOT / "courses" / ontario_code.upper() / "canvas" / "unpacked"
+    return template_pack_paths(ontario_code, content_root).unpacked
 
 
-def inventory_path_for_code(ontario_code: str) -> Path:
-    """Committed Canvas inventory JSON, when this repo has one."""
-    if ontario_code.upper() == "MCF3M":
-        return MCF3M_INVENTORY
-    return REPO_ROOT / "courses" / ontario_code.upper() / "canvas" / "inventory.json"
+def inventory_path_for_code(
+    ontario_code: str, *, content_root: str | None = None
+) -> Path:
+    """Template ``inventory.json`` (read-only).
+
+    Args:
+        ontario_code: Course code.
+        content_root: Catalog ``content_root`` when known.
+    """
+    return template_pack_paths(ontario_code, content_root).inventory
 
 
 def ensure_unpacked(imscc: Path, out_dir: Path, *, force: bool = False) -> dict[str, Any]:
@@ -474,7 +558,7 @@ def load_inventory_file(path: Path) -> dict[str, Any] | None:
 
 
 def load_inventory(ontario_code: str) -> dict[str, Any] | None:
-    """Load ``inventory.json`` for module navigation.
+    """Load the git template ``inventory.json`` (not the live instance pack).
 
     Args:
         ontario_code: Course code.
