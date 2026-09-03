@@ -207,7 +207,16 @@ class SectionTests(unittest.TestCase):
         self.assertIn(f'/staff/class/{second_class["id"]}"', html)
         page = self.client.get(f"/staff/class/{second_class['id']}")
         self.assertEqual(page.status_code, 200)
-        self.assertIn("<h1>MCF3M-2</h1>", page.get_data(as_text=True))
+        course_html = page.get_data(as_text=True)
+        self.assertIn("<h1>MCF3M-2</h1>", course_html)
+        self.assertIn(">Dashboard</a>", course_html)
+        self.assertNotIn("Staff home", course_html)
+        self.assertIn("Inherited curriculum expectations", course_html)
+        # Expectations sit after the Modules tab chrome, not in the top menu.
+        self.assertGreater(
+            course_html.find("Inherited curriculum expectations"),
+            course_html.find('class="tabs"'),
+        )
         plain = self.client.get(f"/staff/class/{first_class['id']}")
         self.assertEqual(plain.status_code, 200)
         self.assertIn("<h1>MCF3M</h1>", plain.get_data(as_text=True))
@@ -246,6 +255,8 @@ class SectionTests(unittest.TestCase):
                 data={
                     "teacher_user_id": str(teacher["id"]),
                     "ontario_code": "MCF3M",
+                    "live_days": "M/W/F",
+                    "live_time": "2:00pm",
                 },
                 follow_redirects=False,
             )

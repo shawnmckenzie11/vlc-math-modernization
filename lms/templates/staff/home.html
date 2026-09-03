@@ -9,10 +9,19 @@
 </head>
 <body class="staff-shell">
   <div class="wrap">
-    <p class="kicker">Staff · {{ user.email }}{% if user.role == 'it' %} · <a href="{{ url_for('it_dashboard') }}">Admin</a>{% endif %} · <a href="{{ url_for('logout') }}">Log out</a></p>
+    <nav class="staff-top-menu" aria-label="Staff navigation">
+      <a class="staff-top-btn on" href="{{ url_for('staff_home') }}">Dashboard</a>
+      {% for item in nav_courses %}
+      <a class="staff-top-btn" href="{{ item.href }}">{{ item.label }}</a>
+      {% endfor %}
+      <span class="staff-top-spacer"></span>
+      {% if user.role == 'it' %}<a class="staff-top-link" href="{{ url_for('it_dashboard') }}">Admin</a>{% endif %}
+      <a class="staff-top-link" href="{{ url_for('logout') }}">Log out</a>
+    </nav>
+    <p class="kicker">Staff · {{ user.email }}</p>
     <h1>Teacher Dashboard</h1>
     {% if active %}
-    <p class="sub">{{ active.label }} · courses Admin assigned to this account. Populate a class to add Codenames, days, and time.</p>
+    <p class="sub">{{ active.label }} · courses Admin assigned to this account. Populate a class to add Codenames (live days and time are set by Admin).</p>
     {% else %}
     <p class="sub">Ask Admin to activate a semester before you populate a class.</p>
     {% endif %}
@@ -23,7 +32,7 @@
     {% else %}
     <section id="course-dash" class="course-dash">
       {% for o in offerings %}
-      <article class="card" data-ontario-code="{{ o.ontario_code }}" data-offering-id="{{ o.id }}" data-section-index="{{ o.section_index or 1 }}">
+      <article class="card" data-ontario-code="{{ o.ontario_code }}" data-offering-id="{{ o.id }}" data-section-index="{{ o.section_index or 1 }}"{% if o.live_days %} data-live-days="{{ o.live_days }}"{% endif %}{% if o.live_time %} data-live-time="{{ o.live_time }}"{% endif %}>
         <p class="kicker">Assigned course{% if (o.section_index or 1) > 1 %} · section {{ o.section_index }}{% endif %}</p>
         <h2>{{ o.section_code or o.ontario_code }}</h2>
         <p class="sub">{{ o.course_title }}</p>
@@ -37,11 +46,14 @@
           </div>
           {% endfor %}
         </div>
+        {% elif o.live_days and o.live_time %}
+        <p class="schedule-line">Schedule (from Admin): {{ o.live_days }} · {{ o.live_time }}</p>
+        <p class="hint">No roster yet — Populate Class to add Codenames.</p>
         {% else %}
         <p class="hint">No section yet.</p>
         {% endif %}
         <div class="row-actions">
-          <button type="button" class="btn-populate secondary" data-offering-id="{{ o.id }}"{% if o.classes %} data-class-id="{{ o.classes[0].id }}"{% endif %}>{% if o.classes %}Edit Class{% else %}Populate Class{% endif %}</button>
+          <button type="button" class="btn-populate secondary" data-offering-id="{{ o.id }}"{% if o.classes %} data-class-id="{{ o.classes[0].id }}"{% endif %}{% if o.live_days %} data-live-days="{{ o.live_days }}"{% endif %}{% if o.live_time %} data-live-time="{{ o.live_time }}"{% endif %}>{% if o.classes %}Edit Class{% else %}Populate Class{% endif %}</button>
         </div>
       </article>
       {% endfor %}

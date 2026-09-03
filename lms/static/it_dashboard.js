@@ -183,6 +183,59 @@ function esc(str) {
     .replace(/"/g, "&quot;");
 }
 
+/* ── Course code typeahead (assign page) ── */
+
+/**
+ * Refresh the Ontario course-code <datalist> as the admin types.
+ * Uses GET /it/courses?q= so options appear in realtime, not only on blur.
+ */
+function initCourseCodeTypeahead() {
+  const codeInput = document.getElementById("ontario_code");
+  const list = document.getElementById("course-codes");
+  if (!codeInput || !list) return;
+
+  let timer = 0;
+  let lastQ = null;
+
+  /**
+   * Replace datalist options from a courses JSON payload.
+   * @param {{code: string, title?: string}[]} courses
+   */
+  function paintOptions(courses) {
+    list.innerHTML = "";
+    for (const row of courses || []) {
+      const opt = document.createElement("option");
+      opt.value = row.code || "";
+      opt.label = row.title || row.code || "";
+      opt.textContent = row.title || row.code || "";
+      list.appendChild(opt);
+    }
+  }
+
+  /**
+   * Debounced fetch against /it/courses for the current input value.
+   */
+  async function refreshOptions() {
+    const q = (codeInput.value || "").trim();
+    if (q === lastQ) return;
+    lastQ = q;
+    try {
+      const rv = await fetch("/it/courses?q=" + encodeURIComponent(q));
+      if (!rv.ok) return;
+      const data = await rv.json();
+      paintOptions(data.courses || []);
+    } catch (_) {}
+  }
+
+  codeInput.addEventListener("input", () => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      refreshOptions().catch(() => {});
+    }, 150);
+  });
+  refreshOptions().catch(() => {});
+}
+
 /* ── Base-layer picker (assign page reuse) ── */
 
 /**
@@ -266,5 +319,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initArchivedToggle();
   initArchivedOfferingsToggle();
   initHistoryDetails();
+  initCourseCodeTypeahead();
   initBasePicker();
 });

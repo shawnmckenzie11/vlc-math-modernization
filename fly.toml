@@ -30,8 +30,8 @@ primary_region = 'yyz'
   processes = ['app']
 
   [http_service.http_options]
-    # Large IMSCC uploads + unpack can sit quiet after the body lands.
-    idle_timeout = 300
+    # Large IMSCC uploads (~650MB+) + unpack can sit quiet after the body lands.
+    idle_timeout = 600
 
 [[vm]]
   memory = '1gb'

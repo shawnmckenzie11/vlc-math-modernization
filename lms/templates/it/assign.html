@@ -19,10 +19,11 @@
         <p class="kicker"><a href="{{ url_for('it_dashboard') }}">Admin dashboard</a></p>
         {% if replace_offering %}
         <h1>Replace Module Pack — {{ replace_offering.section_code or replace_offering.ontario_code }}</h1>
+        <p class="sub">{{ replace_offering.ontario_code }}</p>
         {% else %}
         <h1>Assign Course — {{ staff_member.display_name or staff_member.email }}</h1>
-        {% endif %}
         <p class="sub">{{ staff_member.email }}</p>
+        {% endif %}
       </div>
     </div>
 
@@ -75,6 +76,24 @@
         <label class="field" for="module_pack">Module pack (optional)</label>
         <input id="module_pack" name="module_pack" type="file" accept=".imscc,.zip,application/zip">
         <p class="hint">Required only if no shared template exists for this code yet. Uploading here creates a new library; other teachers of the same code share it unless you upload again. Base layer copies syllabus answers and the library pointer — not pack files.</p>
+
+        <label class="field" for="live_days">Live-class days</label>
+        <select id="live_days" name="live_days" required>
+          {% for d in day_options %}
+          <option value="{{ d.value }}">{{ d.label }}</option>
+          {% else %}
+          <option value="M/W/F">M/W/F</option>
+          <option value="T/Th/F">T/Th/F</option>
+          {% endfor %}
+        </select>
+
+        <label class="field" for="live_time">Start time (75 minutes implied)</label>
+        <select id="live_time" name="live_time" required>
+          {% for t in time_options %}
+          <option value="{{ t }}" {% if t == '2:00pm' %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+        <p class="hint">Teachers inherit this schedule when they Populate Class; they only add Codenames.</p>
 
         <div class="row-actions" style="margin-top:0.75rem">
           <button type="submit">Assign</button>

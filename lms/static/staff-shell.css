@@ -5,6 +5,45 @@ body.staff-shell {
   color: #12202e;
   font-family: "Segoe UI", system-ui, sans-serif;
 }
+body.staff-shell .staff-top-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.65rem;
+  background: #fff;
+  border: 1px solid #c5d0dc;
+  border-radius: 10px;
+}
+body.staff-shell .staff-top-btn {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #94a3b8;
+  background: #fff;
+  color: #0f172a;
+  text-decoration: none;
+  font-weight: 650;
+  font-size: 0.92rem;
+}
+body.staff-shell .staff-top-btn:hover {
+  border-color: #0b5f59;
+  color: #0b5f59;
+}
+body.staff-shell .staff-top-btn.on {
+  background: #0f766e;
+  border-color: #0b5f59;
+  color: #fff;
+}
+body.staff-shell .staff-top-spacer { flex: 1; min-width: 0.5rem; }
+body.staff-shell .staff-top-link {
+  color: #334155;
+  font-size: 0.9rem;
+  text-decoration: none;
+  margin-left: 0.15rem;
+}
+body.staff-shell .staff-top-link:hover { color: #0b5f59; }
 body.staff-shell a { color: #0b5f59; }
 body.staff-shell .wrap { color: #12202e; }
 body.staff-shell .wrap.course-shell { max-width: none; }

@@ -10,27 +10,23 @@
 </head>
 <body class="staff-shell{% if tab in ['modules', 'pages', 'assignments', 'quizzes', 'question-banks'] %} course-modules{% endif %}">
   <div class="wrap course-shell">
+    <nav class="staff-top-menu" aria-label="Staff navigation">
+      <a class="staff-top-btn" href="{{ url_for('staff_home') }}">Dashboard</a>
+      {% for item in nav_courses %}
+      <a class="staff-top-btn{% if item.class_id and item.class_id == cls.id %} on{% endif %}"
+         href="{{ item.href }}">{{ item.label }}</a>
+      {% endfor %}
+      <span class="staff-top-spacer"></span>
+      <a class="staff-top-link" href="{{ url_for('logout') }}">Log out</a>
+    </nav>
+
     <div class="topbar">
       <div>
-        <p class="kicker"><a href="{{ url_for('staff_home') }}">Staff home</a></p>
         <h1>{{ cls.section_code or cls.ontario_code or cls.course_code }}</h1>
       </div>
     </div>
 
     {% if pack_error %}<div class="error">{{ pack_error }}</div>{% endif %}
-
-    {% if expectations %}
-    <details class="card exp-panel" style="margin-bottom:1rem">
-      <summary>Inherited curriculum expectations ({{ cls.ontario_code or cls.course_code }})</summary>
-      <ul>
-        {% for e in expectations %}
-        <li><code>{{ e.code }}</code>{% if e.parent_code %} ← {{ e.parent_code }}{% endif %} · {{ e.kind }} · {{ e.statement }}</li>
-        {% endfor %}
-      </ul>
-    </details>
-    {% elif offering and offering.expectations_status != 'verified' %}
-    <p class="hint">Expectations: {{ offering.expectations_status }} — assignment is allowed; wording is not invented.</p>
-    {% endif %}
 
     <nav class="tabs">
       <a href="{{ url_for('staff_course', class_id=cls.id, tab='modules') }}" class="{{ 'on' if tab == 'modules' else '' }}">Modules</a>
@@ -120,6 +116,19 @@
       </form>
     </dialog>
     <script type="module" src="/static/staff_grades.js"></script>
+    {% endif %}
+
+    {% if expectations %}
+    <details class="card exp-panel" style="margin-top:1.25rem">
+      <summary>Inherited curriculum expectations ({{ cls.ontario_code or cls.course_code }})</summary>
+      <ul>
+        {% for e in expectations %}
+        <li><code>{{ e.code }}</code>{% if e.parent_code %} ← {{ e.parent_code }}{% endif %} · {{ e.kind }} · {{ e.statement }}</li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% elif offering and offering.expectations_status != 'verified' %}
+    <p class="hint" style="margin-top:1rem">Expectations: {{ offering.expectations_status }} — assignment is allowed; wording is not invented.</p>
     {% endif %}
   </div>
 </body>

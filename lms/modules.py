@@ -44,8 +44,8 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 logger = logging.getLogger(__name__)
 
-# Canvas MCF3M export is ~189MB; allow a similar staff upload with headroom.
-IMSCC_MAX_BYTES = 250 * 1024 * 1024
+# Canvas MCF3M export is ~189MB; production packs can exceed 600MB.
+IMSCC_MAX_BYTES = 800 * 1024 * 1024
 PACK_STATUS_NAME = "install_status.json"
 PACK_BUSY_STAGES = frozenset({"saving", "validating", "unpacking", "inventory"})
 

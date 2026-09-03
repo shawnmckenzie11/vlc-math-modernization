@@ -1,6 +1,7 @@
 import { api, hideError, showError } from "/static/common.js";
 
-const POPULATE_STEPS = ["roster", "days", "time"];
+const POPULATE_STEPS_FULL = ["roster", "days", "time"];
+const POPULATE_STEPS_ROSTER = ["roster"];
 const EDIT_STEPS = ["roster"];
 const TITLES = {
   offering: "Assigned course",
@@ -10,8 +11,10 @@ const TITLES = {
 };
 
 let step = 0;
-let steps = POPULATE_STEPS;
+let steps = POPULATE_STEPS_FULL;
 let editingClassId = 0;
+let lockedDays = "";
+let lockedTime = "";
 const names = [];
 
 const $ = (id) => document.getElementById(id);
@@ -78,7 +81,9 @@ function showPicker() {
   $("course-dash")?.classList.remove("hidden");
   $("wizard")?.classList.add("hidden");
   editingClassId = 0;
-  steps = POPULATE_STEPS;
+  lockedDays = "";
+  lockedTime = "";
+  steps = POPULATE_STEPS_FULL;
   hideError("#error");
 }
 
@@ -89,6 +94,8 @@ function showPicker() {
 async function startWizard(btn) {
   const offeringId = btn.getAttribute("data-offering-id") || "";
   const classId = Number(btn.getAttribute("data-class-id") || 0);
+  lockedDays = (btn.getAttribute("data-live-days") || "").trim();
+  lockedTime = (btn.getAttribute("data-live-time") || "").trim();
   const select = $("offering");
   if (select) select.value = String(offeringId);
   const label = select?.selectedOptions?.[0]?.textContent || "";
@@ -99,7 +106,15 @@ async function startWizard(btn) {
   step = 0;
   names.length = 0;
   editingClassId = classId;
-  steps = classId ? EDIT_STEPS : POPULATE_STEPS;
+  if (classId) {
+    steps = EDIT_STEPS;
+  } else if (lockedDays && lockedTime) {
+    steps = POPULATE_STEPS_ROSTER;
+    if ($("days")) $("days").value = lockedDays;
+    if ($("time")) $("time").value = lockedTime;
+  } else {
+    steps = POPULATE_STEPS_FULL;
+  }
   if (classId) {
     try {
       const data = await api(`/api/classes/${classId}/dashboard?sort=az`);
@@ -166,8 +181,8 @@ async function submitClass() {
   const offering = $("offering");
   const payload = {
     offering_id: Number(offering?.value),
-    days: $("days").value,
-    time: $("time").value,
+    days: lockedDays || $("days")?.value,
+    time: lockedTime || $("time")?.value,
     codenames: names,
   };
   const data = await api("/api/staff/classes", {

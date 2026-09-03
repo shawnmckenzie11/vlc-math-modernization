@@ -146,10 +146,93 @@ class ItTests(unittest.TestCase):
         self.assertIn('enctype="multipart/form-data"', html)
         self.assertIn('name="module_pack"', html)
         self.assertIn("Module pack", html)
+        self.assertIn('name="live_days"', html)
+        self.assertIn('name="live_time"', html)
+        self.assertIn("M/W/F", html)
         # dashboard still links to the assign page
         rv2 = self.client.get("/it")
         self.assertEqual(rv2.status_code, 200)
         self.assertIn(f"/it/staff/{staff_id}/assign", rv2.get_data(as_text=True))
+
+    def test_assigned_codes_exclude_archived_offerings(self) -> None:
+        """Staff tab Current Courses omits soft-archived offerings."""
+        self.school.activate_from_semester_json()
+        teacher = self.school.register_staff("archivecodes@gmail.com")
+        offering = self.school.assign_course(
+            teacher_user_id=int(teacher["id"]), ontario_code="MCF3M"
+        )
+        self.school.set_offering_schedule(
+            int(offering["id"]), live_days="M/W/F", live_time="2:00pm"
+        )
+        before = {
+            int(p["id"]): p for p in self.school.list_staff(include_archived=False)
+        }
+        self.assertIn("MCF3M", before[int(teacher["id"])]["assigned_codes"] or "")
+        self.school.archive_offering(int(offering["id"]))
+        after = {
+            int(p["id"]): p for p in self.school.list_staff(include_archived=False)
+        }
+        self.assertIsNone(after[int(teacher["id"])]["assigned_codes"])
+
+    def test_admin_assign_persists_live_schedule(self) -> None:
+        """POST /it/staff/<id>/assign stores days/time for Populate Class."""
+        self.school.activate_from_semester_json()
+        self._login_it()
+        staff = self.school.register_staff("scheduleteacher@gmail.com")
+        rv = self.client.post(
+            f"/it/staff/{int(staff['id'])}/assign",
+            data={
+                "ontario_code": "MCF3M",
+                "live_days": "T/Th/F",
+                "live_time": "10:40am",
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(rv.status_code, 302)
+        offering = self.school.get_offering_for(
+            int(self.school.get_active_semester()["id"]),
+            "MCF3M",
+            int(staff["id"]),
+        )
+        assert offering is not None
+        self.assertEqual(offering["live_days"], "T/Th/F")
+        self.assertEqual(offering["live_time"], "10:40am")
+
+    def test_populate_uses_admin_schedule_over_body(self) -> None:
+        """Staff populate ignores client days/time when Admin locked the schedule."""
+        self.school.activate_from_semester_json()
+        teacher = self.school.register_staff("locked@gmail.com")
+        offering = self.school.assign_course(
+            teacher_user_id=int(teacher["id"]), ontario_code="MCF3M"
+        )
+        self.school.set_offering_schedule(
+            int(offering["id"]), live_days="T/Th/F", live_time="9:15am"
+        )
+        self.client.get("/auth/google?portal=staff")
+        self.client.get("/auth/google/callback?email=locked@gmail.com&name=L")
+        user = self.school.get_user_by_email("locked@gmail.com")
+        assert user is not None
+        self.client.post("/verify-email", data={"code": user["verification_code"]})
+        rv = self.client.post(
+            "/api/staff/classes",
+            json={
+                "offering_id": int(offering["id"]),
+                "days": "M/W/F",
+                "time": "2:00pm",
+                "codenames": ["Cedar"],
+            },
+        )
+        self.assertEqual(rv.status_code, 200)
+        created = rv.get_json()["class"]
+        self.assertEqual(created["days"], "Tue/Thu/Fri")
+        self.assertEqual(created["time"], "9:15am")
+
+    def test_imscc_max_bytes_allows_650mb_class_packs(self) -> None:
+        """App content-length ceiling is above a ~639 MB IMSCC."""
+        from modules import IMSCC_MAX_BYTES
+
+        self.assertGreaterEqual(IMSCC_MAX_BYTES, 650 * 1024 * 1024)
+        self.assertEqual(self.app.config["MAX_CONTENT_LENGTH"], IMSCC_MAX_BYTES)
 
     def test_syllabus_editor_needs_imscc_gracefully(self) -> None:
         """Editor route does not crash when the teacher has a class."""
@@ -298,6 +381,8 @@ class ItTests(unittest.TestCase):
                 "teacher_user_id": str(second_teacher["id"]),
                 "ontario_code": "MCF3M",
                 "copied_from_offering_id": str(first["id"]),
+                "live_days": "M/W/F",
+                "live_time": "2:00pm",
             },
             follow_redirects=False,
         )

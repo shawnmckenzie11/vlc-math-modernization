@@ -80,3 +80,18 @@ Verify:
 curl -s https://alc.mckenzian.com/health
 fly certs check alc.mckenzian.com --app lloves-lms
 ```
+
+## Large module-pack uploads (~650MB+)
+
+App caps are raised so Admin can attach large Common Cartridges:
+
+| Layer | Setting | Notes |
+|-------|---------|--------|
+| Flask / Werkzeug | `MAX_CONTENT_LENGTH` / `IMSCC_MAX_BYTES` | **800 MB** in `lms/modules.py` |
+| gunicorn | `--timeout 600` | Unpack after upload can exceed 5 minutes |
+| Fly `http_service.http_options.idle_timeout` | **600s** | Quiet periods while the body is received / unpack runs |
+| Fly volume `lloves_data` | currently **3 GB** | A 639 MB `.imscc` plus unpacked tree may need a larger volume (`fly volumes extend`) |
+
+**Cloudflare:** keep the `alc` CNAME **DNS only** (grey cloud). Orange-cloud proxying often rejects or truncates very large request bodies; if uploads still fail under ~800 MB with a proxy error, confirm the record is grey-clouded.
+
+If Flask returns HTTP 413, the message names the app max and points here for edge/volume caps.

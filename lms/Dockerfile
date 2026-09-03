@@ -22,4 +22,4 @@ RUN python lms/fetch_ontario_curriculum_pdfs.py
 
 EXPOSE 8080
 
-CMD ["gunicorn", "--worker-class", "gthread", "--workers", "1", "--threads", "2", "--timeout", "300", "--bind", "0.0.0.0:8080", "--chdir", "lms", "app:create_app()"]
+CMD ["gunicorn", "--worker-class", "gthread", "--workers", "1", "--threads", "2", "--timeout", "600", "--bind", "0.0.0.0:8080", "--chdir", "lms", "app:create_app()"]

@@ -701,6 +701,66 @@ def create_app(
 def _register_pages(app: Flask, school: SchoolDB) -> None:
     """Landing, IT, staff, student, static, and module/syllabus routes."""
 
+    def _staff_nav_courses(teacher_user_id: int) -> list[dict[str, Any]]:
+        """Build top-menu quicklinks for a teacher's active-semester courses.
+
+        Links into each offering's staff course page when a class exists;
+        otherwise points at the teacher dashboard so they can Populate Class.
+
+        Args:
+            teacher_user_id: Staff or IT user id.
+
+        Returns:
+            List of ``{label, href, class_id, offering_id}`` dicts.
+        """
+        active = school.get_active_semester()
+        if not active:
+            return []
+        offerings = school.list_offerings(
+            teacher_user_id=int(teacher_user_id),
+            semester_id=int(active["id"]),
+            include_archived=False,
+        )
+        items: list[dict[str, Any]] = []
+        for offering in offerings:
+            label = str(
+                offering.get("section_code")
+                or offering.get("ontario_code")
+                or ""
+            )
+            classes = offering.get("classes") or []
+            class_id = int(classes[0]["id"]) if classes else None
+            href = (
+                url_for("staff_course", class_id=class_id)
+                if class_id
+                else url_for("staff_home")
+            )
+            items.append(
+                {
+                    "label": label,
+                    "href": href,
+                    "class_id": class_id,
+                    "offering_id": int(offering["id"]),
+                }
+            )
+        return items
+
+    def _assign_schedule_from_form() -> tuple[str, str]:
+        """Read and validate live days/time from an Admin assign form.
+
+        Returns:
+            ``(live_days, live_time)`` wizard presets.
+
+        Raises:
+            ValueError: Missing or invalid schedule fields.
+        """
+        live_days = (request.form.get("live_days") or "").strip()
+        live_time = (request.form.get("live_time") or "").strip()
+        if not live_days or not live_time:
+            raise ValueError("Choose live-class days and start time.")
+        # Validation happens in set_offering_schedule.
+        return live_days, live_time
+
     def _owned_offering_for_pack(class_id: int) -> tuple[dict[str, Any], dict[str, Any]]:
         """Return the class and offering for a staff module-pack route, or abort.
 
@@ -796,13 +856,16 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
 
     @app.errorhandler(413)
     def upload_too_large(_err):
-        """Reject oversized IMSCC uploads with a course-dashboard message."""
-        if request.path.endswith("/module-pack"):
-            message = (
-                f"Module pack is too large (max {IMSCC_MAX_BYTES // (1024 * 1024)} MB)."
-            )
-            if _wants_json():
-                return jsonify({"ok": False, "error": message}), 413
+        """Reject oversized IMSCC uploads with a clear size message."""
+        max_mb = IMSCC_MAX_BYTES // (1024 * 1024)
+        message = (
+            f"Module pack is too large (max {max_mb} MB). "
+            "If the file is under that limit, the edge proxy or volume may still "
+            "be capping uploads — see lms/DEPLOY.md."
+        )
+        if _wants_json():
+            return jsonify({"ok": False, "error": message}), 413
+        if "/module-pack" in (request.path or ""):
             session["pack_error"] = message
             parts = request.path.strip("/").split("/")
             try:
@@ -812,7 +875,8 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
                 )
             except (ValueError, IndexError):
                 pass
-        return ("File too large.", 413)
+            return redirect(url_for("it_dashboard", tab="offerings"))
+        return (message, 413)
 
     @app.route("/static/<path:filename>")
     def static_files(filename: str):
@@ -947,6 +1011,12 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
                 copied_from_offering_id=copied_from,
                 library_id=library_id,
                 new_section=True,
+            )
+            live_days, live_time = _assign_schedule_from_form()
+            offering = school.set_offering_schedule(
+                int(offering["id"]),
+                live_days=live_days,
+                live_time=live_time,
             )
         except (ValueError, KeyError) as exc:
             return render_template("forbidden.html", message=str(exc)), 400
@@ -1153,6 +1223,9 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
                 active=active,
                 courses=courses,
                 instances=[],
+                day_options=wizard_defaults()["day_options"],
+                time_options=list(TIME_OPTIONS),
+                school_name=SCHOOL_NAME,
             )
 
         code = (request.form.get("ontario_code") or "").strip().upper()
@@ -1179,6 +1252,12 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
                 copied_from_offering_id=copied_from,
                 library_id=library_id,
                 new_section=True,
+            )
+            live_days, live_time = _assign_schedule_from_form()
+            offering = school.set_offering_schedule(
+                int(offering["id"]),
+                live_days=live_days,
+                live_time=live_time,
             )
         except (ValueError, KeyError) as exc:
             return render_template("forbidden.html", message=str(exc)), 400
@@ -1210,7 +1289,11 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
         except KeyError:
             from flask import abort
             abort(404)
-        return render_template("it/assign.html", replace_offering=replace_offering)
+        return render_template(
+            "it/assign.html",
+            replace_offering=replace_offering,
+            school_name=SCHOOL_NAME,
+        )
 
     @app.route("/staff")
     @staff_required
@@ -1236,6 +1319,7 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
             active=active,
             offerings=offerings,
             classes=classes,
+            nav_courses=_staff_nav_courses(int(user["id"])),
             time_options=list(TIME_OPTIONS),
             school_name=SCHOOL_NAME,
         )
@@ -1304,13 +1388,19 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
         names = body.get("codenames") or []
         if not isinstance(names, list):
             return jsonify({"ok": False, "error": "codenames must be a list"}), 400
+        days = str(body.get("days") or offering.get("live_days") or "")
+        time_label = str(body.get("time") or offering.get("live_time") or "")
+        if offering.get("live_days") and offering.get("live_time"):
+            # Admin-locked schedule wins over any client override.
+            days = str(offering["live_days"])
+            time_label = str(offering["live_time"])
         try:
             created = school.game.create_class(
                 year=str(semester["year_display"]),
                 semester=str(semester["term"]),
                 course_code=str(offering["ontario_code"]),
-                days_preset=str(body.get("days") or ""),
-                time_label=str(body.get("time") or ""),
+                days_preset=days,
+                time_label=time_label,
                 codenames=[str(n) for n in names],
                 offering_id=int(offering["id"]),
                 teacher_user_id=int(user["id"]),
@@ -1371,6 +1461,7 @@ def _register_pages(app: Flask, school: SchoolDB) -> None:
             cls=cls,
             offering=offering,
             expectations=expectations,
+            nav_courses=_staff_nav_courses(int(user["id"])),
             tab=tab,
             school_name=SCHOOL_NAME,
             show_module_pack_upload=False,

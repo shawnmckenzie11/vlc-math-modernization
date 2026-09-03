@@ -89,6 +89,8 @@ CREATE TABLE IF NOT EXISTS course_offerings (
     instance_relpath TEXT,
     section_index INTEGER NOT NULL DEFAULT 1,
     archived_at TEXT,
+    live_days TEXT,
+    live_time TEXT,
     UNIQUE(semester_id, ontario_code, teacher_user_id, section_index)
 );
 
@@ -188,6 +190,7 @@ class LovesDB:
         self._ensure_offering_columns()
         self._ensure_offering_sections()
         self._ensure_offering_archived_column()
+        self._ensure_offering_schedule_columns()
         self._ensure_library_schema()
         self._ensure_archived_column()
         self._seed()
@@ -458,6 +461,22 @@ class LovesDB:
         if "archived_at" not in cols:
             self.conn.execute(
                 "ALTER TABLE course_offerings ADD COLUMN archived_at TEXT"
+            )
+
+    def _ensure_offering_schedule_columns(self) -> None:
+        """Add Admin-assigned live class days/time columns if absent.
+
+        ``live_days`` stores the wizard preset (``M/W/F`` / ``T/Th/F``).
+        ``live_time`` stores a ``TIME_OPTIONS`` label such as ``2:00pm``.
+        """
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(course_offerings)")}
+        if "live_days" not in cols:
+            self.conn.execute(
+                "ALTER TABLE course_offerings ADD COLUMN live_days TEXT"
+            )
+        if "live_time" not in cols:
+            self.conn.execute(
+                "ALTER TABLE course_offerings ADD COLUMN live_time TEXT"
             )
 
     def _seed(self) -> None:
@@ -1009,6 +1028,68 @@ class LovesDB:
             self.conn.commit()
         return self.get_offering(offering_id)
 
+    def set_offering_schedule(
+        self,
+        offering_id: int,
+        *,
+        live_days: str,
+        live_time: str,
+    ) -> dict[str, Any]:
+        """Persist Admin-chosen live class days/time on an offering.
+
+        Validates against the staff wizard presets. When the offering already
+        has game-show classes, their ``days``/``time`` columns are updated to
+        match so teachers do not need to re-pick the schedule.
+
+        Args:
+            offering_id: ``course_offerings.id``.
+            live_days: ``M/W/F`` or ``T/Th/F`` (or already-stored Mon/Wed form).
+            live_time: One of the wizard ``TIME_OPTIONS`` labels.
+
+        Returns:
+            Updated offering dict.
+
+        Raises:
+            KeyError: Unknown offering.
+            ValueError: Invalid days or time.
+        """
+        import sys
+
+        try:
+            from paths import MGS_DIR
+        except ImportError:
+            from lms.paths import MGS_DIR
+
+        if str(MGS_DIR) not in sys.path:
+            sys.path.insert(0, str(MGS_DIR))
+        from schedule import DAY_PRESETS, TIME_OPTIONS, store_days
+
+        self.get_offering(offering_id)
+        days_key = (live_days or "").strip()
+        time_key = (live_time or "").strip()
+        if days_key in {"Mon/Wed/Fri", "Tue/Thu/Fri"}:
+            reverse = {stored: preset for preset, stored in DAY_PRESETS.items()}
+            days_key = reverse[days_key]
+        if days_key not in DAY_PRESETS:
+            raise ValueError("Live-class days must be M/W/F or T/Th/F")
+        if time_key not in TIME_OPTIONS:
+            raise ValueError(f"Start time must be one of: {', '.join(TIME_OPTIONS)}")
+        stored_days = store_days(days_key)
+        with self._lock:
+            self.conn.execute(
+                """
+                UPDATE course_offerings
+                SET live_days = ?, live_time = ?
+                WHERE id = ?
+                """,
+                (days_key, time_key, int(offering_id)),
+            )
+            self.conn.commit()
+        updater = getattr(self, "sync_offering_class_schedule", None)
+        if callable(updater):
+            updater(int(offering_id), stored_days=stored_days, live_time=time_key)
+        return self.get_offering(offering_id)
+
     def unarchive_offering(self, offering_id: int) -> dict[str, Any]:
         """Clear archived_at on a course offering, restoring it to the teacher dashboard.
 
@@ -1428,9 +1509,13 @@ class SchoolDB(LovesDB):
                 offs = self.list_offerings(
                     teacher_user_id=int(item["id"]),
                     semester_id=int(active_sem["id"]),
+                    include_archived=False,
                 )
             else:
-                offs = self.list_offerings(teacher_user_id=int(item["id"]))
+                offs = self.list_offerings(
+                    teacher_user_id=int(item["id"]),
+                    include_archived=False,
+                )
             item["assigned_codes"] = (
                 ", ".join(
                     o.get("section_code")
@@ -1942,6 +2027,31 @@ class SchoolDB(LovesDB):
             item["student_count"] = self.game._student_count(int(item["id"]))
             result.append(item)
         return result
+
+    def sync_offering_class_schedule(
+        self,
+        offering_id: int,
+        *,
+        stored_days: str,
+        live_time: str,
+    ) -> None:
+        """Update linked game-show classes when Admin changes offering schedule.
+
+        Args:
+            offering_id: ``course_offerings.id``.
+            stored_days: Stored weekday label (``Mon/Wed/Fri`` / ``Tue/Thu/Fri``).
+            live_time: Wizard time label such as ``2:00pm``.
+        """
+        with self.game._lock:
+            self.game.conn.execute(
+                """
+                UPDATE classes
+                SET days = ?, time = ?
+                WHERE offering_id = ?
+                """,
+                (stored_days, live_time, int(offering_id)),
+            )
+            self.game.conn.commit()
 
     def list_staff_classes(
         self, teacher_user_id: int, semester_id: int | None = None
